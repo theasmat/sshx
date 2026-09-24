@@ -1,0 +1,443 @@
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SshHost {
+    pub id: String,
+    pub host_pattern: String,
+    pub host_name: Option<String>,
+    pub user: Option<String>,
+    pub port: Option<u16>,
+    pub identity_file: Option<String>,
+    pub identities_only: Option<bool>,
+    pub proxy_jump: Option<String>,
+    pub proxy_command: Option<String>,
+    pub forward_agent: Option<bool>,
+    pub local_forward: Vec<String>,
+    pub remote_forward: Vec<String>,
+    pub dynamic_forward: Option<String>,
+    pub server_alive_interval: Option<u32>,
+    pub server_alive_count_max: Option<u32>,
+    pub strict_host_key_checking: Option<String>,
+    pub custom_directives: Vec<(String, String)>,
+    pub tags: Vec<String>,
+    pub group: Option<String>,
+    pub notes: Option<String>,
+    pub color: Option<String>,
+    pub comments: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SshConfigFileData {
+    pub file_path: String,
+    pub exists: bool,
+    pub raw_content: String,
+    pub hosts: Vec<SshHost>,
+    pub global_directives: Vec<(String, String)>,
+    pub global_comments: Vec<String>,
+}
+
+pub fn get_ssh_dir() -> PathBuf {
+    if let Some(home) = dirs::home_dir() {
+        home.join(".ssh")
+    } else {
+        PathBuf::from("/tmp/.ssh")
+    }
+}
+
+pub fn get_ssh_config_path() -> PathBuf {
+    get_ssh_dir().join("config")
+}
+
+pub fn parse_ssh_config(content: &str, file_path: &str) -> SshConfigFileData {
+    let mut hosts = Vec::new();
+    let mut global_directives = Vec::new();
+    let mut global_comments = Vec::new();
+
+    let mut current_host: Option<SshHost> = None;
+    let mut pending_comments = Vec::new();
+    let mut pending_tags = Vec::new();
+    let mut pending_group: Option<String> = None;
+    let mut pending_note: Option<String> = None;
+    let mut pending_color: Option<String> = None;
+
+    for (line_idx, raw_line) in content.lines().enumerate() {
+        let trimmed = raw_line.trim();
+
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        if trimmed.starts_with('#') {
+            let comment_text = trimmed[1..].trim();
+            // Parse metadata annotations like # @sshx: tag=prod,aws group=Infra color=emerald note=My server
+            if comment_text.starts_with("@sshx:") || comment_text.starts_with("@sshx ") {
+                let meta_str = comment_text
+                    .trim_start_matches("@sshx:")
+                    .trim_start_matches("@sshx")
+                    .trim();
+                for part in meta_str.split_whitespace() {
+                    if let Some((k, v)) = part.split_once('=') {
+                        match k {
+                            "tag" | "tags" => {
+                                for t in v.split(',') {
+                                    let clean_tag = t.trim().to_string();
+                                    if !clean_tag.is_empty() && !pending_tags.contains(&clean_tag) {
+                                        pending_tags.push(clean_tag);
+                                    }
+                                }
+                            }
+                            "group" => {
+                                pending_group = Some(v.replace('_', " ").to_string());
+                            }
+                            "note" | "notes" => {
+                                pending_note = Some(v.replace('_', " ").to_string());
+                            }
+                            "color" => {
+                                pending_color = Some(v.to_string());
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            } else {
+                pending_comments.push(comment_text.to_string());
+            }
+            continue;
+        }
+
+        // Split directive and value
+        let parts: Vec<&str> = trimmed.split_whitespace().collect();
+        if parts.is_empty() {
+            continue;
+        }
+
+        let directive = parts[0];
+        let val = if parts.len() > 1 {
+            trimmed[directive.len()..].trim()
+        } else {
+            ""
+        };
+
+        if directive.eq_ignore_ascii_case("Host") || directive.eq_ignore_ascii_case("Match") {
+            // Commit previous host
+            if let Some(h) = current_host.take() {
+                hosts.push(h);
+            }
+
+            let host_pattern = val.to_string();
+            let id = format!("{}_{}", host_pattern.replace(['*', '?', ' '], "_"), line_idx);
+
+            current_host = Some(SshHost {
+                id,
+                host_pattern,
+                host_name: None,
+                user: None,
+                port: None,
+                identity_file: None,
+                identities_only: None,
+                proxy_jump: None,
+                proxy_command: None,
+                forward_agent: None,
+                local_forward: Vec::new(),
+                remote_forward: Vec::new(),
+                dynamic_forward: None,
+                server_alive_interval: None,
+                server_alive_count_max: None,
+                strict_host_key_checking: None,
+                custom_directives: Vec::new(),
+                tags: std::mem::take(&mut pending_tags),
+                group: pending_group.take(),
+                notes: pending_note.take(),
+                color: pending_color.take(),
+                comments: std::mem::take(&mut pending_comments),
+            });
+            continue;
+        }
+
+        if let Some(ref mut host) = current_host {
+            match directive.to_lowercase().as_str() {
+                "hostname" => host.host_name = Some(val.to_string()),
+                "user" => host.user = Some(val.to_string()),
+                "port" => host.port = val.parse().ok(),
+                "identityfile" => host.identity_file = Some(val.to_string()),
+                "identitiesonly" => {
+                    host.identities_only = Some(val.eq_ignore_ascii_case("yes"))
+                }
+                "proxyjump" => host.proxy_jump = Some(val.to_string()),
+                "proxycommand" => host.proxy_command = Some(val.to_string()),
+                "forwardagent" => {
+                    host.forward_agent = Some(val.eq_ignore_ascii_case("yes"))
+                }
+                "localforward" => host.local_forward.push(val.to_string()),
+                "remoteforward" => host.remote_forward.push(val.to_string()),
+                "dynamicforward" => host.dynamic_forward = Some(val.to_string()),
+                "serveraliveinterval" => host.server_alive_interval = val.parse().ok(),
+                "serveralivecountmax" => host.server_alive_count_max = val.parse().ok(),
+                "stricthostkeychecking" => {
+                    host.strict_host_key_checking = Some(val.to_string())
+                }
+                _ => host
+                    .custom_directives
+                    .push((directive.to_string(), val.to_string())),
+            }
+        } else {
+            // Global directive before any Host line
+            global_comments.append(&mut pending_comments);
+            global_directives.push((directive.to_string(), val.to_string()));
+        }
+    }
+
+    if let Some(h) = current_host {
+        hosts.push(h);
+    }
+
+    SshConfigFileData {
+        file_path: file_path.to_string(),
+        exists: true,
+        raw_content: content.to_string(),
+        hosts,
+        global_directives,
+        global_comments,
+    }
+}
+
+pub fn serialize_ssh_config(
+    global_comments: &[String],
+    global_directives: &[(String, String)],
+    hosts: &[SshHost],
+) -> String {
+    let mut out = String::new();
+
+    // Global comments
+    for c in global_comments {
+        out.push_str(&format!("# {}\n", c));
+    }
+
+    // Global directives
+    for (k, v) in global_directives {
+        out.push_str(&format!("{} {}\n", k, v));
+    }
+
+    if !global_comments.is_empty() || !global_directives.is_empty() {
+        out.push('\n');
+    }
+
+    // Hosts
+    for (i, h) in hosts.iter().enumerate() {
+        if i > 0 || !global_comments.is_empty() || !global_directives.is_empty() {
+            out.push('\n');
+        }
+
+        // Output regular comments
+        for c in &h.comments {
+            out.push_str(&format!("# {}\n", c));
+        }
+
+        // Output metadata annotations
+        let mut meta_parts = Vec::new();
+        if !h.tags.is_empty() {
+            meta_parts.push(format!("tags={}", h.tags.join(",")));
+        }
+        if let Some(ref grp) = h.group {
+            meta_parts.push(format!("group={}", grp.replace(' ', "_")));
+        }
+        if let Some(ref note) = h.notes {
+            meta_parts.push(format!("note={}", note.replace(' ', "_")));
+        }
+        if let Some(ref col) = h.color {
+            meta_parts.push(format!("color={}", col));
+        }
+
+        if !meta_parts.is_empty() {
+            out.push_str(&format!("# @sshx: {}\n", meta_parts.join(" ")));
+        }
+
+        out.push_str(&format!("Host {}\n", h.host_pattern));
+
+        if let Some(ref hn) = h.host_name {
+            out.push_str(&format!("    HostName {}\n", hn));
+        }
+        if let Some(ref u) = h.user {
+            out.push_str(&format!("    User {}\n", u));
+        }
+        if let Some(p) = h.port {
+            if p != 22 {
+                out.push_str(&format!("    Port {}\n", p));
+            }
+        }
+        if let Some(ref id_file) = h.identity_file {
+            if !id_file.trim().is_empty() {
+                out.push_str(&format!("    IdentityFile {}\n", id_file));
+            }
+        }
+        if let Some(io) = h.identities_only {
+            if io {
+                out.push_str("    IdentitiesOnly yes\n");
+            }
+        }
+        if let Some(ref pj) = h.proxy_jump {
+            if !pj.trim().is_empty() {
+                out.push_str(&format!("    ProxyJump {}\n", pj));
+            }
+        }
+        if let Some(ref pc) = h.proxy_command {
+            if !pc.trim().is_empty() {
+                out.push_str(&format!("    ProxyCommand {}\n", pc));
+            }
+        }
+        if let Some(fa) = h.forward_agent {
+            out.push_str(&format!("    ForwardAgent {}\n", if fa { "yes" } else { "no" }));
+        }
+        for lf in &h.local_forward {
+            out.push_str(&format!("    LocalForward {}\n", lf));
+        }
+        for rf in &h.remote_forward {
+            out.push_str(&format!("    RemoteForward {}\n", rf));
+        }
+        if let Some(ref df) = h.dynamic_forward {
+            out.push_str(&format!("    DynamicForward {}\n", df));
+        }
+        if let Some(sai) = h.server_alive_interval {
+            out.push_str(&format!("    ServerAliveInterval {}\n", sai));
+        }
+        if let Some(sacm) = h.server_alive_count_max {
+            out.push_str(&format!("    ServerAliveCountMax {}\n", sacm));
+        }
+        if let Some(ref shkc) = h.strict_host_key_checking {
+            out.push_str(&format!("    StrictHostKeyChecking {}\n", shkc));
+        }
+        for (k, v) in &h.custom_directives {
+            out.push_str(&format!("    {} {}\n", k, v));
+        }
+    }
+
+    out
+}
+
+pub fn read_ssh_config() -> Result<SshConfigFileData, String> {
+    let ssh_dir = get_ssh_dir();
+    if !ssh_dir.exists() {
+        fs::create_dir_all(&ssh_dir).map_err(|e| e.to_string())?;
+    }
+
+    let config_path = get_ssh_config_path();
+    let file_path_str = config_path.to_string_lossy().to_string();
+
+    if !config_path.exists() {
+        return Ok(SshConfigFileData {
+            file_path: file_path_str,
+            exists: false,
+            raw_content: String::new(),
+            hosts: Vec::new(),
+            global_directives: Vec::new(),
+            global_comments: Vec::new(),
+        });
+    }
+
+    let content = fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
+    let data = parse_ssh_config(&content, &file_path_str);
+    Ok(data)
+}
+
+pub fn write_ssh_config_safe(content: &str) -> Result<(), String> {
+    let ssh_dir = get_ssh_dir();
+    if !ssh_dir.exists() {
+        fs::create_dir_all(&ssh_dir).map_err(|e| e.to_string())?;
+    }
+
+    let config_path = get_ssh_config_path();
+
+    // Create timestamped backup if existing config file has content
+    if config_path.exists() {
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        let backup_path = ssh_dir.join(format!("config.bak.{}", ts));
+        let _ = fs::copy(&config_path, backup_path);
+    }
+
+    fs::write(&config_path, content).map_err(|e| e.to_string())?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let perms = fs::Permissions::from_mode(0o600);
+        let _ = fs::set_permissions(&config_path, perms);
+    }
+
+    Ok(())
+}
+
+pub fn list_config_backups() -> Result<Vec<String>, String> {
+    let ssh_dir = get_ssh_dir();
+    if !ssh_dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut backups = Vec::new();
+    let entries = fs::read_dir(&ssh_dir).map_err(|e| e.to_string())?;
+
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if name.starts_with("config.bak.") {
+            backups.push(name);
+        }
+    }
+
+    backups.sort();
+    backups.reverse();
+    Ok(backups)
+}
+
+pub fn restore_config_backup(backup_name: &str) -> Result<(), String> {
+    let ssh_dir = get_ssh_dir();
+    let backup_path = ssh_dir.join(backup_name);
+    if !backup_path.exists() {
+        return Err(format!("Backup file '{}' does not exist", backup_name));
+    }
+
+    let content = fs::read_to_string(&backup_path).map_err(|e| e.to_string())?;
+    write_ssh_config_safe(&content)?;
+    Ok(())
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_and_serialize_roundtrip() {
+        let sample = r#"# Main production servers
+# @sshx: tags=prod,aws group=Cloud color=emerald note=Main_Web_Server
+Host prod-web-01
+    HostName 54.210.12.34
+    User ec2-user
+    IdentityFile ~/.ssh/id_ed25519
+    IdentitiesOnly yes
+    ServerAliveInterval 60
+
+# @sshx: tags=github,personal group=Git
+Host github-personal
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_personal
+    IdentitiesOnly yes
+"#;
+        let parsed = parse_ssh_config(sample, "/tmp/config");
+        assert_eq!(parsed.hosts.len(), 2);
+        assert_eq!(parsed.hosts[0].host_pattern, "prod-web-01");
+        assert_eq!(parsed.hosts[0].user, Some("ec2-user".to_string()));
+        assert_eq!(parsed.hosts[0].tags, vec!["prod", "aws"]);
+        assert_eq!(parsed.hosts[1].host_pattern, "github-personal");
+
+        let serialized = serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
+        assert!(serialized.contains("Host prod-web-01"));
+        assert!(serialized.contains("Host github-personal"));
+        assert!(serialized.contains("tags=github,personal"));
+    }
+}

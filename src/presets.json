@@ -1,0 +1,216 @@
+[
+  {
+    "id": "github-personal",
+    "category": "git",
+    "title": "GitHub Personal",
+    "subtitle": "Dedicated profile for personal GitHub repositories",
+    "iconName": "github",
+    "badge": "Popular",
+    "config": {
+      "host_pattern": "github-personal",
+      "host_name": "github.com",
+      "user": "git",
+      "port": 22,
+      "identities_only": true,
+      "tags": ["github", "personal", "git"],
+      "group": "Git Accounts",
+      "notes": "Personal GitHub account (git@github-personal:username/repo.git)",
+      "color": "emerald"
+    },
+    "keySuggestion": {
+      "keyName": "id_ed25519_github_personal",
+      "keyType": "ed25519",
+      "comment": "personal-github"
+    },
+    "externalLink": {
+      "label": "GitHub SSH Keys",
+      "url": "https://github.com/settings/ssh/new"
+    }
+  },
+  {
+    "id": "github-work",
+    "category": "git",
+    "title": "GitHub Work / Organization",
+    "subtitle": "Separate work organization repos with an isolated key",
+    "iconName": "briefcase",
+    "badge": "Work",
+    "config": {
+      "host_pattern": "github-work",
+      "host_name": "github.com",
+      "user": "git",
+      "port": 22,
+      "identities_only": true,
+      "tags": ["github", "work", "git"],
+      "group": "Git Accounts",
+      "notes": "Work GitHub account (git@github-work:org/repo.git)",
+      "color": "blue"
+    },
+    "keySuggestion": {
+      "keyName": "id_ed25519_github_work",
+      "keyType": "ed25519",
+      "comment": "work-github"
+    },
+    "externalLink": {
+      "label": "GitHub SSH Keys",
+      "url": "https://github.com/settings/ssh/new"
+    }
+  },
+  {
+    "id": "gitlab",
+    "category": "git",
+    "title": "GitLab Profile",
+    "subtitle": "GitLab.com or self-hosted enterprise GitLab instance",
+    "iconName": "git-branch",
+    "badge": "Git",
+    "config": {
+      "host_pattern": "gitlab.com",
+      "host_name": "gitlab.com",
+      "user": "git",
+      "port": 22,
+      "identities_only": true,
+      "tags": ["gitlab", "git"],
+      "group": "Git Accounts",
+      "color": "orange"
+    },
+    "keySuggestion": {
+      "keyName": "id_ed25519_gitlab",
+      "keyType": "ed25519",
+      "comment": "gitlab-key"
+    },
+    "externalLink": {
+      "label": "GitLab SSH Keys",
+      "url": "https://gitlab.com/-/user_settings/ssh_keys"
+    }
+  },
+  {
+    "id": "aws-ec2",
+    "category": "cloud",
+    "title": "AWS EC2 / Lightsail",
+    "subtitle": "Amazon Linux / Ubuntu EC2 instance with 60s keepalive",
+    "iconName": "cloud",
+    "badge": "AWS",
+    "config": {
+      "host_pattern": "aws-ec2-node",
+      "host_name": "ec2-XX-XX-XX-XX.compute-1.amazonaws.com",
+      "user": "ubuntu",
+      "port": 22,
+      "server_alive_interval": 60,
+      "server_alive_count_max": 3,
+      "tags": ["aws", "cloud", "production"],
+      "group": "Cloud Servers",
+      "color": "amber"
+    }
+  },
+  {
+    "id": "hetzner-cloud",
+    "category": "cloud",
+    "title": "Hetzner Cloud VPS",
+    "subtitle": "Fast European cloud server with root or sudo user",
+    "iconName": "server",
+    "badge": "Hetzner",
+    "config": {
+      "host_pattern": "hetzner-node-01",
+      "host_name": "your-server-ip",
+      "user": "root",
+      "port": 22,
+      "server_alive_interval": 60,
+      "tags": ["hetzner", "cloud", "vps"],
+      "group": "Cloud Servers",
+      "color": "rose"
+    }
+  },
+  {
+    "id": "digitalocean-droplet",
+    "category": "cloud",
+    "title": "DigitalOcean Droplet",
+    "subtitle": "Standard Ubuntu or Debian droplet",
+    "iconName": "droplet",
+    "badge": "DO",
+    "config": {
+      "host_pattern": "do-droplet-01",
+      "host_name": "your-droplet-ip",
+      "user": "root",
+      "port": 22,
+      "server_alive_interval": 60,
+      "tags": ["digitalocean", "droplet", "cloud"],
+      "group": "Cloud Servers",
+      "color": "cyan"
+    }
+  },
+  {
+    "id": "bastion-jump",
+    "category": "bastion",
+    "title": "Bastion / Jump Host",
+    "subtitle": "Securely route traffic to an internal host via Jump server",
+    "iconName": "shield",
+    "badge": "ProxyJump",
+    "config": {
+      "host_pattern": "internal-prod-db",
+      "host_name": "10.0.1.50",
+      "user": "postgres",
+      "port": 22,
+      "proxy_jump": "bastion-host",
+      "tags": ["internal", "bastion", "private"],
+      "group": "Private Network",
+      "notes": "Routes seamlessly via bastion-host",
+      "color": "purple"
+    }
+  },
+  {
+    "id": "homelab-pi",
+    "category": "homelab",
+    "title": "Raspberry Pi / Homelab",
+    "subtitle": "Home server, Raspberry Pi, or local Linux machine",
+    "iconName": "cpu",
+    "badge": "Homelab",
+    "config": {
+      "host_pattern": "raspberrypi",
+      "host_name": "raspberrypi.local",
+      "user": "pi",
+      "port": 22,
+      "tags": ["homelab", "raspberrypi", "iot"],
+      "group": "Homelab",
+      "color": "rose"
+    }
+  },
+  {
+    "id": "db-tunnel-postgres",
+    "category": "tunnel",
+    "title": "PostgreSQL Port Tunnel",
+    "subtitle": "Forward remote Postgres 5432 to local 127.0.0.1:5432",
+    "iconName": "arrow-left-right",
+    "badge": "Port Forward",
+    "config": {
+      "host_pattern": "pg-tunnel-prod",
+      "host_name": "remote-gateway.example.com",
+      "user": "admin",
+      "port": 22,
+      "local_forward": ["5432 127.0.0.1:5432"],
+      "server_alive_interval": 30,
+      "tags": ["tunnel", "postgres", "database"],
+      "group": "Tunnels",
+      "notes": "Access remote Postgres locally at localhost:5432",
+      "color": "indigo"
+    }
+  },
+  {
+    "id": "db-tunnel-mysql",
+    "category": "tunnel",
+    "title": "MySQL / Redis Tunnel",
+    "subtitle": "Forward remote MySQL (3306) or Redis (6379) to local",
+    "iconName": "arrow-left-right",
+    "badge": "Port Forward",
+    "config": {
+      "host_pattern": "mysql-tunnel-prod",
+      "host_name": "remote-gateway.example.com",
+      "user": "admin",
+      "port": 22,
+      "local_forward": ["3306 127.0.0.1:3306"],
+      "server_alive_interval": 30,
+      "tags": ["tunnel", "mysql", "database"],
+      "group": "Tunnels",
+      "notes": "Access remote MySQL locally at localhost:3306",
+      "color": "cyan"
+    }
+  }
+]
