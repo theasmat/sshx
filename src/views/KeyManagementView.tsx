@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  Settings,
   Lock,
 } from "lucide-react";
 import { SshKeyInfo } from "../types";
@@ -181,72 +180,40 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
         </div>
       </div>
 
-      {/* Top 3 Stat Cards */}
-      <div className="p-4 border-b border-[#1f2942] bg-[#090d16]/60 shrink-0">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Card 1: Total Discovered */}
-          <div className="p-3 bg-[#0b0f19] border border-[#1f2942] rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-                <Key className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                  Total Discovered
-                </div>
-                <div className="text-base font-bold text-white font-mono">
-                  {keys.length} {keys.length === 1 ? "Key" : "Keys"}
-                </div>
-              </div>
-            </div>
-            <span className="text-[10px] text-gray-500 font-mono">~/.ssh/</span>
-          </div>
-
-          {/* Card 2: Active in Agent */}
-          <div className="p-3 bg-[#0b0f19] border border-[#1f2942] rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <Shield className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                  Active in Agent
-                </div>
-                <div className="text-base font-bold text-emerald-400 font-mono">
-                  {loadedCount} Loaded
-                </div>
-              </div>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-              ssh-agent
+      {/* Top Summary Status Bar (Clean & Space-Efficient) */}
+      <div className="px-5 py-2.5 border-b border-[#1f2942] bg-[#090d16]/70 shrink-0 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0f1422] border border-[#1f2942] text-gray-300 text-xs">
+            <Key className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="font-bold text-white font-mono">{keys.length}</span>
+            <span className="text-gray-400">
+              {keys.length === 1 ? "key found in ~/.ssh" : "keys found in ~/.ssh"}
             </span>
           </div>
 
-          {/* Card 3: Default Algorithm with Switch Popup Button */}
-          <div className="p-3 bg-[#0b0f19] border border-[#1f2942] rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
-                  Default Algorithm
-                </div>
-                <div className="text-base font-bold text-purple-300 font-mono uppercase">
-                  {defaultAlgo}
-                </div>
-              </div>
-            </div>
-
-            {/* Switch Button */}
-            <button
-              onClick={() => setIsAlgoModalOpen(true)}
-              className="px-2.5 py-1 bg-[#161d30] hover:bg-purple-600 hover:text-white text-purple-300 rounded-lg border border-purple-500/30 text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <span>Switch</span>
-              <Settings className="w-3 h-3" />
-            </button>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0f1422] border border-[#1f2942] text-gray-300 text-xs">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                loadedCount > 0 ? "bg-emerald-400 ring-2 ring-emerald-400/20" : "bg-gray-500"
+              }`}
+            />
+            <span className="font-bold text-emerald-400 font-mono">{loadedCount}</span>
+            <span className="text-gray-400">in ssh-agent</span>
           </div>
+        </div>
+
+        {/* Default Algorithm with Switch Button */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-gray-500 text-[11px]">Default:</span>
+          <button
+            onClick={() => setIsAlgoModalOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#161d30] hover:bg-[#1f2942] text-purple-300 border border-purple-500/30 font-mono font-semibold text-[11px] transition-colors cursor-pointer"
+            title="Click to switch preferred key algorithm"
+          >
+            <Sparkles className="w-3 h-3 text-purple-400" />
+            <span className="uppercase">{defaultAlgo}</span>
+            <span className="text-gray-400 font-sans font-normal text-[10px]">Switch</span>
+          </button>
         </div>
       </div>
 
@@ -362,7 +329,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       onClick={() =>
                         handleCopyPublic(selectedKey.public_key_content!)
                       }
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap"
                       title="Copy public key to clipboard"
                     >
                       {copiedKey ? (
@@ -370,13 +337,13 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
-                      <span>{copiedKey ? "Copied Public Key!" : "Copy Public Key"}</span>
+                      <span>{copiedKey ? "Copied!" : "Copy Public Key"}</span>
                     </button>
                   )}
 
                   <button
                     onClick={() => handleCopyPath(selectedKey.private_path)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer whitespace-nowrap"
                     title="Copy absolute key file path"
                   >
                     {copiedPath ? (
@@ -384,19 +351,19 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                     ) : (
                       <Copy className="w-3.5 h-3.5 text-gray-400" />
                     )}
-                    <span>{copiedPath ? "Copied Path!" : "Copy Path"}</span>
+                    <span>{copiedPath ? "Copied!" : "Copy Path"}</span>
                   </button>
                 </div>
               </div>
 
-              {/* Secure Privacy Box for Fingerprint (Masked) */}
-              <div className="p-3.5 bg-[#070a10] border border-[#1f2942] rounded-xl flex items-center justify-between">
-                <div className="space-y-0.5">
+              {/* Secure Privacy Box for Fingerprint (Masked) - Clean & Responsive */}
+              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Lock className="w-3 h-3 text-amber-400" />
-                    <span>SHA256 Cryptographic Fingerprint (Protected)</span>
+                    <Lock className="w-3 h-3 text-amber-400 shrink-0" />
+                    <span className="truncate">SHA256 Cryptographic Fingerprint (Protected)</span>
                   </div>
-                  <div className="font-mono text-gray-400 text-xs tracking-widest select-none">
+                  <div className="font-mono text-gray-400 text-xs tracking-widest select-none truncate">
                     SHA256:••••••••••••••••••••••••••••••••
                   </div>
                 </div>
@@ -405,21 +372,25 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                   onClick={() =>
                     handleCopyFingerprint(selectedKey.fingerprint_sha256)
                   }
-                  className="px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-amber-300 hover:text-white rounded-lg border border-amber-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-amber-300 hover:text-white rounded-lg border border-amber-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Copy full SHA256 fingerprint to clipboard"
                 >
-                  {copiedFingerprint ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-amber-400" />}
-                  <span>{copiedFingerprint ? "Copied Fingerprint!" : "Copy Fingerprint"}</span>
+                  {copiedFingerprint ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                  <span>{copiedFingerprint ? "Copied!" : "Copy"}</span>
                 </button>
               </div>
 
-              {/* Secure Public Key Card (Copy-Only for Privacy) */}
-              <div className="p-3.5 bg-[#070a10] border border-[#1f2942] rounded-xl flex items-center justify-between">
-                <div className="space-y-0.5">
+              {/* Secure Public Key Card (Copy-Only for Privacy) - Clean & Responsive */}
+              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Shield className="w-3 h-3 text-blue-400" />
-                    <span>Public Key (.pub)</span>
+                    <Shield className="w-3 h-3 text-blue-400 shrink-0" />
+                    <span className="truncate">Public Key (.pub)</span>
                   </div>
-                  <div className="text-xs text-gray-400 font-mono">
+                  <div
+                    className="text-xs text-gray-400 font-mono truncate"
+                    title={selectedKey.public_path || `${selectedKey.private_path}.pub`}
+                  >
                     {selectedKey.public_path || `${selectedKey.private_path}.pub`}
                   </div>
                 </div>
@@ -429,10 +400,11 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                     onClick={() =>
                       handleCopyPublic(selectedKey.public_key_content!)
                     }
-                    className="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg border border-blue-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg border border-blue-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title="Copy full public key string to clipboard"
                   >
-                    {copiedKey ? <Check className="w-3 h-3 text-emerald-300" /> : <Copy className="w-3 h-3 text-blue-400" />}
-                    <span>{copiedKey ? "Copied!" : "Copy Public Key"}</span>
+                    {copiedKey ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5 text-blue-400" />}
+                    <span>{copiedKey ? "Copied!" : "Copy .pub"}</span>
                   </button>
                 )}
               </div>

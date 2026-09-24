@@ -5,7 +5,8 @@ export type NavTab =
   | "keys"
   | "known-hosts"
   | "audit"
-  | "raw-config";
+  | "raw-config"
+  | "settings";
 
 export interface SshHost {
   id: string;

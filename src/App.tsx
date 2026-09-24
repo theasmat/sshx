@@ -7,6 +7,7 @@ import { KeyManagementView } from "./views/KeyManagementView";
 import { KnownHostsView } from "./views/KnownHostsView";
 import { SecurityAuditView } from "./views/SecurityAuditView";
 import { RawConfigView } from "./views/RawConfigView";
+import { SettingsView } from "./views/SettingsView";
 import { TestResultModal } from "./components/TestResultModal";
 import {
   SshConfigFileData,
@@ -29,6 +30,11 @@ export function App() {
   const [auditReport, setAuditReport] = useState<SecurityAuditReport | null>(null);
   const [selectedTerminal, setSelectedTerminal] = useState<string>("ghostty");
 
+  // Collapsible sidebar state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem("sshx_sidebar_collapsed") === "true";
+  });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -37,6 +43,15 @@ export function App() {
   const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingHost, setEditingHost] = useState<SshHost | null>(null);
+
+  // Toggle sidebar collapse
+  const handleToggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sshx_sidebar_collapsed", next ? "true" : "false");
+      return next;
+    });
+  };
 
   // Transient Test Modal state
   const [testModalState, setTestModalState] = useState<{
@@ -343,7 +358,7 @@ export function App() {
 
       {/* Main App Container */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Side Navigation */}
+        {/* Left Side Navigation (Collapsible) */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={(tab) => {
@@ -365,6 +380,8 @@ export function App() {
           terminals={terminals}
           selectedTerminal={selectedTerminal}
           onSelectTerminal={setSelectedTerminal}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={handleToggleSidebarCollapse}
         />
 
         {/* Center / Main Content View (Dedicated In-Page Tabs) */}
@@ -433,6 +450,15 @@ export function App() {
               filePath={configData?.file_path || "~/.ssh/config"}
               onSaved={loadAllData}
               isLoading={isLoading}
+            />
+          )}
+
+          {activeTab === "settings" && (
+            <SettingsView
+              terminals={terminals}
+              selectedTerminal={selectedTerminal}
+              onSelectTerminal={setSelectedTerminal}
+              onOpenRawBackups={() => setActiveTab("raw-config")}
             />
           )}
         </main>

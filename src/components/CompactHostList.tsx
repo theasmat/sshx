@@ -1,25 +1,21 @@
 import React from "react";
-import { Terminal, Copy, Check, Play, Key, Shield, ArrowLeftRight } from "lucide-react";
+import { Key, Shield, ArrowLeftRight } from "lucide-react";
 import { SshHost } from "../types";
 
 interface CompactHostListProps {
   hosts: SshHost[];
   selectedHostId: string | null;
   onSelectHost: (host: SshHost) => void;
-  onConnect: (host: SshHost) => void;
-  onCopyCmd: (host: SshHost) => void;
-  onTest: (host: SshHost) => void;
-  copiedId: string | null;
+  onConnect?: (host: SshHost) => void;
+  onCopyCmd?: (host: SshHost) => void;
+  onTest?: (host: SshHost) => void;
+  copiedId?: string | null;
 }
 
 export const CompactHostList: React.FC<CompactHostListProps> = ({
   hosts,
   selectedHostId,
   onSelectHost,
-  onConnect,
-  onCopyCmd,
-  onTest,
-  copiedId,
 }) => {
   const getColorDot = (color?: string | null) => {
     switch (color) {
@@ -43,7 +39,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto divide-y divide-[#1f2942]/60 select-none text-xs">
+    <div className="flex-1 overflow-y-auto divide-y divide-[#1f2942]/50 select-none text-xs">
       {hosts.map((host) => {
         const isSelected = selectedHostId === host.id;
 
@@ -51,7 +47,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
           <div
             key={host.id}
             onClick={() => onSelectHost(host)}
-            className={`group px-3 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-all ${
+            className={`px-3 py-2.5 flex items-center justify-between gap-3 cursor-pointer transition-all ${
               isSelected
                 ? "bg-blue-600/15 border-l-2 border-blue-500 pl-[10px]"
                 : "hover:bg-[#161d30]/60 hover:pl-3.5"
@@ -65,7 +61,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
                 )} shrink-0`}
               />
 
-              <div className="min-w-0 space-y-0.5">
+              <div className="min-w-0 space-y-0.5 flex-1">
                 <div className="flex items-center gap-2">
                   <span
                     className={`font-semibold text-xs truncate ${
@@ -75,7 +71,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
                     {host.host_pattern}
                   </span>
                   {host.group && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#161d30] text-gray-400 border border-[#232f4d] truncate">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#161d30] text-gray-400 border border-[#232f4d] truncate max-w-[90px]">
                       {host.group}
                     </span>
                   )}
@@ -97,10 +93,13 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
               </div>
             </div>
 
-            {/* Middle: Badges (Key, ProxyJump) */}
-            <div className="hidden sm:flex items-center gap-1 shrink-0 text-[10px]">
+            {/* Right: Clean subtle badges (Key, ProxyJump, Forward) */}
+            <div className="flex items-center gap-1 shrink-0 text-[10px]">
               {host.identity_file && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono truncate max-w-[110px]">
+                <span
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono truncate max-w-[100px]"
+                  title={host.identity_file}
+                >
                   <Key className="w-2.5 h-2.5 shrink-0" />
                   <span className="truncate">
                     {host.identity_file.split("/").pop()}
@@ -109,53 +108,24 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
               )}
 
               {host.proxy_jump && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  <Shield className="w-2.5 h-2.5" />
-                  <span>via {host.proxy_jump}</span>
+                <span
+                  className="flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[9px]"
+                  title={`via ${host.proxy_jump}`}
+                >
+                  <Shield className="w-2.5 h-2.5 shrink-0" />
+                  <span className="truncate max-w-[60px]">{host.proxy_jump}</span>
                 </span>
               )}
 
               {host.local_forward.length > 0 && (
-                <span className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span
+                  className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  title={`${host.local_forward.length} Port Forwarding rules`}
+                >
                   <ArrowLeftRight className="w-2.5 h-2.5" />
                   <span>{host.local_forward.length}</span>
                 </span>
               )}
-            </div>
-
-            {/* Right: Quick Action Buttons */}
-            <div
-              className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => onTest(host)}
-                className="p-1 text-gray-400 hover:text-amber-400 hover:bg-[#1f2942] rounded transition-colors"
-                title="Test Connection"
-              >
-                <Play className="w-3 h-3" />
-              </button>
-
-              <button
-                onClick={() => onCopyCmd(host)}
-                className="p-1 text-gray-400 hover:text-blue-400 hover:bg-[#1f2942] rounded transition-colors"
-                title="Copy Command"
-              >
-                {copiedId === host.id ? (
-                  <Check className="w-3 h-3 text-emerald-400" />
-                ) : (
-                  <Copy className="w-3 h-3" />
-                )}
-              </button>
-
-              <button
-                onClick={() => onConnect(host)}
-                className="flex items-center gap-1 px-2 py-1 bg-blue-600/80 hover:bg-blue-600 text-white rounded font-medium text-[11px] transition-colors shadow-sm"
-                title="Launch in Terminal"
-              >
-                <Terminal className="w-3 h-3" />
-                <span className="hidden md:inline">Connect</span>
-              </button>
             </div>
           </div>
         );
