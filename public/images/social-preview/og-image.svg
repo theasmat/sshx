@@ -1,0 +1,237 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <!-- Background Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050813" />
+      <stop offset="50%" stop-color="#090E20" />
+      <stop offset="100%" stop-color="#04060C" />
+    </linearGradient>
+
+    <!-- Glow Gradients -->
+    <radialGradient id="cyanGlow" cx="15%" cy="20%" r="45%">
+      <stop offset="0%" stop-color="#00f2ff" stop-opacity="0.22" />
+      <stop offset="60%" stop-color="#00f2ff" stop-opacity="0.03" />
+      <stop offset="100%" stop-color="#00f2ff" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="indigoGlow" cx="85%" cy="75%" r="55%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25" />
+      <stop offset="60%" stop-color="#4f46e5" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Logo Gradients -->
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2ff" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f2ff" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Window Border & Surface Gradients -->
+    <linearGradient id="windowBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4" />
+      <stop offset="50%" stop-color="#6366f1" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#1e293b" stop-opacity="0.6" />
+    </linearGradient>
+
+    <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#131b2e" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#0b101d" stop-opacity="0.9" />
+    </linearGradient>
+
+    <linearGradient id="cardGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#162038" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#0d1424" stop-opacity="0.9" />
+    </linearGradient>
+
+    <!-- Shadow Filters -->
+    <filter id="shadowBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#000000" flood-opacity="0.75" />
+    </filter>
+
+    <filter id="badgeGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#00f2ff" flood-opacity="0.4" />
+    </filter>
+
+    <!-- Background Grid Pattern -->
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-opacity="0.025" stroke-width="1" />
+      <circle cx="40" cy="40" r="1" fill="#00f2ff" fill-opacity="0.1" />
+    </pattern>
+  </defs>
+
+  <!-- 1. Background Fill & Grid -->
+  <rect width="1280" height="640" fill="url(#bgGrad)" />
+  <rect width="1280" height="640" fill="url(#gridPattern)" />
+  <rect width="1280" height="640" fill="url(#cyanGlow)" />
+  <rect width="1280" height="640" fill="url(#indigoGlow)" />
+
+  <!-- Subtle Ambient Glow Rings -->
+  <circle cx="180" cy="180" r="220" fill="none" stroke="#00f2ff" stroke-opacity="0.04" stroke-width="1" />
+  <circle cx="180" cy="180" r="320" fill="none" stroke="#6366f1" stroke-opacity="0.03" stroke-width="1" />
+
+  <!-- 2. LEFT HERO BRANDING SECTION -->
+  <g transform="translate(80, 80)">
+
+    <!-- Category Pill Tag -->
+    <g transform="translate(0, 0)">
+      <rect width="210" height="34" rx="17" fill="#0f172a" fill-opacity="0.8" stroke="#38bdf8" stroke-opacity="0.4" stroke-width="1.2" />
+      <circle cx="18" cy="17" r="4.5" fill="#00f2ff" filter="url(#badgeGlow)" />
+      <text x="32" y="22" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="12.5" font-weight="700" letter-spacing="1.2">OPEN-SOURCE APP</text>
+    </g>
+
+    <!-- App Logo Icon + Text Title -->
+    <g transform="translate(0, 56)">
+      <!-- Vector Shield / Key Hex Icon -->
+      <g transform="translate(0, 0)">
+        <rect width="68" height="68" rx="18" fill="url(#cardGrad1)" stroke="url(#logoGrad)" stroke-width="2" filter="url(#shadowBlur)" />
+        <path d="M 22 24 L 34 16 L 46 24 L 46 44 L 34 52 L 22 44 Z" fill="none" stroke="url(#accentGrad)" stroke-width="2.5" stroke-linejoin="round" />
+        <path d="M 28 34 L 34 29 L 40 34" fill="none" stroke="#00f2ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34" cy="38" r="3" fill="#ffffff" />
+      </g>
+
+      <!-- Main Logo Typography -->
+      <text x="86" y="52" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5">SSH<tspan fill="url(#accentGrad)">X</tspan></text>
+    </g>
+
+    <!-- Headline & Tagline -->
+    <text x="0" y="180" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', Roboto, sans-serif" font-size="34" font-weight="800" letter-spacing="-0.8">
+      Modern SSH Desktop Manager
+    </text>
+    <text x="0" y="216" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Inter', Roboto, sans-serif" font-size="18" font-weight="500">
+      Lightning-fast, secure <tspan fill="#38bdf8" font-family="monospace">~/.ssh/config</tspan> &amp; Key Vault
+    </text>
+
+    <!-- Feature Highlights Badges -->
+    <g transform="translate(0, 260)">
+      <!-- Badge 1 -->
+      <g transform="translate(0, 0)">
+        <rect width="230" height="34" rx="8" fill="#111827" fill-opacity="0.8" stroke="#1f293d" stroke-width="1" />
+        <text x="12" y="22" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="13" font-weight="600">⚡ Lossless AST Config Parser</text>
+      </g>
+      <!-- Badge 2 -->
+      <g transform="translate(242, 0)">
+        <rect width="248" height="34" rx="8" fill="#111827" fill-opacity="0.8" stroke="#1f293d" stroke-width="1" />
+        <text x="12" y="22" fill="#a78bfa" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="13" font-weight="600">🔑 3-Way Key Conflict Engine</text>
+      </g>
+      <!-- Badge 3 -->
+      <g transform="translate(0, 46)">
+        <rect width="230" height="34" rx="8" fill="#111827" fill-opacity="0.8" stroke="#1f293d" stroke-width="1" />
+        <text x="12" y="22" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="13" font-weight="600">🚀 1-Click Terminal Launch</text>
+      </g>
+      <!-- Badge 4 -->
+      <g transform="translate(242, 46)">
+        <rect width="248" height="34" rx="8" fill="#111827" fill-opacity="0.8" stroke="#1f293d" stroke-width="1" />
+        <text x="12" y="22" fill="#fbbf24" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="13" font-weight="600">🛡️ Permission Audit &amp; Snapshot</text>
+      </g>
+    </g>
+
+    <!-- Bottom Tech Stack Pills -->
+    <g transform="translate(0, 390)">
+      <!-- Tauri v2 -->
+      <g transform="translate(0, 0)">
+        <rect width="90" height="28" rx="6" fill="#0c1a2e" stroke="#24C8D8" stroke-opacity="0.5" stroke-width="1" />
+        <text x="14" y="18" fill="#24C8D8" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">Tauri v2</text>
+      </g>
+      <!-- Rust -->
+      <g transform="translate(100, 0)">
+        <rect width="70" height="28" rx="6" fill="#1f1610" stroke="#DEA584" stroke-opacity="0.5" stroke-width="1" />
+        <text x="14" y="18" fill="#DEA584" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">Rust</text>
+      </g>
+      <!-- React 19 -->
+      <g transform="translate(180, 0)">
+        <rect width="88" height="28" rx="6" fill="#0b1b29" stroke="#61DAFB" stroke-opacity="0.5" stroke-width="1" />
+        <text x="14" y="18" fill="#61DAFB" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">React 19</text>
+      </g>
+      <!-- TypeScript -->
+      <g transform="translate(278, 0)">
+        <rect width="102" height="28" rx="6" fill="#0d1b30" stroke="#3178C6" stroke-opacity="0.5" stroke-width="1" />
+        <text x="12" y="18" fill="#60a5fa" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">TypeScript</text>
+      </g>
+      <!-- MIT -->
+      <g transform="translate(390, 0)">
+        <rect width="94" height="28" rx="6" fill="#171226" stroke="#8B5CF6" stroke-opacity="0.5" stroke-width="1" />
+        <text x="12" y="18" fill="#a78bfa" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">MIT Open</text>
+      </g>
+    </g>
+
+  </g>
+
+  <!-- 3. RIGHT APP WINDOW MOCKUP -->
+  <g transform="translate(680, 70)" filter="url(#shadowBlur)">
+    <!-- Window Container Frame -->
+    <rect width="520" height="500" rx="16" fill="url(#cardGrad1)" stroke="url(#windowBorder)" stroke-width="1.5" />
+
+    <!-- Window Titlebar -->
+    <path d="M 0 16 C 0 7.16 7.16 0 16 0 L 504 0 C 512.84 0 520 7.16 520 16 L 520 48 L 0 48 Z" fill="#0b0f19" fill-opacity="0.9" />
+    <line x1="0" y1="48" x2="520" y2="48" stroke="#1f293d" stroke-width="1" />
+
+    <!-- Window Controls (macOS Traffic Lights) -->
+    <circle cx="24" cy="24" r="6" fill="#ef4444" />
+    <circle cx="44" cy="24" r="6" fill="#f59e0b" />
+    <circle cx="64" cy="24" r="6" fill="#10b981" />
+
+    <!-- Omnibox Search Bar in Titlebar -->
+    <g transform="translate(140, 12)">
+      <rect width="240" height="24" rx="6" fill="#131b2e" stroke="#1e293b" stroke-width="1" />
+      <text x="12" y="16.5" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="11">Search hosts, keys, presets (⌘K)...</text>
+    </g>
+
+    <!-- Window Body: 2 Mock Host Cards -->
+    <g transform="translate(24, 68)">
+      <!-- Header Row in Window -->
+      <text x="0" y="16" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="15" font-weight="700">SSH Hosts</text>
+      <rect x="400" y="0" width="72" height="24" rx="6" fill="#0284c7" />
+      <text x="414" y="16" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="11" font-weight="700">+ Add Host</text>
+
+      <!-- Mock Host Card 1: prod-api-cluster -->
+      <g transform="translate(0, 32)">
+        <rect width="472" height="114" rx="10" fill="url(#cardGrad2)" stroke="#0284c7" stroke-width="1.2" stroke-opacity="0.6" />
+        <circle cx="20" cy="28" r="5" fill="#10b981" filter="url(#badgeGlow)" />
+        <text x="34" y="32" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="15" font-weight="700">prod-api-cluster</text>
+        <rect x="170" y="18" width="62" height="20" rx="4" fill="#0369a1" fill-opacity="0.3" stroke="#0284c7" stroke-width="1" />
+        <text x="178" y="32" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="10" font-weight="700">AWS EC2</text>
+
+        <!-- Host details -->
+        <text x="34" y="58" fill="#94a3b8" font-family="monospace" font-size="12">ec2-user@54.210.88.42:22</text>
+        <text x="34" y="80" fill="#64748b" font-family="monospace" font-size="11">IdentityFile ~/.ssh/id_ed25519_aws_prod</text>
+
+        <!-- Action Button -->
+        <rect x="372" y="66" width="86" height="30" rx="6" fill="#0284c7" />
+        <text x="388" y="86" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">Connect ➜</text>
+      </g>
+
+      <!-- Mock Host Card 2: bastion-jump-host -->
+      <g transform="translate(0, 160)">
+        <rect width="472" height="114" rx="10" fill="url(#cardGrad2)" stroke="#1e293b" stroke-width="1" />
+        <circle cx="20" cy="28" r="5" fill="#38bdf8" />
+        <text x="34" y="32" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="15" font-weight="700">bastion-jump-secure</text>
+        <rect x="200" y="18" width="76" height="20" rx="4" fill="#5b21b6" fill-opacity="0.3" stroke="#8b5cf6" stroke-width="1" />
+        <text x="208" y="32" fill="#c084fc" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="10" font-weight="700">ProxyJump</text>
+
+        <!-- Host details -->
+        <text x="34" y="58" fill="#94a3b8" font-family="monospace" font-size="12">ops@bastion.internal.net:2222</text>
+        <text x="34" y="80" fill="#64748b" font-family="monospace" font-size="11">ProxyJump jump.gateway.corp</text>
+
+        <!-- Action Button -->
+        <rect x="372" y="66" width="86" height="30" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+        <text x="388" y="86" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="12" font-weight="700">Connect ➜</text>
+      </g>
+
+      <!-- Mock Mini Status bar in window -->
+      <g transform="translate(0, 290)">
+        <rect width="472" height="36" rx="8" fill="#0b101d" stroke="#1e293b" stroke-width="1" />
+        <text x="16" y="23" fill="#10b981" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="11" font-weight="600">✓ Snapshot Active: ~/.ssh/config.sshx.bak</text>
+        <text x="330" y="23" fill="#64748b" font-family="-apple-system, BlinkMacSystemFont, Roboto, sans-serif" font-size="11">Ghostty Terminal</text>
+      </g>
+
+    </g>
+
+  </g>
+
+</svg>
