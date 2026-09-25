@@ -8,9 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "dev:website": "vite website",
-    "build:website": "vite build website --base /sshx/ --outDir ../dist",
-    "preview:website": "vite preview website",
+    "site:dev": "vite website",
+    "site:build": "vite build website --base /sshx/ --outDir ../dist",
+    "site:preview": "vite preview website",
     "tauri": "tauri",
     "td": "tauri dev"
   },
