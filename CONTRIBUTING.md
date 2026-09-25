@@ -48,8 +48,8 @@ Make sure you have the following installed on your development machine:
 ## 🛠️ Development Workflow
 
 ```bash
-# 1. Clone your fork of the repository
-git clone git@github-personal:theasmat/sshx.git
+# 1. Clone your fork of the repository (HTTPS)
+git clone https://github.com/theasmat/sshx.git
 cd sshx
 
 # 2. Install frontend dependencies

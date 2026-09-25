@@ -191,8 +191,8 @@ Download the package for your distribution from [GitHub Releases](https://github
 Want to contribute to SSHX? Read our comprehensive **[Contributing Guide](CONTRIBUTING.md)** for architecture details, coding guidelines, and PR procedures.
 
 ```bash
-# 1. Clone repository
-git clone git@github-personal:theasmat/sshx.git
+# 1. Clone repository via HTTPS
+git clone https://github.com/theasmat/sshx.git
 cd sshx
 
 # 2. Install dependencies
