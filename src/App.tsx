@@ -29,7 +29,12 @@ import {
   SearchItem,
 } from "./utils/searchEngine";
 
-export function App() {
+interface AppProps {
+  embedded?: boolean;
+  className?: string;
+}
+
+export function App({ embedded = false, className = "" }: AppProps = {}) {
   const [activeTab, setActiveTab] = useState<NavTab>("hosts");
   const [configData, setConfigData] = useState<SshConfigFileData | null>(null);
   const [keys, setKeys] = useState<SshKeyInfo[]>([]);
@@ -57,9 +62,11 @@ export function App() {
   });
 
   useEffect(() => {
-    (document.documentElement.style as any).zoom = `${zoomLevel}%`;
-    localStorage.setItem("sshx_zoom_level", zoomLevel.toString());
-  }, [zoomLevel]);
+    if (!embedded) {
+      (document.documentElement.style as any).zoom = `${zoomLevel}%`;
+      localStorage.setItem("sshx_zoom_level", zoomLevel.toString());
+    }
+  }, [zoomLevel, embedded]);
 
   // Collapsible sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -487,7 +494,11 @@ export function App() {
     terminals.find((t) => t.id === selectedTerminal)?.name || "Terminal.app";
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#070a10] text-gray-200 font-sans select-none antialiased">
+    <div
+      className={`flex flex-col overflow-hidden bg-[#070a10] text-gray-200 font-sans select-none antialiased ${
+        embedded ? "w-full h-full min-h-[580px]" : "h-screen w-screen"
+      } ${className}`}
+    >
       {/* Top Universal Header */}
       <Header
         searchQuery={searchQuery}

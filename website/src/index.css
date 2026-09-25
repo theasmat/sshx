@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @source "../index.html";
 @source "./**/*.{ts,tsx,js,jsx}";
+@source "../../src/**/*.{ts,tsx,js,jsx}";
 @source "..";
 
 @layer base {
