@@ -62,24 +62,79 @@
 
 ---
 
+<p align="center">
+  <a href="https://github.com/theasmat/sshx/releases/latest">
+    <img src="https://img.shields.io/badge/⬇%20Download-Latest%20Release-0070F3?style=for-the-badge&logo=apple&logoColor=white" alt="Download Latest Release" />
+  </a>
+  <a href="https://github.com/theasmat/sshx/releases">
+    <img src="https://img.shields.io/badge/📦%20All-Releases%20&%20Notes-1F2937?style=for-the-badge&logo=github&logoColor=white" alt="View All Releases" />
+  </a>
+</p>
+
+---
+
 ## 📥 Installation
 
-### macOS (Apple Silicon & Intel)
-Download the latest `.dmg` from [GitHub Releases](https://github.com/theasmat/sshx/releases).
+### ⚡ 1-Line Universal Installer (macOS & Linux)
+Install or update SSHX instantly with a single command:
 
 ```bash
-# Or build locally
-git clone git@github-personal:theasmat/sshx.git
-cd sshx
-npm install
-npm run tauri build
+curl -fsSL https://raw.githubusercontent.com/theasmat/sshx/main/install.sh | bash
 ```
 
-### Linux (.deb / .AppImage)
-Download `.deb` or `.AppImage` from the [Releases page](https://github.com/theasmat/sshx/releases).
+> **What this script does:**
+> - Automatically detects your OS (`macOS` / `Linux`) and CPU architecture (`Apple Silicon arm64` / `Intel x64`).
+> - Downloads the latest release binary from GitHub.
+> - Installs `SSHX.app` to `/Applications` (or Linux system path).
+> - Clears quarantine attributes (`xattr -cr`) and re-signs ad-hoc so it launches seamlessly.
+> - Automatically deletes all temporary download files.
 
-### Windows (.msi / .exe)
-Download the installer from [Releases](https://github.com/theasmat/sshx/releases).
+---
+
+### 🍎 macOS (Apple Silicon & Intel)
+
+1. Download the latest **`.dmg`** from [GitHub Releases](https://github.com/theasmat/sshx/releases/latest).
+2. Open the `.dmg` and drag **SSHX** into your **Applications** folder.
+
+> [!IMPORTANT]
+> **macOS Security & Gatekeeper Note (Unnotarized Open Source App)**  
+> Because SSHX is a free open-source project and is not distributed through a paid Apple Developer certificate, macOS Gatekeeper may display a warning: *"SSHX is damaged and can't be opened"* or *"Developer cannot be verified"*.
+>
+> **How to fix in 1 second:**
+>
+> **Option 1 — Terminal (Fastest)**:
+> ```bash
+> xattr -cr /Applications/SSHX.app
+> ```
+> *(Optional: re-sign locally if required: `codesign --force --deep --sign - /Applications/SSHX.app`)*
+>
+> **Option 2 — System Settings**:
+> 1. Right-click (or <kbd>Control</kbd> + click) `SSHX.app` in `/Applications` and select **Open**.
+> 2. Click **Open** in the confirmation popup.  
+> *(Or go to **macOS System Settings** → **Privacy & Security** → scroll down and click **Open Anyway**).*
+
+---
+
+### 🐧 Linux (.deb / .AppImage)
+
+Download the package for your distribution from [GitHub Releases](https://github.com/theasmat/sshx/releases/latest):
+
+- **Ubuntu / Debian (.deb)**:
+  ```bash
+  sudo dpkg -i SSHX_*_amd64.deb || sudo apt-get install -f -y
+  ```
+- **Universal AppImage**:
+  ```bash
+  chmod +x SSHX_*_amd64.AppImage
+  ./SSHX_*_amd64.AppImage
+  ```
+
+---
+
+### 🪟 Windows (.msi / .exe)
+
+1. Download the **`.msi`** or **`.exe`** installer from [GitHub Releases](https://github.com/theasmat/sshx/releases/latest).
+2. If Windows SmartScreen appears: click **More info** → click **Run anyway**.
 
 ---
 
