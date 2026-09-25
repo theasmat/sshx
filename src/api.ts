@@ -10,6 +10,7 @@ import {
   SecurityAuditReport,
   SelectiveFixRequest,
   SelectiveFixResponse,
+  SshxBackupInfo,
 } from "./types";
 
 export const api = {
@@ -180,12 +181,26 @@ export const api = {
     return await invoke<string>("fix_stale_host", { hostPattern });
   },
 
-  listBackups: async (): Promise<string[]> => {
-    return await invoke<string[]>("list_backups");
+  listBackups: async (): Promise<SshxBackupInfo[]> => {
+    return await invoke<SshxBackupInfo[]>("list_backups");
+  },
+
+  getDeviceSnapshotInfo: async (): Promise<SshxBackupInfo | null> => {
+    return await invoke<SshxBackupInfo | null>("get_device_snapshot_info");
+  },
+
+  readBackupPreview: async (backupName: string): Promise<string> => {
+    return await invoke<string>("read_backup_preview", { backupName });
   },
 
   restoreBackup: async (backupName: string): Promise<SshConfigFileData> => {
     return await invoke<SshConfigFileData>("restore_backup", { backupName });
+  },
+
+  restoreDeviceSnapshot: async (): Promise<SshConfigFileData> => {
+    return await invoke<SshConfigFileData>("restore_backup", {
+      backupName: "config.sshx.bak",
+    });
   },
 
   auditSecurity: async (): Promise<SecurityAuditReport> => {

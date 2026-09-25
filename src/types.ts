@@ -153,3 +153,12 @@ export interface PresetTemplate {
   postCreationGuide?: PostCreationGuide;
 }
 
+export interface SshxBackupInfo {
+  filename: string;
+  display_name: string;
+  file_path: string;
+  size_bytes: number;
+  modified_timestamp: number;
+  is_primary: boolean;
+}
+

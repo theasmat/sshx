@@ -89,8 +89,7 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 - **TypeScript / React**: Use functional components with TypeScript types. Avoid using `any` when explicit types can be declared in `src/types.ts`.
 - **Styling**: Use Tailwind CSS utilities adhering to the dark-mode aesthetic palette (`#070a10`, `#0b0f19`, `#121829`, `#1f2942`).
-- **Rust**: Keep code idiomatic and format using `cargo fmt`.
-- **Safety**: Never perform destructive config overwrites without creating timestamped backups (`config.bak.<timestamp>`).
+- **Safety**: Never perform destructive config overwrites without updating the dedicated sshX device snapshot (`~/.ssh/config.sshx.bak`).
 
 ---
 

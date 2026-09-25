@@ -23,8 +23,7 @@
 ## ⚡ Highlights & Key Features
 
 ### 🎛️ Intelligent SSH Host Management
-- **Lossless Two-Way Sync**: Safely reads and writes `~/.ssh/config`, preserving comments, custom directives, and includes.
-- **Safety First with Automated Snapshots**: Creates automated timestamped backups before every write operation.
+- **Safety First with Dedicated Snapshots**: Automatically maintains a single clean device snapshot (`~/.ssh/config.sshx.bak`) on every edit with 1-click rollback and preview.
 - **Dependency-Aware Deletion**: Visual confirmation modals analyze dependencies (e.g. key usage, port forwarding) before removing entries.
 
 ### 🔑 SSH Key Vault & Smart Conflict Resolution

@@ -5,9 +5,9 @@ mod security_audit;
 mod terminal_launcher;
 
 use config_parser::{
-    list_config_backups, read_ssh_config, remove_host_entry, restore_config_backup,
-    serialize_ssh_config, unlink_key_from_hosts, write_ssh_config_safe, SshConfigFileData,
-    SshHost,
+    get_device_snapshot, list_config_backups, read_backup_content, read_ssh_config,
+    remove_host_entry, restore_config_backup, serialize_ssh_config, unlink_key_from_hosts,
+    write_ssh_config_safe, SshConfigFileData, SshHost, SshxBackupInfo,
 };
 use key_manager::{
     add_key_to_agent as add_key_to_agent_fn, delete_ssh_key as delete_ssh_key_fn,
@@ -138,8 +138,18 @@ fn delete_known_host(host_pattern: String, line_number: Option<usize>) -> Result
 }
 
 #[tauri::command]
-fn list_backups() -> Result<Vec<String>, String> {
+fn list_backups() -> Result<Vec<SshxBackupInfo>, String> {
     list_config_backups()
+}
+
+#[tauri::command]
+fn get_device_snapshot_info() -> Result<Option<SshxBackupInfo>, String> {
+    get_device_snapshot()
+}
+
+#[tauri::command]
+fn read_backup_preview(backup_name: String) -> Result<String, String> {
+    read_backup_content(&backup_name)
 }
 
 #[tauri::command]
@@ -196,6 +206,8 @@ pub fn run() {
             delete_known_host,
             fix_stale_host,
             list_backups,
+            get_device_snapshot_info,
+            read_backup_preview,
             restore_backup,
             audit_security,
             fix_security_permissions,

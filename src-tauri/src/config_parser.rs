@@ -405,6 +405,34 @@ pub fn read_ssh_config() -> Result<SshConfigFileData, String> {
     Ok(data)
 }
 
+pub const SSHX_BACKUP_PRIMARY: &str = "config.sshx.bak";
+pub const SSHX_BACKUP_PREVIOUS: &str = "config.sshx.bak.previous";
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SshxBackupInfo {
+    pub filename: String,
+    pub display_name: String,
+    pub file_path: String,
+    pub size_bytes: u64,
+    pub modified_timestamp: u64,
+    pub is_primary: bool,
+}
+
+/// Automatically removes legacy timestamped config.bak.<ts> files to keep ~/.ssh/ clean
+pub fn clean_legacy_backups(ssh_dir: &std::path::Path) {
+    if let Ok(entries) = fs::read_dir(ssh_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with("config.bak.") {
+                let suffix = &name["config.bak.".len()..];
+                if !suffix.is_empty() && suffix.chars().all(|c| c.is_ascii_digit()) {
+                    let _ = fs::remove_file(entry.path());
+                }
+            }
+        }
+    }
+}
+
 pub fn write_ssh_config_safe(content: &str) -> Result<(), String> {
     let ssh_dir = get_ssh_dir();
     if !ssh_dir.exists() {
@@ -413,15 +441,37 @@ pub fn write_ssh_config_safe(content: &str) -> Result<(), String> {
 
     let config_path = get_ssh_config_path();
 
-    // Create timestamped backup if existing config file has content
+    // Maintain a single primary snapshot named config.sshx.bak
     if config_path.exists() {
-        let ts = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs();
-        let backup_path = ssh_dir.join(format!("config.bak.{}", ts));
-        let _ = fs::copy(&config_path, backup_path);
+        if let Ok(existing_content) = fs::read_to_string(&config_path) {
+            // Only back up if existing file has content and is different from new content
+            if !existing_content.trim().is_empty() && existing_content != content {
+                let primary_backup = ssh_dir.join(SSHX_BACKUP_PRIMARY);
+                let previous_backup = ssh_dir.join(SSHX_BACKUP_PREVIOUS);
+
+                // Rotate existing primary backup to previous
+                if primary_backup.exists() {
+                    let _ = fs::copy(&primary_backup, &previous_backup);
+                }
+
+                // Copy current config to primary snapshot
+                let _ = fs::copy(&config_path, &primary_backup);
+
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let perms = fs::Permissions::from_mode(0o600);
+                    let _ = fs::set_permissions(&primary_backup, perms.clone());
+                    if previous_backup.exists() {
+                        let _ = fs::set_permissions(&previous_backup, perms);
+                    }
+                }
+            }
+        }
     }
+
+    // Clean up any legacy timestamped backups to prevent ~/.ssh pollution
+    clean_legacy_backups(&ssh_dir);
 
     fs::write(&config_path, content).map_err(|e| e.to_string())?;
 
@@ -435,32 +485,109 @@ pub fn write_ssh_config_safe(content: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn list_config_backups() -> Result<Vec<String>, String> {
+pub fn list_config_backups() -> Result<Vec<SshxBackupInfo>, String> {
     let ssh_dir = get_ssh_dir();
     if !ssh_dir.exists() {
         return Ok(Vec::new());
     }
 
     let mut backups = Vec::new();
-    let entries = fs::read_dir(&ssh_dir).map_err(|e| e.to_string())?;
 
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with("config.bak.") {
-            backups.push(name);
+    // 1. Primary snapshot (config.sshx.bak)
+    let primary_path = ssh_dir.join(SSHX_BACKUP_PRIMARY);
+    if primary_path.exists() {
+        if let Ok(meta) = fs::metadata(&primary_path) {
+            let mod_time = meta.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+            let ts = mod_time.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+            backups.push(SshxBackupInfo {
+                filename: SSHX_BACKUP_PRIMARY.to_string(),
+                display_name: "sshX Device Snapshot (Latest)".to_string(),
+                file_path: primary_path.to_string_lossy().to_string(),
+                size_bytes: meta.len(),
+                modified_timestamp: ts,
+                is_primary: true,
+            });
         }
     }
 
-    backups.sort();
-    backups.reverse();
+    // 2. Previous snapshot (config.sshx.bak.previous)
+    let previous_path = ssh_dir.join(SSHX_BACKUP_PREVIOUS);
+    if previous_path.exists() {
+        if let Ok(meta) = fs::metadata(&previous_path) {
+            let mod_time = meta.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+            let ts = mod_time.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+            backups.push(SshxBackupInfo {
+                filename: SSHX_BACKUP_PREVIOUS.to_string(),
+                display_name: "sshX Device Snapshot (Previous)".to_string(),
+                file_path: previous_path.to_string_lossy().to_string(),
+                size_bytes: meta.len(),
+                modified_timestamp: ts,
+                is_primary: false,
+            });
+        }
+    }
+
+    // 3. Any additional user or legacy config backups
+    if let Ok(entries) = fs::read_dir(&ssh_dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if (name.starts_with("config.") && name.ends_with(".bak") || name.starts_with("config.bak."))
+                && name != SSHX_BACKUP_PRIMARY
+                && name != SSHX_BACKUP_PREVIOUS
+            {
+                if let Ok(meta) = entry.metadata() {
+                    let mod_time = meta.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+                    let ts = mod_time.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+                    backups.push(SshxBackupInfo {
+                        filename: name.clone(),
+                        display_name: format!("Backup: {}", name),
+                        file_path: entry.path().to_string_lossy().to_string(),
+                        size_bytes: meta.len(),
+                        modified_timestamp: ts,
+                        is_primary: false,
+                    });
+                }
+            }
+        }
+    }
+
+    // Primary first, then newest modified timestamp
+    backups.sort_by(|a, b| {
+        if a.is_primary != b.is_primary {
+            b.is_primary.cmp(&a.is_primary)
+        } else {
+            b.modified_timestamp.cmp(&a.modified_timestamp)
+        }
+    });
+
     Ok(backups)
+}
+
+pub fn get_device_snapshot() -> Result<Option<SshxBackupInfo>, String> {
+    let backups = list_config_backups()?;
+    Ok(backups.into_iter().find(|b| b.is_primary))
+}
+
+pub fn read_backup_content(backup_name: &str) -> Result<String, String> {
+    let ssh_dir = get_ssh_dir();
+    let clean_name = std::path::Path::new(backup_name)
+        .file_name()
+        .ok_or_else(|| "Invalid backup filename".to_string())?;
+    let backup_path = ssh_dir.join(clean_name);
+    if !backup_path.exists() {
+        return Err(format!("Backup file '{}' does not exist in ~/.ssh/", backup_name));
+    }
+    fs::read_to_string(&backup_path).map_err(|e| e.to_string())
 }
 
 pub fn restore_config_backup(backup_name: &str) -> Result<(), String> {
     let ssh_dir = get_ssh_dir();
-    let backup_path = ssh_dir.join(backup_name);
+    let clean_name = std::path::Path::new(backup_name)
+        .file_name()
+        .ok_or_else(|| "Invalid backup filename".to_string())?;
+    let backup_path = ssh_dir.join(clean_name);
     if !backup_path.exists() {
-        return Err(format!("Backup file '{}' does not exist", backup_name));
+        return Err(format!("Backup file '{}' does not exist in ~/.ssh/", backup_name));
     }
 
     let content = fs::read_to_string(&backup_path).map_err(|e| e.to_string())?;
@@ -572,5 +699,31 @@ Host github-personal
         let (fixed, count) = sanitize_raw_config_lines(bad_config);
         assert_eq!(count, 1);
         assert!(fixed.contains("# [Fixed by SSHX - missing argument]     dynamicforward"));
+    }
+
+    #[test]
+    fn test_legacy_cleanup_and_backup_naming() {
+        let temp_dir = std::env::temp_dir().join(format!("sshx_test_bak_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let _ = fs::create_dir_all(&temp_dir);
+
+        // Create mock legacy timestamped files and new files
+        let legacy_file1 = temp_dir.join("config.bak.1740000000");
+        let legacy_file2 = temp_dir.join("config.bak.1740000001");
+        let valid_backup = temp_dir.join(SSHX_BACKUP_PRIMARY);
+        let _ = fs::write(&legacy_file1, "old 1");
+        let _ = fs::write(&legacy_file2, "old 2");
+        let _ = fs::write(&valid_backup, "valid backup");
+
+        assert!(legacy_file1.exists());
+        assert!(legacy_file2.exists());
+        assert!(valid_backup.exists());
+
+        clean_legacy_backups(&temp_dir);
+
+        assert!(!legacy_file1.exists(), "Legacy file 1 should be removed");
+        assert!(!legacy_file2.exists(), "Legacy file 2 should be removed");
+        assert!(valid_backup.exists(), "Primary sshx backup must NOT be removed");
+
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }
