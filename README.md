@@ -206,4 +206,4 @@ npm run tauri dev
 
 ## 📄 License
 
-SSHX is licensed under the [MIT License](LICENSE).
+SSHX is permanently open-source software licensed under the **[MIT Attribution License](LICENSE)** — free for personal and community use, with prominent project attribution required for commercial use and redistribution.
