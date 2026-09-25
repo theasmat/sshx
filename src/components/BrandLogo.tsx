@@ -42,6 +42,9 @@ import {
   BsArrowLeftRight,
   BsCloud,
 } from "react-icons/bs";
+export { SshxLogo, SshxGlyphSvg, SshxMacAppIcon } from "./SshxLogo";
+export type { SshxLogoProps } from "./SshxLogo";
+
 
 // Clean official SVGs for trademarks not in simple-icons upstream
 export const AwsLogo: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (

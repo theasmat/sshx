@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   BsSearch,
   BsArrowClockwise,
-  BsTerminalFill,
   BsShieldCheck,
   BsXLg,
 } from "react-icons/bs";
+import { SshxLogo } from "./SshxLogo";
 import { NavTab } from "../types";
 import { OmniboxDropdown } from "./OmniboxDropdown";
 import { SearchItem } from "../utils/searchEngine";
@@ -84,20 +84,13 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="h-10 border-b border-[#1f2942] bg-[#090d16] px-3.5 flex items-center justify-between gap-3 shrink-0 select-none relative z-40">
-      {/* Brand Logo */}
+      {/* Brand Logo - macOS Style */}
       <div
         onClick={() => onSelectTab("hosts")}
-        className="flex items-center gap-2 shrink-0 cursor-pointer"
+        className="flex items-center gap-2 shrink-0 cursor-pointer group"
+        title="SSHX - Modern SSH Config & Key Manager"
       >
-        <div className="w-6 h-6 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-blue-500/20 text-white font-bold text-xs tracking-wider">
-          <BsTerminalFill className="w-3.5 h-3.5" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-bold text-white text-sm tracking-tight">SSHX</span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
-            Manager
-          </span>
-        </div>
+        <SshxLogo variant="badge" size="sm" macStyle={true} tagText="v1.0.0" />
       </div>
 
       {/* Center Search Bar & Omnibox Dropdown */}

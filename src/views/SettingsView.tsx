@@ -25,6 +25,7 @@ import {
 } from "react-icons/bs";
 import { check, Update } from "@tauri-apps/plugin-updater";
 import { BrandLogo } from "../components/BrandLogo";
+import { SshxLogo } from "../components/SshxLogo";
 import { TerminalAppInfo, SshConfigFileData } from "../types";
 import {
   createEncryptedSshxBackup,
@@ -832,19 +833,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* Section 8: About SSHX */}
           <div className="p-3 bg-[#090d16] border border-[#1f2942] rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/20 font-mono font-bold text-xs">
-                SX
-              </div>
+              <SshxLogo variant="icon" size={36} macStyle={true} />
               <div>
                 <h4 className="font-bold text-white text-xs">SSHX — Modern SSH Desktop Manager</h4>
                 <p className="text-[11px] text-gray-400 leading-tight">
-                  Version 0.1.0 • Built with Tauri v2 + Rust + React 19 • Open Source
+                  Version 1.0.0 • Built with Tauri v2 + Rust + React 19 • Open Source
                 </p>
               </div>
             </div>
 
             <span className="text-[10px] px-2 py-0.5 rounded bg-[#161d30] text-blue-400 border border-blue-500/30 font-medium font-mono">
-              v0.1.0
+              v1.0.0
             </span>
           </div>
         </div>
