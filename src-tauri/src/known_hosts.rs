@@ -84,6 +84,29 @@ pub fn remove_known_host(host_or_pattern: &str, line_number: Option<usize>) -> R
     Ok(())
 }
 
+pub fn read_known_hosts_raw() -> Result<String, String> {
+    let path = get_ssh_dir().join("known_hosts");
+    if !path.exists() {
+        return Ok(String::new());
+    }
+    fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
+pub fn write_known_hosts_raw(content: &str) -> Result<(), String> {
+    let ssh_dir = get_ssh_dir();
+    if !ssh_dir.exists() {
+        fs::create_dir_all(&ssh_dir).map_err(|e| e.to_string())?;
+    }
+    let path = ssh_dir.join("known_hosts");
+    fs::write(&path, content).map_err(|e| e.to_string())?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o644));
+    }
+    Ok(())
+}
+
 pub fn fix_stale_host(host_or_pattern: &str) -> Result<String, String> {
     let output = Command::new("ssh-keygen")
         .arg("-R")
@@ -98,4 +121,6 @@ pub fn fix_stale_host(host_or_pattern: &str) -> Result<String, String> {
         Err(err.to_string())
     }
 }
+
+
 

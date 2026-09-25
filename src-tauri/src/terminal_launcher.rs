@@ -221,6 +221,76 @@ pub fn test_ssh_connection(host_alias: &str) -> SshTestResult {
     }
 }
 
+pub fn test_ssh_direct(
+    host_name: &str,
+    user: Option<&str>,
+    port: Option<u16>,
+    identity_file: Option<&str>,
+) -> SshTestResult {
+    let start = std::time::Instant::now();
+    let mut cmd = Command::new("ssh");
+
+    cmd.arg("-F").arg("/dev/null")
+        .arg("-o").arg("BatchMode=yes")
+        .arg("-o").arg("ConnectTimeout=6")
+        .arg("-o").arg("StrictHostKeyChecking=accept-new")
+        .arg("-T");
+
+    if let Some(p) = port {
+        if p != 22 && p != 0 {
+            cmd.arg("-p").arg(p.to_string());
+        }
+    }
+
+    if let Some(id_file) = identity_file {
+        if !id_file.trim().is_empty() {
+            cmd.arg("-i").arg(id_file.trim());
+        }
+    }
+
+    let target = match user {
+        Some(u) if !u.trim().is_empty() => format!("{}@{}", u.trim(), host_name),
+        _ => host_name.to_string(),
+    };
+    cmd.arg(target);
+
+    match cmd.output() {
+        Ok(output) => {
+            let duration_ms = start.elapsed().as_millis() as u64;
+            let stdout_str = String::from_utf8_lossy(&output.stdout).to_string();
+            let stderr_str = String::from_utf8_lossy(&output.stderr).to_string();
+            let combined = if !stdout_str.is_empty() && !stderr_str.is_empty() {
+                format!("{}\n{}", stdout_str, stderr_str)
+            } else if !stdout_str.is_empty() {
+                stdout_str
+            } else {
+                stderr_str
+            };
+
+            let code = output.status.code();
+            let is_success = output.status.success()
+                || combined.contains("successfully authenticated")
+                || combined.contains("Welcome to GitLab");
+
+            SshTestResult {
+                success: is_success,
+                exit_code: code,
+                output: combined.trim().to_string(),
+                duration_ms,
+            }
+        }
+        Err(e) => {
+            let duration_ms = start.elapsed().as_millis() as u64;
+            SshTestResult {
+                success: false,
+                exit_code: None,
+                output: format!("Execution error: {}", e),
+                duration_ms,
+            }
+        }
+    }
+}
+
 pub fn install_key_to_remote(host_alias: &str, identity_file: Option<&str>) -> SshTestResult {
     let start = std::time::Instant::now();
     let mut cmd = Command::new("ssh-copy-id");
@@ -264,4 +334,6 @@ pub fn install_key_to_remote(host_alias: &str, identity_file: Option<&str>) -> S
         }
     }
 }
+
+
 

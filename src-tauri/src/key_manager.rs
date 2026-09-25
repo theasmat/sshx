@@ -189,6 +189,11 @@ pub fn generate_ssh_key(req: GenerateKeyRequest) -> Result<SshKeyInfo, String> {
         }
     }
 
+    // Automatically load unencrypted key into ssh-agent
+    if passphrase.is_empty() {
+        let _ = add_key_to_agent(&key_path_str);
+    }
+
     // Return the created key info
     let keys = list_ssh_keys()?;
     keys.into_iter()
@@ -228,4 +233,32 @@ pub fn remove_key_from_agent(private_path: &str) -> Result<String, String> {
         Err(err_text.to_string())
     }
 }
+
+pub fn delete_ssh_key(private_path: &str) -> Result<String, String> {
+    let priv_path = std::path::PathBuf::from(private_path);
+    if !priv_path.exists() {
+        return Err(format!("Key file '{}' does not exist.", private_path));
+    }
+
+    // Try removing from ssh-agent
+    let _ = remove_key_from_agent(private_path);
+
+    // Delete public key file if exists
+    let pub_path = if private_path.ends_with(".pub") {
+        std::path::PathBuf::from(private_path)
+    } else {
+        std::path::PathBuf::from(format!("{}.pub", private_path))
+    };
+    if pub_path.exists() {
+        let _ = fs::remove_file(&pub_path);
+    }
+
+    // Delete private key file
+    if priv_path.exists() {
+        fs::remove_file(&priv_path).map_err(|e| format!("Failed to delete private key file: {}", e))?;
+    }
+
+    Ok(format!("SSH key '{}' deleted successfully.", private_path))
+}
+
 

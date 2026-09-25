@@ -1,5 +1,20 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Production Builds
+dist/
+dist-ssr/
+build/
+
+# Tauri & Rust build artifacts
+target/
+src-tauri/target/
+src-tauri/gen/schemas/
+*.rs.bk
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,22 +22,38 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
-# Editor directories and files
+# IDE & Editor Files
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.sublime-workspace
+*.sublime-project
 
-# Rust target
-src-tauri/target
-target
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!src-tauri/icons/*
+*.secret
+
+# SSHX Local Backups & Exports
+*.sshx
+*.bak
+*.bak.*
+*.orig

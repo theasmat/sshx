@@ -25,6 +25,28 @@
     "externalLink": {
       "label": "GitHub SSH Keys",
       "url": "https://github.com/settings/ssh/new"
+    },
+    "postCreationGuide": {
+      "platform": "github",
+      "settingsUrl": "https://github.com/settings/ssh/new",
+      "settingsLabel": "Open GitHub → SSH Keys",
+      "steps": [
+        "Copy your public key using the Copy button above.",
+        "Open GitHub → Settings → SSH and GPG keys → New SSH key.",
+        "Set Title to \"{host_pattern}\" and Key type to \"Authentication Key\".",
+        "Paste your public key into the Key field and click \"Add SSH key\".",
+        "Test your connection using the Test Connection button below."
+      ],
+      "testCommand": "ssh -T {host_pattern}",
+      "gitRemoteRewrite": {
+        "pattern": "git@{host_pattern}:",
+        "example": "git clone git@{host_pattern}:username/repo.git"
+      },
+      "warnings": [
+        "If you have multiple GitHub accounts, update existing repo remotes: git remote set-url origin git@{host_pattern}:org/repo.git",
+        "If GitHub says 'Key is already in use', this public key is already tied to another account. Generate a new dedicated key with a unique name."
+      ],
+      "skipKeyInstall": true
     }
   },
   {
@@ -53,6 +75,29 @@
     "externalLink": {
       "label": "GitHub SSH Keys",
       "url": "https://github.com/settings/ssh/new"
+    },
+    "postCreationGuide": {
+      "platform": "github",
+      "settingsUrl": "https://github.com/settings/ssh/new",
+      "settingsLabel": "Open GitHub → SSH Keys",
+      "steps": [
+        "Copy your public key using the Copy button above.",
+        "Open GitHub → Settings → SSH and GPG keys → New SSH key.",
+        "Set Title to \"{host_pattern}\" and Key type to \"Authentication Key\".",
+        "Paste your public key into the Key box and click \"Add SSH key\".",
+        "If your organization enforces SAML SSO, click 'Configure SSO' next to the key and click 'Authorize'.",
+        "Test authentication using the Test Connection button below."
+      ],
+      "testCommand": "ssh -T {host_pattern}",
+      "gitRemoteRewrite": {
+        "pattern": "git@{host_pattern}:",
+        "example": "git clone git@{host_pattern}:your-org/repo.git"
+      },
+      "warnings": [
+        "Organization SSO Notice: Remember to click 'Configure SSO' → 'Authorize' for your organization after adding the key.",
+        "Clone your work repositories with: git clone git@{host_pattern}:org/repo.git"
+      ],
+      "skipKeyInstall": true
     }
   },
   {
@@ -80,6 +125,27 @@
     "externalLink": {
       "label": "GitLab SSH Keys",
       "url": "https://gitlab.com/-/user_settings/ssh_keys"
+    },
+    "postCreationGuide": {
+      "platform": "gitlab",
+      "settingsUrl": "https://gitlab.com/-/user_settings/ssh_keys",
+      "settingsLabel": "Open GitLab → SSH Keys",
+      "steps": [
+        "Copy your public key using the Copy button above.",
+        "Open GitLab → User Settings → SSH Keys (or click the direct link above).",
+        "Paste the key into the Key field, set Title to \"{host_pattern}\", and set optional expiration.",
+        "Click \"Add key\".",
+        "Test connection using the Test Connection button below."
+      ],
+      "testCommand": "ssh -T {host_pattern}",
+      "gitRemoteRewrite": {
+        "pattern": "git@{host_pattern}:",
+        "example": "git clone git@{host_pattern}:group/project.git"
+      },
+      "warnings": [
+        "For self-hosted GitLab instances, open your instance's User Settings → SSH Keys page instead."
+      ],
+      "skipKeyInstall": true
     }
   },
   {
@@ -99,6 +165,22 @@
       "tags": ["aws", "cloud", "production"],
       "group": "Cloud Servers",
       "color": "amber"
+    },
+    "postCreationGuide": {
+      "platform": "cloud",
+      "settingsUrl": "https://console.aws.amazon.com/ec2/",
+      "settingsLabel": "Open AWS EC2 Console",
+      "steps": [
+        "Copy your public key or use the 1-click ssh-copy-id tool below.",
+        "Verify your EC2 Security Group permits inbound SSH on port {port} from your IP.",
+        "Ensure the public key is appended to ~/.ssh/authorized_keys on the instance.",
+        "Connect in terminal using: ssh {host_pattern}"
+      ],
+      "testCommand": "ssh {host_pattern}",
+      "warnings": [
+        "Default usernames for AWS: Ubuntu ('ubuntu'), Amazon Linux 2023 ('ec2-user'), Debian ('admin'), CentOS ('centos').",
+        "If ssh-copy-id fails with syntax errors, use the Troubleshooting panel below."
+      ]
     }
   },
   {
@@ -117,6 +199,20 @@
       "tags": ["hetzner", "cloud", "vps"],
       "group": "Cloud Servers",
       "color": "rose"
+    },
+    "postCreationGuide": {
+      "platform": "cloud",
+      "settingsUrl": "https://console.hetzner.cloud/",
+      "settingsLabel": "Open Hetzner Cloud Console",
+      "steps": [
+        "Copy your public key or install it with the 1-click ssh-copy-id button below.",
+        "Or add this key to Hetzner Cloud Console → Security → SSH Keys to auto-provision on new servers.",
+        "Connect with: ssh {host_pattern}"
+      ],
+      "testCommand": "ssh {host_pattern}",
+      "warnings": [
+        "If connecting as root, ensure PermitRootLogin is allowed in /etc/ssh/sshd_config."
+      ]
     }
   },
   {
@@ -135,6 +231,20 @@
       "tags": ["digitalocean", "droplet", "cloud"],
       "group": "Cloud Servers",
       "color": "cyan"
+    },
+    "postCreationGuide": {
+      "platform": "cloud",
+      "settingsUrl": "https://cloud.digitalocean.com/account/security",
+      "settingsLabel": "Open DigitalOcean Security",
+      "steps": [
+        "Copy your public key or install it with 1-click ssh-copy-id.",
+        "You can also register this key in DigitalOcean Settings → Security → SSH Keys for auto-injection in new Droplets.",
+        "Connect with: ssh {host_pattern}"
+      ],
+      "testCommand": "ssh {host_pattern}",
+      "warnings": [
+        "Droplets initially deployed with password auth require ssh-copy-id or manual key copy before passwordless login works."
+      ]
     }
   },
   {
@@ -154,6 +264,20 @@
       "group": "Private Network",
       "notes": "Routes seamlessly via bastion-host",
       "color": "purple"
+    },
+    "postCreationGuide": {
+      "platform": "bastion",
+      "steps": [
+        "Ensure your SSH key is authorized on BOTH the bastion ({proxy_jump}) AND the target host ({host_name}).",
+        "Step 1: Install key to bastion: ssh-copy-id {proxy_jump}",
+        "Step 2: Install key to target: ssh-copy-id -o ProxyJump={proxy_jump} {host_pattern}",
+        "Connect transparently: ssh {host_pattern}"
+      ],
+      "testCommand": "ssh {host_pattern}",
+      "warnings": [
+        "Dual-Key Requirement: The intermediate bastion and the target private host each verify SSH keys independently.",
+        "ForwardAgent Security: If ForwardAgent is enabled, your private key agent is forwarded to the bastion. Only use this with trusted jump hosts."
+      ]
     }
   },
   {
@@ -171,6 +295,19 @@
       "tags": ["homelab", "raspberrypi", "iot"],
       "group": "Homelab",
       "color": "rose"
+    },
+    "postCreationGuide": {
+      "platform": "homelab",
+      "steps": [
+        "Copy your public key or use the 1-click ssh-copy-id tool below.",
+        "Install key to Pi: ssh-copy-id {user}@{host_name}",
+        "Verify local mDNS resolution: ensure '{host_name}' resolves on your local network.",
+        "Connect with: ssh {host_pattern}"
+      ],
+      "testCommand": "ssh {host_pattern}",
+      "warnings": [
+        "If raspberrypi.local fails to resolve, replace HostName with the static LAN IP (e.g. 192.168.1.50)."
+      ]
     }
   },
   {
@@ -191,6 +328,20 @@
       "group": "Tunnels",
       "notes": "Access remote Postgres locally at localhost:5432",
       "color": "indigo"
+    },
+    "postCreationGuide": {
+      "platform": "tunnel",
+      "steps": [
+        "Ensure your SSH key is authorized on the gateway server ({host_name}).",
+        "Open the tunnel in background: ssh -N {host_pattern}",
+        "Connect your local database client (e.g. pgAdmin, DBeaver, psql) to: 127.0.0.1:5432",
+        "Keep the SSH connection alive while querying the database."
+      ],
+      "testCommand": "ssh -N {host_pattern}",
+      "warnings": [
+        "The tunnel terminates when the SSH process closes. Use 'ssh -N' to keep it active without an interactive shell.",
+        "Ensure local port 5432 is not already in use by a local PostgreSQL service."
+      ]
     }
   },
   {
@@ -211,6 +362,19 @@
       "group": "Tunnels",
       "notes": "Access remote MySQL locally at localhost:3306",
       "color": "cyan"
+    },
+    "postCreationGuide": {
+      "platform": "tunnel",
+      "steps": [
+        "Ensure your SSH key is authorized on the gateway server ({host_name}).",
+        "Open the tunnel: ssh -N {host_pattern}",
+        "Connect your local MySQL client / TablePlus / DBeaver to: 127.0.0.1:3306",
+        "Keep the SSH connection alive while using the database."
+      ],
+      "testCommand": "ssh -N {host_pattern}",
+      "warnings": [
+        "Use 'ssh -N' (no remote command) to keep the port tunnel open in the background."
+      ]
     }
   }
 ]

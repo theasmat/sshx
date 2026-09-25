@@ -9,6 +9,7 @@ import { SecurityAuditView } from "./views/SecurityAuditView";
 import { RawConfigView } from "./views/RawConfigView";
 import { SettingsView } from "./views/SettingsView";
 import { TestResultModal } from "./components/TestResultModal";
+import { DeleteHostConfirmationModal } from "./components/DeleteHostConfirmationModal";
 import {
   SshConfigFileData,
   SshHost,
@@ -18,8 +19,15 @@ import {
   SecurityAuditReport,
   SshTestResult,
   NavTab,
+  PresetTemplate,
 } from "./types";
 import { api } from "./api";
+import { getAllPresets } from "./presets";
+import {
+  buildSearchIndex,
+  executeSearch,
+  SearchItem,
+} from "./utils/searchEngine";
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>("hosts");
@@ -29,6 +37,29 @@ export function App() {
   const [knownHosts, setKnownHosts] = useState<KnownHostEntry[]>([]);
   const [auditReport, setAuditReport] = useState<SecurityAuditReport | null>(null);
   const [selectedTerminal, setSelectedTerminal] = useState<string>("ghostty");
+
+  // Dynamic AddHost parameters from search / presets
+  const [addHostInitialPreset, setAddHostInitialPreset] = useState<PresetTemplate | null>(null);
+  const [addHostInitialScreen, setAddHostInitialScreen] = useState<"hub" | "interactive" | "fast" | "presets">("hub");
+
+  // Dynamic Key parameters from search
+  const [keyInitialCreateModalOpen, setKeyInitialCreateModalOpen] = useState(false);
+  const [keyInitialSelectedPath, setKeyInitialSelectedPath] = useState<string | null>(null);
+
+  // Dynamic Settings parameters from search
+  const [settingsInitialOpenExport, setSettingsInitialOpenExport] = useState(false);
+  const [settingsInitialOpenRestore, setSettingsInitialOpenRestore] = useState(false);
+
+  // Zoom state (70% - 150%)
+  const [zoomLevel, setZoomLevel] = useState<number>(() => {
+    const saved = localStorage.getItem("sshx_zoom_level");
+    return saved ? parseInt(saved, 10) : 100;
+  });
+
+  useEffect(() => {
+    (document.documentElement.style as any).zoom = `${zoomLevel}%`;
+    localStorage.setItem("sshx_zoom_level", zoomLevel.toString());
+  }, [zoomLevel]);
 
   // Collapsible sidebar state
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -43,6 +74,10 @@ export function App() {
   const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingHost, setEditingHost] = useState<SshHost | null>(null);
+
+  // Delete Host Modal State
+  const [isDeleteHostModalOpen, setIsDeleteHostModalOpen] = useState(false);
+  const [hostToDelete, setHostToDelete] = useState<SshHost | null>(null);
 
   // Toggle sidebar collapse
   const handleToggleSidebarCollapse = () => {
@@ -148,13 +183,114 @@ export function App() {
         const matchAlias = h.host_pattern.toLowerCase().includes(q);
         const matchHostName = (h.host_name || "").toLowerCase().includes(q);
         const matchUser = (h.user || "").toLowerCase().includes(q);
+        const matchPort = h.port ? h.port.toString().includes(q) : false;
         const matchGroup = (h.group || "").toLowerCase().includes(q);
         const matchTags = h.tags.some((t) => t.toLowerCase().includes(q));
-        return matchAlias || matchHostName || matchUser || matchGroup || matchTags;
+        const matchNotes = (h.notes || "").toLowerCase().includes(q);
+        const matchKey = (h.identity_file || "").toLowerCase().includes(q);
+        const matchProxy = (h.proxy_jump || "").toLowerCase().includes(q);
+        const matchForward = h.local_forward.some((f) => f.toLowerCase().includes(q));
+
+        return (
+          matchAlias ||
+          matchHostName ||
+          matchUser ||
+          matchPort ||
+          matchGroup ||
+          matchTags ||
+          matchNotes ||
+          matchKey ||
+          matchProxy ||
+          matchForward
+        );
       }
       return true;
     });
   }, [configData, activeGroup, activeTag, searchQuery]);
+
+  // Dynamic Omnibox Search Index
+  const allPresets = useMemo(() => getAllPresets(), []);
+
+  const searchIndex = useMemo(() => {
+    return buildSearchIndex({
+      presets: allPresets,
+      hosts: configData?.hosts || [],
+      keys,
+      knownHosts,
+    });
+  }, [allPresets, configData, keys, knownHosts]);
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return executeSearch(searchQuery, searchIndex, 8).results;
+  }, [searchQuery, searchIndex]);
+
+  const handleSelectSearchItem = (item: SearchItem) => {
+    switch (item.handler.type) {
+      case "NAVIGATE_TAB":
+        if (item.handler.tab) {
+          setActiveTab(item.handler.tab);
+        }
+        break;
+
+      case "NAVIGATE_ADD_HOST":
+        setEditingHost(null);
+        setAddHostInitialPreset(null);
+        setAddHostInitialScreen(item.handler.addHostScreen || "hub");
+        setActiveTab("add-host");
+        break;
+
+      case "APPLY_PRESET":
+        setEditingHost(null);
+        setAddHostInitialPreset(item.handler.preset || null);
+        setAddHostInitialScreen("interactive");
+        setActiveTab("add-host");
+        break;
+
+      case "SELECT_HOST":
+        if (item.handler.hostId) {
+          setSelectedHostId(item.handler.hostId);
+          setActiveTab("hosts");
+        }
+        break;
+
+      case "SELECT_KEY":
+        if (item.handler.keyPath) {
+          setKeyInitialSelectedPath(item.handler.keyPath);
+          setActiveTab("keys");
+        }
+        break;
+
+      case "TRIGGER_ACTION":
+        switch (item.handler.actionName) {
+          case "open_key_modal":
+            setKeyInitialCreateModalOpen(true);
+            setActiveTab("keys");
+            break;
+          case "open_export_backup":
+            setSettingsInitialOpenExport(true);
+            setActiveTab("settings");
+            break;
+          case "open_restore_backup":
+            setSettingsInitialOpenRestore(true);
+            setActiveTab("settings");
+            break;
+          case "reload_config":
+            loadAllData();
+            break;
+          case "zoom_in":
+            setZoomLevel((prev) => Math.min(prev + 10, 150));
+            break;
+          case "zoom_out":
+            setZoomLevel((prev) => Math.max(prev - 10, 70));
+            break;
+          case "zoom_reset":
+            setZoomLevel(100);
+            break;
+        }
+        break;
+    }
+  };
 
   // Selected Host
   const selectedHost = useMemo(() => {
@@ -169,6 +305,17 @@ export function App() {
   // Keyboard navigation for host list
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Allow Cmd+K, Cmd+N, Cmd+R, Cmd+-, Cmd+= everywhere
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const searchInput = document.getElementById("global-sshx-search-input") as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          searchInput.select();
+        }
+        return;
+      }
+
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -203,17 +350,28 @@ export function App() {
         setActiveTab("add-host");
       }
 
-      // Shortcut: Cmd+K -> Focus Search
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-        if (searchInput) searchInput.focus();
-      }
-
       // Shortcut: Cmd+R -> Reload
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "r") {
         e.preventDefault();
         loadAllData();
+      }
+
+      // Shortcut: Cmd + / Cmd = -> Zoom In
+      if ((e.metaKey || e.ctrlKey) && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        setZoomLevel((prev) => Math.min(prev + 10, 150));
+      }
+
+      // Shortcut: Cmd - / Cmd _ -> Zoom Out
+      if ((e.metaKey || e.ctrlKey) && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        setZoomLevel((prev) => Math.max(prev - 10, 70));
+      }
+
+      // Shortcut: Cmd 0 -> Reset Zoom to 100%
+      if ((e.metaKey || e.ctrlKey) && e.key === "0") {
+        e.preventDefault();
+        setZoomLevel(100);
       }
     };
 
@@ -232,17 +390,7 @@ export function App() {
 
   // Copy SSH Command
   const handleCopyCmd = (host: SshHost) => {
-    let cmd = "ssh";
-    if (host.port && host.port !== 22) cmd += ` -p ${host.port}`;
-    if (host.identity_file) cmd += ` -i ${host.identity_file}`;
-    if (host.user && host.host_name) {
-      cmd += ` ${host.user}@${host.host_name}`;
-    } else if (host.host_name) {
-      cmd += ` ${host.host_name}`;
-    } else {
-      cmd += ` ${host.host_pattern}`;
-    }
-
+    const cmd = `ssh ${host.host_pattern}`;
     navigator.clipboard.writeText(cmd);
     setCopiedId(host.id);
     setTimeout(() => setCopiedId(null), 1500);
@@ -301,17 +449,24 @@ export function App() {
     }
   };
 
-  // Delete Host
-  const handleDeleteHost = async (host: SshHost) => {
-    if (!confirm(`Are you sure you want to delete host "${host.host_pattern}"?`)) {
-      return;
-    }
+  // Delete Host Action - Opens confirmation modal
+  const handleDeleteHost = (host: SshHost) => {
+    setHostToDelete(host);
+    setIsDeleteHostModalOpen(true);
+  };
+
+  // Confirmed Host Deletion Handler
+  const handleConfirmDeleteHost = async (host: SshHost) => {
     try {
-      await api.deleteHost(host.id);
+      await api.deleteHost(host.id, host.host_pattern);
       await loadAllData();
+      if (selectedHostId === host.id) {
+        setSelectedHostId(null);
+      }
       setActiveTab("hosts");
     } catch (err: any) {
       alert(`Failed to delete host: ${err}`);
+      throw err;
     }
   };
 
@@ -341,6 +496,8 @@ export function App() {
         isLoading={isLoading}
         auditScore={auditReport?.score}
         onSelectTab={setActiveTab}
+        searchResults={searchResults}
+        onSelectSearchItem={handleSelectSearchItem}
       />
 
       {/* Error Alert Banner */}
@@ -364,6 +521,8 @@ export function App() {
           onSelectTab={(tab) => {
             if (tab === "add-host") {
               setEditingHost(null);
+              setAddHostInitialPreset(null);
+              setAddHostInitialScreen("hub");
             }
             setActiveTab(tab);
           }}
@@ -399,32 +558,44 @@ export function App() {
               onDelete={handleDeleteHost}
               onOpenAddHost={() => {
                 setEditingHost(null);
+                setAddHostInitialPreset(null);
+                setAddHostInitialScreen("hub");
                 setActiveTab("add-host");
               }}
               copiedId={copiedId}
               terminalName={activeTerminalName}
+              keys={keys}
+              onOpenRawConfig={() => setActiveTab("raw-config")}
             />
           )}
 
           {activeTab === "add-host" && (
             <AddHostView
               initialHost={editingHost}
+              initialPreset={addHostInitialPreset}
+              initialScreen={addHostInitialScreen}
               existingKeys={keys}
               existingHosts={configData?.hosts || []}
               onSave={handleSaveHost}
               onCancel={() => {
                 setEditingHost(null);
+                setAddHostInitialPreset(null);
                 setActiveTab("hosts");
               }}
               onRefreshKeys={loadAllData}
+              onConnect={handleConnect}
+              onOpenRawConfig={() => setActiveTab("raw-config")}
             />
           )}
 
           {activeTab === "keys" && (
             <KeyManagementView
               keys={keys}
+              hosts={configData?.hosts || []}
               onRefresh={loadAllData}
               isLoading={isLoading}
+              initialCreateModalOpen={keyInitialCreateModalOpen}
+              initialSelectedKeyPath={keyInitialSelectedPath}
             />
           )}
 
@@ -441,6 +612,13 @@ export function App() {
               report={auditReport}
               onRefresh={loadAllData}
               isLoading={isLoading}
+              onSelectTab={setActiveTab}
+              onOpenAddHost={() => {
+                setEditingHost(null);
+                setAddHostInitialPreset(null);
+                setAddHostInitialScreen("hub");
+                setActiveTab("add-host");
+              }}
             />
           )}
 
@@ -459,6 +637,13 @@ export function App() {
               selectedTerminal={selectedTerminal}
               onSelectTerminal={setSelectedTerminal}
               onOpenRawBackups={() => setActiveTab("raw-config")}
+              zoomLevel={zoomLevel}
+              onSetZoom={setZoomLevel}
+              configData={configData}
+              knownHostsCount={knownHosts.length}
+              onRefreshAll={loadAllData}
+              initialOpenExportModal={settingsInitialOpenExport}
+              initialOpenRestoreModal={settingsInitialOpenRestore}
             />
           )}
         </main>
@@ -473,6 +658,18 @@ export function App() {
         hostAlias={testModalState.hostAlias}
         result={testModalState.result}
         isLoading={testModalState.isLoading}
+      />
+
+      {/* Host Deletion Impact & Confirmation Modal */}
+      <DeleteHostConfirmationModal
+        isOpen={isDeleteHostModalOpen}
+        onClose={() => {
+          setIsDeleteHostModalOpen(false);
+          setHostToDelete(null);
+        }}
+        host={hostToDelete}
+        keys={keys}
+        onConfirmDelete={handleConfirmDeleteHost}
       />
     </div>
   );

@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import {
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Wrench,
-  Check,
-  RotateCw,
-  KeyRound,
-} from "lucide-react";
+  BsXLg,
+  BsCheckCircleFill,
+  BsExclamationCircleFill,
+  BsClock,
+  BsWrench,
+  BsCheckLg,
+  BsArrowClockwise,
+  BsKeyFill,
+} from "react-icons/bs";
 import { SshTestResult } from "../types";
 import { api } from "../api";
 
@@ -80,7 +80,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
             onClick={onClose}
             className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-[#161d30] cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <BsXLg className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -102,9 +102,9 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
             >
               <div className="flex items-center gap-2 font-medium text-xs">
                 {result.success ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <BsCheckCircleFill className="w-4 h-4 text-emerald-400 shrink-0" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <BsExclamationCircleFill className="w-4 h-4 text-rose-400 shrink-0" />
                 )}
                 <span>
                   {result.success
@@ -113,7 +113,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-1 text-[11px] opacity-80 font-mono">
-                <Clock className="w-3 h-3" />
+                <BsClock className="w-3 h-3" />
                 <span>{result.duration_ms}ms</span>
               </div>
             </div>
@@ -122,7 +122,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
             {isHostKeyMismatch && (
               <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2 text-amber-200">
                 <div className="flex items-center gap-2 font-semibold text-xs text-amber-300">
-                  <Wrench className="w-4 h-4" />
+                  <BsWrench className="w-4 h-4" />
                   <span>Stale Remote Host Key Detected</span>
                 </div>
                 <p className="text-[11px] text-gray-300 leading-relaxed">
@@ -134,7 +134,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
                   onClick={handleAutoFixHostKey}
                   className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  <Wrench className="w-3.5 h-3.5" />
+                  <BsWrench className="w-3.5 h-3.5" />
                   <span>{isFixingHost ? "Purging Stale Key..." : "⚡ 1-Click Auto-Fix Host & Retest"}</span>
                 </button>
               </div>
@@ -144,7 +144,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
             {isPermissionDenied && !isHostKeyMismatch && (
               <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl space-y-1 text-blue-200">
                 <div className="flex items-center gap-2 font-semibold text-xs text-blue-300">
-                  <KeyRound className="w-4 h-4" />
+                  <BsKeyFill className="w-4 h-4" />
                   <span>Authentication / Key Setup Tip</span>
                 </div>
                 <p className="text-[11px] text-gray-300 leading-relaxed">
@@ -155,7 +155,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
 
             {fixSuccessMsg && (
               <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                <BsCheckLg className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>{fixSuccessMsg}</span>
               </div>
             )}
@@ -180,7 +180,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
               disabled={isLoading}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium transition-colors text-xs border border-[#232f4d] cursor-pointer"
             >
-              <RotateCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+              <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
               <span>Retest</span>
             </button>
           )}

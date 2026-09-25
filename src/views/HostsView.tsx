@@ -1,8 +1,8 @@
 import React from "react";
 import { CompactHostList } from "../components/CompactHostList";
 import { HostDetailPane } from "../components/HostDetailPane";
-import { SshHost } from "../types";
-import { Server, Plus } from "lucide-react";
+import { BsServer, BsPlusLg } from "react-icons/bs";
+import { SshHost, SshKeyInfo } from "../types";
 
 interface HostsViewProps {
   hosts: SshHost[];
@@ -17,6 +17,8 @@ interface HostsViewProps {
   onOpenAddHost: () => void;
   copiedId: string | null;
   terminalName: string;
+  keys?: SshKeyInfo[];
+  onOpenRawConfig?: () => void;
 }
 
 export const HostsView: React.FC<HostsViewProps> = ({
@@ -32,12 +34,14 @@ export const HostsView: React.FC<HostsViewProps> = ({
   onOpenAddHost,
   copiedId,
   terminalName,
+  keys,
+  onOpenRawConfig,
 }) => {
   if (hosts.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[#070a10] select-none">
         <div className="w-14 h-14 rounded-2xl bg-[#121829] border border-[#1f2942] flex items-center justify-center text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
-          <Server className="w-7 h-7" />
+          <BsServer className="w-7 h-7" />
         </div>
         <h3 className="text-base font-bold text-white mb-1">No SSH Hosts Found</h3>
         <p className="text-xs text-gray-400 max-w-sm mb-5 leading-relaxed">
@@ -47,7 +51,7 @@ export const HostsView: React.FC<HostsViewProps> = ({
           onClick={onOpenAddHost}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition-colors shadow-md shadow-blue-600/20"
         >
-          <Plus className="w-4 h-4" />
+          <BsPlusLg className="w-4 h-4" />
           <span>Add Your First Host</span>
         </button>
       </div>
@@ -55,24 +59,24 @@ export const HostsView: React.FC<HostsViewProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-col md:flex-row overflow-hidden bg-[#070a10]">
+    <div className="h-full flex flex-row overflow-hidden bg-[#070a10]">
       {/* Left Pane: Host List */}
-      <div className="w-full md:w-1/2 lg:w-5/12 h-full flex flex-col border-r border-[#1f2942] bg-[#070a10]">
+      <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-[#1f2942] bg-[#070a10]">
         {/* Navigation / Host count header */}
-        <div className="px-3.5 py-2 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between text-[11px] text-gray-400 select-none">
+        <div className="px-3 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between text-xs text-gray-400 select-none">
           <span className="font-semibold text-gray-300">
             {hosts.length} {hosts.length === 1 ? "host" : "hosts"}
           </span>
-          <div className="flex items-center gap-2 text-[10px] text-gray-500">
+          <div className="flex items-center gap-2 text-[11px] text-gray-400">
             <span className="flex items-center gap-1">
-              <kbd className="bg-[#161d30] px-1 py-0.2 rounded border border-[#232f4d] font-mono text-gray-400">↑</kbd>
-              <kbd className="bg-[#161d30] px-1 py-0.2 rounded border border-[#232f4d] font-mono text-gray-400">↓</kbd>
-              <span>navigate</span>
+              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↑</kbd>
+              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↓</kbd>
+              <span className="text-gray-400">nav</span>
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <kbd className="bg-[#161d30] px-1 py-0.2 rounded border border-[#232f4d] font-mono text-gray-400">↵</kbd>
-              <span>connect</span>
+              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↵</kbd>
+              <span className="text-gray-400">connect</span>
             </span>
           </div>
         </div>
@@ -85,12 +89,13 @@ export const HostsView: React.FC<HostsViewProps> = ({
           onConnect={onConnect}
           onCopyCmd={onCopyCmd}
           onTest={onTest}
+          onDelete={onDelete}
           copiedId={copiedId}
         />
       </div>
 
       {/* Right Pane: Host Detail View */}
-      <div className="w-full md:w-1/2 lg:w-7/12 h-full overflow-hidden bg-[#0b0f19]">
+      <div className="flex-1 min-w-0 h-full overflow-hidden bg-[#0b0f19]">
         <HostDetailPane
           host={selectedHost}
           onConnect={onConnect}
@@ -99,6 +104,8 @@ export const HostsView: React.FC<HostsViewProps> = ({
           onDuplicate={onDuplicate}
           onTest={onTest}
           terminalName={terminalName}
+          keys={keys}
+          onOpenRawConfig={onOpenRawConfig}
         />
       </div>
     </div>

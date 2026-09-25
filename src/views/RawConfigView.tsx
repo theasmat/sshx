@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
-  FileCode,
-  Save,
-  RotateCcw,
-  Check,
-  AlertCircle,
-  Clock,
-  History,
-  X,
-  RefreshCw,
-  ArchiveRestore,
-} from "lucide-react";
+  BsFileEarmarkCode,
+  BsSave,
+  BsArrowCounterclockwise,
+  BsCheckLg,
+  BsExclamationCircleFill,
+  BsClock,
+  BsClockHistory,
+  BsXLg,
+  BsArrowClockwise,
+  BsArchive,
+} from "react-icons/bs";
 import { api } from "../api";
 
 interface RawConfigViewProps {
@@ -129,34 +129,34 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
   return (
     <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
       {/* Top Header */}
-      <div className="px-5 py-3 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-            <FileCode className="w-3.5 h-3.5" />
+            <BsFileEarmarkCode className="w-3.5 h-3.5" />
           </div>
           <div>
             <h2 className="font-bold text-white text-sm">Raw ~/.ssh/config Editor</h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Backups Button */}
           <button
             onClick={handleOpenBackups}
-            className="flex items-center gap-1.5 px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
             title="View automated backup snapshots"
           >
-            <History className="w-3.5 h-3.5 text-amber-400" />
-            <span>Snapshots & Backups</span>
+            <BsClockHistory className="w-3.5 h-3.5 text-amber-400" />
+            <span>Snapshots</span>
           </button>
 
           {isModified && (
             <button
               onClick={handleRevert}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <BsArrowCounterclockwise className="w-3.5 h-3.5" />
               <span>Revert</span>
             </button>
           )}
@@ -164,58 +164,58 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
           <button
             onClick={handleSave}
             disabled={isSaving || !isModified}
-            className="flex items-center gap-1.5 px-4 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-semibold transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-md font-semibold text-xs transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
           >
             {saveSuccess ? (
-              <Check className="w-3.5 h-3.5 text-emerald-300" />
+              <BsCheckLg className="w-3.5 h-3.5 text-emerald-300" />
             ) : (
-              <Save className="w-3.5 h-3.5" />
+              <BsSave className="w-3.5 h-3.5" />
             )}
-            <span>{saveSuccess ? "Saved!" : isSaving ? "Saving..." : "Save Config (⌘S)"}</span>
+            <span>{saveSuccess ? "Saved!" : isSaving ? "Saving..." : "Save (⌘S)"}</span>
           </button>
         </div>
       </div>
 
       {/* Helper Bar */}
-      <div className="px-5 py-2 bg-[#090d16]/80 border-b border-[#1f2942] flex items-center justify-between text-[11px] text-gray-400">
+      <div className="px-3.5 py-1 bg-[#090d16]/80 border-b border-[#1f2942] flex items-center justify-between text-xs text-gray-400">
         <div className="flex items-center gap-2 font-mono">
           <span>File: {filePath || "~/.ssh/config"}</span>
           {isModified && (
-            <span className="text-amber-400 font-sans font-semibold text-[10px] px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20">
+            <span className="text-amber-400 font-sans font-semibold text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 leading-none">
               ● Unsaved Changes
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 text-gray-500">
-          <Clock className="w-3.5 h-3.5" />
-          <span>Automatic backup snapshot created before every modification</span>
+        <div className="flex items-center gap-1 text-gray-500 text-xs">
+          <BsClock className="w-3.5 h-3.5" />
+          <span>Auto-backup snapshot saved on write</span>
         </div>
       </div>
 
       {restoreSuccessMsg && (
-        <div className="px-5 py-2 bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-300 flex items-center gap-2">
-          <Check className="w-4 h-4 text-emerald-400" />
+        <div className="px-3 py-1 bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5">
+          <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
           <span>{restoreSuccessMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="px-5 py-2 bg-rose-500/10 border-b border-rose-500/30 text-rose-300 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400" />
+        <div className="px-3 py-1 bg-rose-500/10 border-b border-rose-500/30 text-rose-300 text-xs flex items-center gap-1.5">
+          <BsExclamationCircleFill className="w-3.5 h-3.5 text-rose-400" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {/* Code Editor Textarea */}
-      <div className="flex-1 p-5 overflow-hidden">
-        <div className="h-full bg-[#05070c] border border-[#1f2942] rounded-xl overflow-hidden flex flex-col shadow-inner">
+      <div className="flex-1 p-2.5 overflow-hidden">
+        <div className="h-full bg-[#05070c] border border-[#1f2942] rounded-lg overflow-hidden flex flex-col shadow-inner">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             spellCheck={false}
             placeholder="# ~/.ssh/config"
-            className="flex-1 w-full p-4 bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed select-text"
+            className="flex-1 w-full p-3 bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed select-text"
           />
         </div>
       </div>
@@ -228,7 +228,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
             <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-                  <History className="w-4 h-4" />
+                  <BsClockHistory className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm">Config Backup Snapshots</h3>
@@ -245,7 +245,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                   className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
                   title="Refresh list"
                 >
-                  <RefreshCw
+                  <BsArrowClockwise
                     className={`w-3.5 h-3.5 ${isLoadingBackups ? "animate-spin" : ""}`}
                   />
                 </button>
@@ -253,7 +253,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                   onClick={() => setIsBackupsModalOpen(false)}
                   className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <BsXLg className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -291,7 +291,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                       disabled={restoringBackup === b}
                       className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/30 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      <ArchiveRestore className="w-3.5 h-3.5" />
+                      <BsArchive className="w-3.5 h-3.5" />
                       <span>{restoringBackup === b ? "Restoring..." : "Restore"}</span>
                     </button>
                   </div>

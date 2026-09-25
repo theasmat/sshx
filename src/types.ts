@@ -86,12 +86,28 @@ export interface KnownHostEntry {
 }
 
 export interface AuditIssue {
+  id?: string;
   severity: "critical" | "warning" | "info";
+  category?: "permissions" | "syntax" | "keys" | "hosts" | string;
   title: string;
   description: string;
   path?: string | null;
   fixable: boolean;
   fix_action?: string | null;
+  fix_preview?: string | null;
+}
+
+export interface SelectiveFixRequest {
+  id: string;
+  fix_action: string;
+  path?: string | null;
+}
+
+export interface SelectiveFixResponse {
+  success: boolean;
+  fixed_count: number;
+  messages: string[];
+  report: SecurityAuditReport;
 }
 
 export interface SecurityAuditReport {
@@ -99,6 +115,20 @@ export interface SecurityAuditReport {
   total_keys: number;
   score: number;
   issues: AuditIssue[];
+}
+
+export interface PostCreationGuide {
+  platform: "github" | "gitlab" | "bitbucket" | "cloud" | "bastion" | "homelab" | "tunnel" | "custom" | string;
+  settingsUrl?: string;
+  settingsLabel?: string;
+  steps: string[];
+  testCommand?: string;
+  gitRemoteRewrite?: {
+    pattern: string;
+    example: string;
+  };
+  warnings?: string[];
+  skipKeyInstall?: boolean;
 }
 
 export interface PresetTemplate {
@@ -120,4 +150,6 @@ export interface PresetTemplate {
     label: string;
     url: string;
   };
+  postCreationGuide?: PostCreationGuide;
 }
+

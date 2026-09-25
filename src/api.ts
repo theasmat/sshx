@@ -8,6 +8,8 @@ import {
   SshTestResult,
   KnownHostEntry,
   SecurityAuditReport,
+  SelectiveFixRequest,
+  SelectiveFixResponse,
 } from "./types";
 
 export const api = {
@@ -52,13 +54,13 @@ export const api = {
     });
   },
 
-  deleteHost: async (hostId: string): Promise<SshConfigFileData> => {
-    const current = await invoke<SshConfigFileData>("get_ssh_config");
-    const updatedHosts = current.hosts.filter((h) => h.id !== hostId);
-    return await invoke<SshConfigFileData>("save_ssh_hosts", {
-      globalComments: current.global_comments,
-      globalDirectives: current.global_directives,
-      hosts: updatedHosts,
+  deleteHost: async (
+    hostId: string,
+    hostPattern?: string
+  ): Promise<SshConfigFileData> => {
+    return await invoke<SshConfigFileData>("delete_host", {
+      hostId,
+      hostPattern: hostPattern || null,
     });
   },
 
@@ -72,6 +74,20 @@ export const api = {
 
   generateKey: async (req: GenerateKeyRequest): Promise<SshKeyInfo> => {
     return await invoke<SshKeyInfo>("create_ssh_key", { req });
+  },
+
+  deleteKey: async (
+    privatePath: string,
+    unlinkHosts: boolean = true
+  ): Promise<string> => {
+    return await invoke<string>("delete_key", {
+      privatePath,
+      unlinkHosts,
+    });
+  },
+
+  unlinkKey: async (keyPath: string): Promise<SshConfigFileData> => {
+    return await invoke<SshConfigFileData>("unlink_key", { keyPath });
   },
 
   addKeyToAgent: async (privatePath: string): Promise<string> => {
@@ -108,6 +124,20 @@ export const api = {
     return await invoke<SshTestResult>("test_host_connection", { hostAlias });
   },
 
+  testDirectConnection: async (
+    hostName: string,
+    user?: string,
+    port?: number,
+    identityFile?: string
+  ): Promise<SshTestResult> => {
+    return await invoke<SshTestResult>("test_direct_connection", {
+      hostName,
+      user: user || null,
+      port: port || null,
+      identityFile: identityFile || null,
+    });
+  },
+
   installKeyToRemote: async (
     hostAlias: string,
     identityFile?: string
@@ -138,6 +168,14 @@ export const api = {
     });
   },
 
+  getKnownHostsRaw: async (): Promise<string> => {
+    return await invoke<string>("get_known_hosts_raw");
+  },
+
+  saveKnownHostsRaw: async (content: string): Promise<void> => {
+    return await invoke<void>("save_known_hosts_raw", { content });
+  },
+
   fixStaleHost: async (hostPattern: string): Promise<string> => {
     return await invoke<string>("fix_stale_host", { hostPattern });
   },
@@ -156,6 +194,14 @@ export const api = {
 
   fixSecurityPermissions: async (): Promise<SecurityAuditReport> => {
     return await invoke<SecurityAuditReport>("fix_security_permissions");
+  },
+
+  fixSelectedSecurityIssues: async (
+    requests: SelectiveFixRequest[]
+  ): Promise<SelectiveFixResponse> => {
+    return await invoke<SelectiveFixResponse>("fix_selected_security_issues", {
+      requests,
+    });
   },
 
   fixPermissions: async (): Promise<string> => {

@@ -248,29 +248,35 @@ pub fn serialize_ssh_config(
             meta_parts.push(format!("note={}", note.replace(' ', "_")));
         }
         if let Some(ref col) = h.color {
-            meta_parts.push(format!("color={}", col));
+            if !col.trim().is_empty() {
+                meta_parts.push(format!("color={}", col.trim()));
+            }
         }
 
         if !meta_parts.is_empty() {
             out.push_str(&format!("# @sshx: {}\n", meta_parts.join(" ")));
         }
 
-        out.push_str(&format!("Host {}\n", h.host_pattern));
+        out.push_str(&format!("Host {}\n", h.host_pattern.trim()));
 
         if let Some(ref hn) = h.host_name {
-            out.push_str(&format!("    HostName {}\n", hn));
+            if !hn.trim().is_empty() {
+                out.push_str(&format!("    HostName {}\n", hn.trim()));
+            }
         }
         if let Some(ref u) = h.user {
-            out.push_str(&format!("    User {}\n", u));
+            if !u.trim().is_empty() {
+                out.push_str(&format!("    User {}\n", u.trim()));
+            }
         }
         if let Some(p) = h.port {
-            if p != 22 {
+            if p != 22 && p != 0 {
                 out.push_str(&format!("    Port {}\n", p));
             }
         }
         if let Some(ref id_file) = h.identity_file {
             if !id_file.trim().is_empty() {
-                out.push_str(&format!("    IdentityFile {}\n", id_file));
+                out.push_str(&format!("    IdentityFile {}\n", id_file.trim()));
             }
         }
         if let Some(io) = h.identities_only {
@@ -280,41 +286,98 @@ pub fn serialize_ssh_config(
         }
         if let Some(ref pj) = h.proxy_jump {
             if !pj.trim().is_empty() {
-                out.push_str(&format!("    ProxyJump {}\n", pj));
+                out.push_str(&format!("    ProxyJump {}\n", pj.trim()));
             }
         }
         if let Some(ref pc) = h.proxy_command {
             if !pc.trim().is_empty() {
-                out.push_str(&format!("    ProxyCommand {}\n", pc));
+                out.push_str(&format!("    ProxyCommand {}\n", pc.trim()));
             }
         }
         if let Some(fa) = h.forward_agent {
             out.push_str(&format!("    ForwardAgent {}\n", if fa { "yes" } else { "no" }));
         }
         for lf in &h.local_forward {
-            out.push_str(&format!("    LocalForward {}\n", lf));
+            if !lf.trim().is_empty() {
+                out.push_str(&format!("    LocalForward {}\n", lf.trim()));
+            }
         }
         for rf in &h.remote_forward {
-            out.push_str(&format!("    RemoteForward {}\n", rf));
+            if !rf.trim().is_empty() {
+                out.push_str(&format!("    RemoteForward {}\n", rf.trim()));
+            }
         }
         if let Some(ref df) = h.dynamic_forward {
-            out.push_str(&format!("    DynamicForward {}\n", df));
+            if !df.trim().is_empty() {
+                out.push_str(&format!("    DynamicForward {}\n", df.trim()));
+            }
         }
         if let Some(sai) = h.server_alive_interval {
-            out.push_str(&format!("    ServerAliveInterval {}\n", sai));
+            if sai > 0 {
+                out.push_str(&format!("    ServerAliveInterval {}\n", sai));
+            }
         }
         if let Some(sacm) = h.server_alive_count_max {
-            out.push_str(&format!("    ServerAliveCountMax {}\n", sacm));
+            if sacm > 0 {
+                out.push_str(&format!("    ServerAliveCountMax {}\n", sacm));
+            }
         }
         if let Some(ref shkc) = h.strict_host_key_checking {
-            out.push_str(&format!("    StrictHostKeyChecking {}\n", shkc));
+            if !shkc.trim().is_empty() {
+                out.push_str(&format!("    StrictHostKeyChecking {}\n", shkc.trim()));
+            }
         }
         for (k, v) in &h.custom_directives {
-            out.push_str(&format!("    {} {}\n", k, v));
+            if !k.trim().is_empty() && !v.trim().is_empty() {
+                out.push_str(&format!("    {} {}\n", k.trim(), v.trim()));
+            }
         }
     }
 
     out
+}
+
+pub fn sanitize_raw_config_lines(content: &str) -> (String, usize) {
+    let mut fixed_lines = Vec::new();
+    let mut fixed_count = 0;
+
+    let keywords_requiring_arg = [
+        "dynamicforward",
+        "localforward",
+        "remoteforward",
+        "hostname",
+        "user",
+        "identityfile",
+        "proxyjump",
+        "proxycommand",
+        "port",
+        "serveraliveinterval",
+        "serveralivecountmax",
+        "stricthostkeychecking",
+    ];
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            fixed_lines.push(line.to_string());
+            continue;
+        }
+
+        let parts: Vec<&str> = trimmed.split_whitespace().collect();
+        if parts.len() == 1 {
+            let directive_lower = parts[0].to_lowercase();
+            if keywords_requiring_arg.contains(&directive_lower.as_str()) {
+                // Comment out the empty directive line
+                fixed_lines.push(format!("# [Fixed by SSHX - missing argument] {}", line));
+                fixed_count += 1;
+                continue;
+            }
+        }
+
+        fixed_lines.push(line.to_string());
+    }
+
+    (fixed_lines.join("\n"), fixed_count)
 }
 
 pub fn read_ssh_config() -> Result<SshConfigFileData, String> {
@@ -406,6 +469,68 @@ pub fn restore_config_backup(backup_name: &str) -> Result<(), String> {
 }
 
 
+pub fn remove_host_entry(host_id: &str, host_pattern: Option<&str>) -> Result<SshConfigFileData, String> {
+    let mut config = read_ssh_config()?;
+    let original_len = config.hosts.len();
+
+    // 1. Try removing by exact host_id match
+    if !host_id.is_empty() {
+        config.hosts.retain(|h| h.id != host_id);
+    }
+
+    // 2. If nothing was removed (e.g. host_id was ephemeral client ID), match and remove first matching host_pattern
+    if config.hosts.len() == original_len {
+        if let Some(pat) = host_pattern {
+            let clean_pat = pat.trim();
+            if !clean_pat.is_empty() {
+                if let Some(pos) = config.hosts.iter().position(|h| h.host_pattern.eq_ignore_ascii_case(clean_pat)) {
+                    config.hosts.remove(pos);
+                }
+            }
+        }
+    }
+
+    // 3. Fallback prefix match if still not found
+    if config.hosts.len() == original_len && !host_id.is_empty() {
+        if let Some((prefix, _)) = host_id.split_once('_') {
+            if let Some(pos) = config.hosts.iter().position(|h| h.host_pattern.eq_ignore_ascii_case(prefix)) {
+                config.hosts.remove(pos);
+            }
+        }
+    }
+
+    let serialized = serialize_ssh_config(&config.global_comments, &config.global_directives, &config.hosts);
+    write_ssh_config_safe(&serialized)?;
+    read_ssh_config()
+}
+
+pub fn unlink_key_from_hosts(key_path_or_name: &str) -> Result<SshConfigFileData, String> {
+    let mut config = read_ssh_config()?;
+    let clean_target = key_path_or_name.trim();
+    let file_name = std::path::Path::new(clean_target)
+        .file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_else(|| clean_target.to_string());
+
+    for h in &mut config.hosts {
+        if let Some(ref id_file) = h.identity_file {
+            let id_name = std::path::Path::new(id_file)
+                .file_name()
+                .map(|f| f.to_string_lossy().to_string())
+                .unwrap_or_else(|| id_file.clone());
+
+            if id_file == clean_target || id_name == file_name {
+                h.identity_file = None;
+                h.identities_only = None;
+            }
+        }
+    }
+
+    let serialized = serialize_ssh_config(&config.global_comments, &config.global_directives, &config.hosts);
+    write_ssh_config_safe(&serialized)?;
+    read_ssh_config()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -438,6 +563,14 @@ Host github-personal
         let serialized = serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
         assert!(serialized.contains("Host prod-web-01"));
         assert!(serialized.contains("Host github-personal"));
-        assert!(serialized.contains("tags=github,personal"));
+        assert!(serialized.contains("tags=prod,aws"));
+    }
+
+    #[test]
+    fn test_sanitize_raw_config_lines() {
+        let bad_config = "Host foo\n    HostName 1.2.3.4\n    dynamicforward\n    Port 22\n";
+        let (fixed, count) = sanitize_raw_config_lines(bad_config);
+        assert_eq!(count, 1);
+        assert!(fixed.contains("# [Fixed by SSHX - missing argument]     dynamicforward"));
     }
 }

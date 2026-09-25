@@ -1,4 +1,4 @@
-import { PresetTemplate, SshHost } from "./types";
+import { PresetTemplate, SshHost, PostCreationGuide } from "./types";
 import rawBuiltinPresets from "./presets.json";
 
 export interface PresetJsonItem {
@@ -20,6 +20,7 @@ export interface PresetJsonItem {
     label: string;
     url: string;
   };
+  postCreationGuide?: PostCreationGuide;
 }
 
 // Map raw JSON entries to PresetTemplate structure
@@ -36,6 +37,7 @@ export const BUILTIN_PRESET_TEMPLATES: PresetTemplate[] = (
   keyRecommendation: item.keySuggestion,
   extraHelp: item.extraHelp,
   externalLink: item.externalLink,
+  postCreationGuide: item.postCreationGuide,
 }));
 
 const CUSTOM_PRESETS_STORAGE_KEY = "sshx_custom_presets_v2";

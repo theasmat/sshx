@@ -13,14 +13,22 @@
     "windows": [
       {
         "title": "SSHX",
-        "width": 840,
-        "height": 560,
-        "minWidth": 720,
-        "minHeight": 460
+        "width": 1080,
+        "height": 680,
+        "minWidth": 880,
+        "minHeight": 520
       }
     ],
     "security": {
       "csp": null
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhFQzBGNTVFNDBBOUZBMQpSV1Nobndya1ZRL3NDSDVsSXQzRkZlRE9ZcVFTbVVoQUlYcU94cXJIQWIvM2VRY00rMm9lNnAwYgo=",
+      "endpoints": [
+        "https://github.com/theasmat/sshx/releases/latest/download/latest.json"
+      ]
     }
   },
   "bundle": {
