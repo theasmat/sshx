@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="src-tauri/icons/128x128@2x.png" width="96" height="96" alt="SSHX Logo" />
+  <a href="https://github.com/theasmat/sshx">
+    <img src="public/images/logo/sshx-badge.svg" width="420" alt="SSHX — Modern SSH Desktop Manager" />
+  </a>
 </p>
-
-<h1 align="center">SSHX — Modern SSH Desktop Manager</h1>
 
 <p align="center">
   <b>A lightning-fast, secure, and intuitive desktop manager for <code>~/.ssh/config</code>, SSH keys, and native terminal sessions.</b>

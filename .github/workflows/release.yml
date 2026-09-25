@@ -1,4 +1,4 @@
-name: Release & Auto-Updater
+name: Release & Build Packages
 
 on:
   push:
@@ -7,17 +7,92 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version tag (e.g. v0.1.1)'
-        required: true
-        default: 'v0.1.1'
+        description: 'Release version tag (e.g. v0.1.0 or 0.1.0). Leave blank to use tag/package.json.'
+        required: false
+        default: ''
+      draft:
+        description: 'Create a draft release on GitHub'
+        type: boolean
+        required: false
+        default: true
+      prerelease:
+        description: 'Mark release as pre-release'
+        type: boolean
+        required: false
+        default: false
+      allow_same_version:
+        description: 'Allow building existing or equal version'
+        type: boolean
+        required: false
+        default: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build & Publish Release (${{ matrix.platform }})
+  validate-and-setup:
+    name: Validate Version & Setup Release
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.version_step.outputs.tag_name }}
+      clean_version: ${{ steps.version_step.outputs.clean_version }}
+      draft: ${{ steps.version_step.outputs.draft }}
+      prerelease: ${{ steps.version_step.outputs.prerelease }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute and Validate Target Version
+        id: version_step
+        run: |
+          # 1. Determine version input
+          INPUT_VER="${{ github.event.inputs.version }}"
+          REF_NAME="${{ github.ref_name }}"
+          
+          if [ -n "$INPUT_VER" ]; then
+            RAW_VER="$INPUT_VER"
+          elif [[ "$REF_NAME" == v* ]]; then
+            RAW_VER="$REF_NAME"
+          else
+            RAW_VER=$(node -p "require('./package.json').version")
+          fi
+
+          # Ensure 'v' prefix for tag
+          if [[ "$RAW_VER" == v* ]]; then
+            TAG_NAME="$RAW_VER"
+            CLEAN_VER="${RAW_VER#v}"
+          else
+            TAG_NAME="v$RAW_VER"
+            CLEAN_VER="$RAW_VER"
+          fi
+
+          echo "Target tag name: $TAG_NAME"
+          echo "Clean version: $CLEAN_VER"
+
+          # 2. Extract latest existing git tag if available
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1 || echo "")
+          echo "Latest existing git tag: $LATEST_TAG"
+
+          # 3. Determine draft and prerelease flags
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DRAFT_FLAG="${{ github.event.inputs.draft }}"
+            PRERELEASE_FLAG="${{ github.event.inputs.prerelease }}"
+          else
+            DRAFT_FLAG="false"
+            PRERELEASE_FLAG="false"
+          fi
+
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "clean_version=$CLEAN_VER" >> "$GITHUB_OUTPUT"
+          echo "draft=$DRAFT_FLAG" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE_FLAG" >> "$GITHUB_OUTPUT"
+
+  build-and-publish:
+    name: Build & Package (${{ matrix.platform }})
+    needs: [validate-and-setup]
     permissions:
       contents: write
     strategy:
@@ -71,16 +146,16 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      - name: Build Tauri Application & Generate Updater Artifacts
+      - name: Build Tauri Application & Generate Packages
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name || inputs.version }}
-          releaseName: 'SSHX ${{ github.ref_name || inputs.version }}'
-          releaseBody: 'Automated release of SSHX. See assets below for direct downloads and auto-updates.'
-          releaseDraft: false
-          prerelease: false
+          tagName: ${{ needs.validate-and-setup.outputs.tag_name }}
+          releaseName: 'SSHX ${{ needs.validate-and-setup.outputs.tag_name }}'
+          releaseBody: 'Automated release of SSHX desktop app. See assets below for direct downloads (.dmg, .deb, .AppImage, .msi, .exe).'
+          releaseDraft: ${{ needs.validate-and-setup.outputs.draft == 'true' }}
+          prerelease: ${{ needs.validate-and-setup.outputs.prerelease == 'true' }}
           args: ${{ matrix.args }}
