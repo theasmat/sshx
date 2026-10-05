@@ -8,14 +8,19 @@ import {
   BsCheckLg,
   BsArrowClockwise,
   BsKeyFill,
+  BsBoxArrowUpRight,
 } from "react-icons/bs";
-import { SshTestResult } from "../types";
+import { SshTestResult, SshHost } from "../types";
 import { api } from "../api";
+import { getGitProviderInfo } from "../utils/hostUtils";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 interface TestResultModalProps {
   isOpen: boolean;
   onClose: () => void;
   hostAlias: string;
+  /** Full host entry when available — used for provider-aware advice. */
+  host?: SshHost | null;
   result: SshTestResult | null;
   isLoading: boolean;
   onRetest?: (hostAlias: string) => void;
@@ -25,6 +30,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
   isOpen,
   onClose,
   hostAlias,
+  host,
   result,
   isLoading,
   onRetest,
@@ -47,6 +53,19 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
     (outputText.includes("Permission denied (publickey)") ||
       outputText.includes("publickey,password") ||
       outputText.includes("Permission denied"));
+
+  // Git hosting providers (GitHub/GitLab/Bitbucket) never accept ssh-copy-id —
+  // the public key must be registered in the provider's web settings instead.
+  const gitProvider = getGitProviderInfo(host || null);
+
+  const handleOpenProviderSettings = async () => {
+    if (!gitProvider?.settingsUrl) return;
+    try {
+      await openUrl(gitProvider.settingsUrl);
+    } catch {
+      window.open(gitProvider.settingsUrl, "_blank");
+    }
+  };
 
   const handleAutoFixHostKey = async () => {
     setIsFixingHost(true);
@@ -147,9 +166,34 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
                   <BsKeyFill className="w-4 h-4" />
                   <span>Authentication / Key Setup Tip</span>
                 </div>
-                <p className="text-[11px] text-gray-300 leading-relaxed">
-                  Remote server rejected public key authentication. You can install your public key directly to this server using the <strong className="text-white font-medium">"Install Key to Remote (ssh-copy-id)"</strong> button in the Host Details pane.
-                </p>
+                {gitProvider ? (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-gray-300 leading-relaxed">
+                      {gitProvider.name} rejected public key authentication, which means this
+                      public key is not registered on your {gitProvider.name} account yet.{" "}
+                      <strong className="text-white font-medium">ssh-copy-id does not work with {gitProvider.name}</strong> — add the key in the provider's SSH settings instead, then retest.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {gitProvider.settingsUrl && (
+                        <button
+                          type="button"
+                          onClick={handleOpenProviderSettings}
+                          className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                        >
+                          <BsBoxArrowUpRight className="w-3 h-3" />
+                          <span>{gitProvider.settingsLabel || `Open ${gitProvider.name} SSH settings`}</span>
+                        </button>
+                      )}
+                      <span className="text-[10px] text-gray-400">
+                        Tip: copy the public key from the host's "Setup &amp; Auth Guide".
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-gray-300 leading-relaxed">
+                    Remote server rejected public key authentication. You can install your public key directly to this server using the <strong className="text-white font-medium">"Install Key to Remote (ssh-copy-id)"</strong> button in the Host Details pane.
+                  </p>
+                )}
               </div>
             )}
 

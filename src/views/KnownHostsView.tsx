@@ -51,10 +51,12 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
     }
   }, [entries, selectedEntryLine]);
 
-  const handleDelete = async (host: string) => {
+  const handleDelete = async (host: string, lineNumber?: number) => {
     setDeletingHost(host);
     try {
-      await api.removeKnownHost(host);
+      // Pass the exact line number: hashed entries (|1|...) cannot be removed
+      // with `ssh-keygen -R` and would otherwise silently fail to delete.
+      await api.deleteKnownHost(host, lineNumber);
       onRefresh();
     } catch (err: any) {
       console.error(`Failed to remove host: ${err}`);
@@ -230,7 +232,7 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
                   </button>
 
                   <button
-                    onClick={() => handleDelete(selectedEntry.host)}
+                    onClick={() => handleDelete(selectedEntry.host, selectedEntry.line_number)}
                     disabled={deletingHost === selectedEntry.host}
                     className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-md border border-rose-500/30 font-semibold text-xs transition-colors cursor-pointer"
                   >

@@ -196,7 +196,7 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
             <div>
               <span className="font-semibold text-gray-200">Reversible Action</span>
               <p className="text-gray-400 text-[10px] mt-0.5 leading-relaxed">
-                A timestamped snapshot of your <code className="text-gray-300 font-mono">~/.ssh/config</code> will be saved automatically. You can restore this host anytime from Settings &gt; Backups.
+                An automatic backup snapshot of your <code className="text-gray-300 font-mono">~/.ssh/config</code> is saved before removal. You can restore this host anytime from Settings &gt; Backups.
               </p>
             </div>
           </div>
