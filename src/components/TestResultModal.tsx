@@ -10,7 +10,7 @@ import {
   BsKeyFill,
   BsBoxArrowUpRight,
 } from "react-icons/bs";
-import { SshTestResult, SshHost } from "../types";
+import { SshTestResult, SshHost, SshKeyInfo } from "../types";
 import { api } from "../api";
 import { getGitProviderInfo } from "../utils/hostUtils";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -21,6 +21,8 @@ interface TestResultModalProps {
   hostAlias: string;
   /** Full host entry when available — used for provider-aware advice. */
   host?: SshHost | null;
+  /** Key configured for the host (matched via IdentityFile), if any. */
+  keyInfo?: SshKeyInfo | null;
   result: SshTestResult | null;
   isLoading: boolean;
   onRetest?: (hostAlias: string) => void;
@@ -31,6 +33,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
   onClose,
   hostAlias,
   host,
+  keyInfo,
   result,
   isLoading,
   onRetest,
@@ -173,6 +176,19 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
                       public key is not registered on your {gitProvider.name} account yet.{" "}
                       <strong className="text-white font-medium">ssh-copy-id does not work with {gitProvider.name}</strong> — add the key in the provider's SSH settings instead, then retest.
                     </p>
+                    {keyInfo && (
+                      <div className="p-2 bg-black/40 border border-white/5 rounded-lg space-y-0.5">
+                        <div className="text-[10px] text-gray-400">
+                          This host offers the key <code className="font-mono text-amber-300">{keyInfo.file_name}</code>:
+                        </div>
+                        <div className="font-mono text-[10px] text-emerald-300 break-all select-all">
+                          {keyInfo.fingerprint_sha256}
+                        </div>
+                        <div className="text-[10px] text-gray-500 leading-snug">
+                          Compare this fingerprint with the keys listed in your {gitProvider.name} SSH settings — if it isn't there, that's the problem.
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       {gitProvider.settingsUrl && (
                         <button
