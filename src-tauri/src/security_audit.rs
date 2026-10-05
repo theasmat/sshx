@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use crate::config_parser::{get_ssh_dir, get_ssh_config_path, read_ssh_config};
+use crate::config_parser::{get_ssh_dir, get_ssh_config_path, read_ssh_config, write_ssh_config_safe};
 use crate::key_manager::list_ssh_keys;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -281,7 +281,9 @@ pub fn fix_selected_issues(requests: Vec<SelectiveFixRequest>) -> Result<Selecti
                     if let Ok(raw) = fs::read_to_string(&config_path) {
                         let (sanitized, count) = crate::config_parser::sanitize_raw_config_lines(&raw);
                         if count > 0 {
-                            if fs::write(&config_path, sanitized).is_ok() {
+                            // Route through the safe writer so an automatic
+                            // backup snapshot is taken before modifying the config.
+                            if write_ssh_config_safe(&sanitized).is_ok() {
                                 messages.push(format!("Sanitized ~/.ssh/config: commented out {} incomplete directive(s)", count));
                                 fixed_count += 1;
                             }
@@ -305,13 +307,13 @@ pub fn fix_selected_issues(requests: Vec<SelectiveFixRequest>) -> Result<Selecti
 pub fn fix_all_permissions() -> Result<(), String> {
     let ssh_dir = get_ssh_dir();
 
-    // Sanitize config lines if syntax errors exist
+    // Sanitize config lines if syntax errors exist (with automatic backup)
     let config_path = get_ssh_config_path();
     if config_path.exists() {
         if let Ok(raw) = fs::read_to_string(&config_path) {
             let (sanitized, fixed_count) = crate::config_parser::sanitize_raw_config_lines(&raw);
             if fixed_count > 0 {
-                let _ = fs::write(&config_path, sanitized);
+                let _ = write_ssh_config_safe(&sanitized);
             }
         }
     }
@@ -319,6 +321,7 @@ pub fn fix_all_permissions() -> Result<(), String> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
+        use std::collections::HashSet;
 
         // Set ~/.ssh to 700
         if ssh_dir.exists() {
@@ -330,18 +333,48 @@ pub fn fix_all_permissions() -> Result<(), String> {
             let _ = fs::set_permissions(&config_path, fs::Permissions::from_mode(0o600));
         }
 
-        // Set all private keys to 600, public keys to 644
-        if let Ok(entries) = fs::read_dir(&ssh_dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_file() {
-                    let name = entry.file_name().to_string_lossy().to_string();
-                    if name.ends_with(".pub") || name == "known_hosts" || name == "authorized_keys" {
-                        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o644));
-                    } else if !name.starts_with('.') {
-                        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
-                    }
-                }
+        // Only touch files we positively identify as SSH key material.
+        // Never chmod unknown files in ~/.ssh (e.g. environment, rc, or user data).
+        let keys = list_ssh_keys().unwrap_or_default();
+        let private_paths: HashSet<String> = keys.iter().map(|k| k.private_path.clone()).collect();
+        let public_paths: HashSet<String> = keys
+            .iter()
+            .filter_map(|k| k.public_path.clone())
+            .collect();
+
+        for p in &private_paths {
+            let path = std::path::Path::new(p);
+            if path.is_file() {
+                let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
+            }
+        }
+        for p in &public_paths {
+            let path = std::path::Path::new(p);
+            if path.is_file() {
+                let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o644));
+            }
+        }
+
+        // Known SSH-managed files with well-known safe modes
+        for (name, mode) in [
+            ("known_hosts", 0o644),
+            ("known_hosts.old", 0o644),
+            ("authorized_keys", 0o644),
+        ] {
+            let path = ssh_dir.join(name);
+            if path.is_file() {
+                let _ = fs::set_permissions(&path, fs::Permissions::from_mode(mode));
+            }
+        }
+
+        // Backup snapshots created by sshx itself
+        for name in [
+            crate::config_parser::SSHX_BACKUP_PRIMARY,
+            crate::config_parser::SSHX_BACKUP_PREVIOUS,
+        ] {
+            let path = ssh_dir.join(name);
+            if path.is_file() {
+                let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
             }
         }
     }
