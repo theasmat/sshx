@@ -307,7 +307,18 @@ pub fn serialize_ssh_config(
         }
         if let Some(io) = h.identities_only {
             if io {
-                out.push_str("    IdentitiesOnly yes\n");
+                // Guard against a broken combination: `IdentitiesOnly yes`
+                // without an `IdentityFile` makes ssh offer NO keys at all
+                // (agent and default keys are suppressed), which always ends
+                // in "Permission denied (publickey)". Never persist that.
+                let has_identity_file = h
+                    .identity_file
+                    .as_ref()
+                    .map(|s| !s.trim().is_empty())
+                    .unwrap_or(false);
+                if has_identity_file {
+                    out.push_str("    IdentitiesOnly yes\n");
+                }
             }
         }
         if let Some(ref pj) = h.proxy_jump {
@@ -790,6 +801,38 @@ Match host *.internal.example.com
         let serialized =
             serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
         assert!(serialized.contains("ClearAllForwardings\n"));
+    }
+
+    #[test]
+    fn test_identities_only_without_identity_file_is_not_persisted() {
+        // `IdentitiesOnly yes` with no `IdentityFile` makes ssh offer zero
+        // keys (agent + defaults suppressed) -> guaranteed "Permission denied".
+        // The serializer must never write that broken combination.
+        let sample = "Host broken\n    HostName example.com\n    IdentitiesOnly yes\n";
+        let parsed = parse_ssh_config(sample, "/tmp/config");
+        assert_eq!(parsed.hosts.len(), 1);
+        assert_eq!(parsed.hosts[0].identities_only, Some(true));
+        assert_eq!(parsed.hosts[0].identity_file, None);
+
+        let serialized =
+            serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
+        assert!(
+            !serialized.contains("IdentitiesOnly"),
+            "must not persist IdentitiesOnly yes without an IdentityFile:\n{}",
+            serialized
+        );
+
+        // With an IdentityFile present, it must still be written.
+        let sample2 =
+            "Host ok\n    HostName example.com\n    IdentityFile ~/.ssh/id_ed25519\n    IdentitiesOnly yes\n";
+        let parsed2 = parse_ssh_config(sample2, "/tmp/config");
+        let serialized2 = serialize_ssh_config(
+            &parsed2.global_comments,
+            &parsed2.global_directives,
+            &parsed2.hosts,
+        );
+        assert!(serialized2.contains("IdentityFile ~/.ssh/id_ed25519"));
+        assert!(serialized2.contains("IdentitiesOnly yes"));
     }
 
     #[test]

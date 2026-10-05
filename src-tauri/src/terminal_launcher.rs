@@ -31,6 +31,7 @@ pub fn detect_terminals() -> Vec<TerminalAppInfo> {
             ("alacritty", "Alacritty", "/Applications/Alacritty.app"),
             ("kitty", "kitty", "/Applications/kitty.app"),
             ("warp", "Warp", "/Applications/Warp.app"),
+            ("cmux", "cmux", "/Applications/cmux.app"),
             ("terminal", "Terminal.app", "/System/Applications/Utilities/Terminal.app"),
         ];
 
@@ -140,6 +141,44 @@ pub fn launch_ssh_session(terminal_id: &str, host_alias: &str) -> Result<(), Str
                     .arg(format!("ssh {}", host_alias))
                     .spawn()
                     .map_err(|e| format!("Failed to launch Warp: {}", e))?;
+            }
+            "cmux" => {
+                // cmux ships a CLI at <app>/Contents/Resources/bin/cmux with
+                // `new-workspace --command <cmd>`. Note: cmux's control socket
+                // only accepts commands from processes it started, so the CLI
+                // may be denied when called from here — fall back to just
+                // opening the app in that case.
+                let system_cli = Path::new("/Applications/cmux.app/Contents/Resources/bin/cmux");
+                let user_cli = dirs::home_dir()
+                    .map(|h| h.join("Applications/cmux.app/Contents/Resources/bin/cmux"))
+                    .unwrap_or_default();
+                let cli_bin: Option<std::path::PathBuf> = if system_cli.exists() {
+                    Some(system_cli.to_path_buf())
+                } else if user_cli.exists() {
+                    Some(user_cli)
+                } else {
+                    None
+                };
+
+                let mut launched_via_cli = false;
+                if let Some(bin) = cli_bin {
+                    if let Ok(status) = Command::new(&bin)
+                        .arg("new-workspace")
+                        .arg("--command")
+                        .arg(format!("ssh {}", host_alias))
+                        .status()
+                    {
+                        launched_via_cli = status.success();
+                    }
+                }
+
+                if !launched_via_cli {
+                    let _ = Command::new("open")
+                        .arg("-a")
+                        .arg("cmux")
+                        .spawn()
+                        .map_err(|e| format!("Failed to launch cmux: {}", e))?;
+                }
             }
             _ => {
                 // Default to Terminal.app via osascript

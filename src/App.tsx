@@ -100,12 +100,14 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
     isOpen: boolean;
     hostAlias: string;
     host: SshHost | null;
+    keyInfo: SshKeyInfo | null;
     result: SshTestResult | null;
     isLoading: boolean;
   }>({
     isOpen: false,
     hostAlias: "",
     host: null,
+    keyInfo: null,
     result: null,
     isLoading: false,
   });
@@ -407,10 +409,22 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
 
   // Test Connection
   const handleTestConnection = async (host: SshHost) => {
+    // Resolve the key configured for this host so the result modal can show
+    // its fingerprint for comparison with the provider's registered keys.
+    const matchedKey =
+      (host.identity_file &&
+        keys.find(
+          (k) =>
+            k.private_path === host.identity_file ||
+            k.file_name === host.identity_file ||
+            k.file_name === host.identity_file?.split("/").pop()
+        )) ||
+      null;
     setTestModalState({
       isOpen: true,
       hostAlias: host.host_pattern,
       host,
+      keyInfo: matchedKey,
       result: null,
       isLoading: true,
     });
@@ -671,6 +685,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
         }
         hostAlias={testModalState.hostAlias}
         host={testModalState.host}
+        keyInfo={testModalState.keyInfo}
         result={testModalState.result}
         isLoading={testModalState.isLoading}
       />
