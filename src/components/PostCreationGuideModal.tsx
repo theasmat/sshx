@@ -318,10 +318,19 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
   const handleRunDirectTest = async () => {
     if (!host) return;
+    const directHost = (host.host_name || "").trim();
+    if (!directHost) {
+      setTestResult({
+        success: false,
+        exit_code: null,
+        output: "Direct test unavailable: this host has no HostName/IP configured.",
+        duration_ms: 0,
+      });
+      return;
+    }
     setIsTesting(true);
     setTestResult(null);
     try {
-      const directHost = host.host_name || "github.com";
       const res = await api.testDirectConnection(
         directHost,
         host.user || undefined,

@@ -99,11 +99,13 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
   const [testModalState, setTestModalState] = useState<{
     isOpen: boolean;
     hostAlias: string;
+    host: SshHost | null;
     result: SshTestResult | null;
     isLoading: boolean;
   }>({
     isOpen: false,
     hostAlias: "",
+    host: null,
     result: null,
     isLoading: false,
   });
@@ -408,6 +410,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
     setTestModalState({
       isOpen: true,
       hostAlias: host.host_pattern,
+      host,
       result: null,
       isLoading: true,
     });
@@ -667,6 +670,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
           setTestModalState((prev) => ({ ...prev, isOpen: false }))
         }
         hostAlias={testModalState.hostAlias}
+        host={testModalState.host}
         result={testModalState.result}
         isLoading={testModalState.isLoading}
       />

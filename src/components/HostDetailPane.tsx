@@ -23,6 +23,8 @@ import { BrandLogo } from "./BrandLogo";
 import { SshHost, SshKeyInfo } from "../types";
 import { api } from "../api";
 import { getAllPresets } from "../presets";
+import { getGitProviderInfo } from "../utils/hostUtils";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { PostCreationGuideModal } from "./PostCreationGuideModal";
 
 interface HostDetailPaneProps {
@@ -49,9 +51,13 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
   onOpenRawConfig,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedPubKey, setCopiedPubKey] = useState(false);
   const [isInstallingKey, setIsInstallingKey] = useState(false);
   const [installMsg, setInstallMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+
+  const gitProvider = useMemo(() => getGitProviderInfo(host), [host]);
+  const isGit = gitProvider !== null;
 
   const matchedKey = useMemo(() => {
     if (!host?.identity_file || !keys) return null;
@@ -97,13 +103,32 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
   }
 
   const getSshCommand = () => {
-    return `ssh ${host.host_pattern}`;
+    // Use only the first alias token — a Host line may list several patterns.
+    const firstAlias = host.host_pattern.trim().split(/\s+/)[0] || host.host_pattern;
+    return `ssh ${firstAlias}`;
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(getSshCommand());
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleCopyPublicKey = () => {
+    const content = matchedKey?.public_key_content?.trim();
+    if (!content) return;
+    navigator.clipboard.writeText(content);
+    setCopiedPubKey(true);
+    setTimeout(() => setCopiedPubKey(false), 1500);
+  };
+
+  const handleOpenProviderSettings = async () => {
+    if (!gitProvider?.settingsUrl) return;
+    try {
+      await openUrl(gitProvider.settingsUrl);
+    } catch {
+      window.open(gitProvider.settingsUrl, "_blank");
+    }
   };
 
   const handleInstallKey = async () => {
@@ -234,19 +259,54 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
           </button>
 
           {/* 1-Click Install Key to Remote Server (ssh-copy-id) */}
-          <button
-            onClick={handleInstallKey}
-            disabled={isInstallingKey}
-            className="col-span-2 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
-            title="Install public key onto remote server's ~/.ssh/authorized_keys"
-          >
-            <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
-            <span>
-              {isInstallingKey
-                ? "Authorizing Key..."
-                : "Install Key (ssh-copy-id)"}
-            </span>
-          </button>
+          {/* Git hosting providers don't accept ssh-copy-id — show key copy + settings link instead */}
+          {isGit ? (
+            <div className="col-span-2 space-y-1.5">
+              <div className="flex gap-1.5">
+                <button
+                  onClick={handleCopyPublicKey}
+                  disabled={!matchedKey?.public_key_content}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
+                  title="Copy the public key to register it in your provider's SSH settings"
+                >
+                  {copiedPubKey ? (
+                    <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <BsCopy className="w-3.5 h-3.5 text-blue-400" />
+                  )}
+                  <span>{copiedPubKey ? "Public Key Copied" : "Copy Public Key"}</span>
+                </button>
+                {gitProvider?.settingsUrl && (
+                  <button
+                    onClick={handleOpenProviderSettings}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer text-xs"
+                    title={`Open ${gitProvider.name} SSH key settings`}
+                  >
+                    <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Add Key to {gitProvider.name}</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-500 leading-snug px-0.5">
+                {gitProvider?.name || "Git providers"} don't support ssh-copy-id — paste the
+                public key into your account's SSH settings, or follow the Setup &amp; Auth Guide.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleInstallKey}
+              disabled={isInstallingKey}
+              className="col-span-2 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
+              title="Install public key onto remote server's ~/.ssh/authorized_keys"
+            >
+              <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
+              <span>
+                {isInstallingKey
+                  ? "Authorizing Key..."
+                  : "Install Key (ssh-copy-id)"}
+              </span>
+            </button>
+          )}
         </div>
 
         {installMsg && (

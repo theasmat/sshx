@@ -7,6 +7,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub struct SshHost {
     pub id: String,
     pub host_pattern: String,
+    /// True when this block was a `Match` block (not a `Host` block).
+    /// Preserved so re-serializing never corrupts `Match` criteria into `Host` lines.
+    #[serde(default)]
+    pub is_match: bool,
     pub host_name: Option<String>,
     pub user: Option<String>,
     pub port: Option<u16>,
@@ -108,20 +112,38 @@ pub fn parse_ssh_config(content: &str, file_path: &str) -> SshConfigFileData {
             continue;
         }
 
-        // Split directive and value
+        // Split directive and value.
+        // OpenSSH allows the keyword and argument to be separated by whitespace
+        // OR by '=' (e.g. "HostName=example.com", "Port=2222").
         let parts: Vec<&str> = trimmed.split_whitespace().collect();
         if parts.is_empty() {
             continue;
         }
 
-        let directive = parts[0];
-        let val = if parts.len() > 1 {
-            trimmed[directive.len()..].trim()
+        let (directive, val): (String, String) = if let Some(eq_pos) = parts[0].find('=') {
+            let kw = parts[0][..eq_pos].to_string();
+            let mut v = parts[0][eq_pos + 1..].to_string();
+            let rest = trimmed[parts[0].len()..].trim();
+            if !rest.is_empty() {
+                if !v.is_empty() {
+                    v.push(' ');
+                }
+                v.push_str(rest);
+            }
+            (kw, v)
         } else {
-            ""
+            let directive = parts[0];
+            let val = if parts.len() > 1 {
+                trimmed[directive.len()..].trim()
+            } else {
+                ""
+            };
+            (directive.to_string(), val.to_string())
         };
 
-        if directive.eq_ignore_ascii_case("Host") || directive.eq_ignore_ascii_case("Match") {
+        let is_host_line = directive.eq_ignore_ascii_case("Host");
+        let is_match_line = directive.eq_ignore_ascii_case("Match");
+        if is_host_line || is_match_line {
             // Commit previous host
             if let Some(h) = current_host.take() {
                 hosts.push(h);
@@ -133,6 +155,7 @@ pub fn parse_ssh_config(content: &str, file_path: &str) -> SshConfigFileData {
             current_host = Some(SshHost {
                 id,
                 host_pattern,
+                is_match: is_match_line,
                 host_name: None,
                 user: None,
                 port: None,
@@ -257,7 +280,10 @@ pub fn serialize_ssh_config(
             out.push_str(&format!("# @sshx: {}\n", meta_parts.join(" ")));
         }
 
-        out.push_str(&format!("Host {}\n", h.host_pattern.trim()));
+        // Preserve the original block kind: a `Match` block must never be
+        // rewritten as `Host` (that would silently change its semantics).
+        let block_keyword = if h.is_match { "Match" } else { "Host" };
+        out.push_str(&format!("{} {}\n", block_keyword, h.host_pattern.trim()));
 
         if let Some(ref hn) = h.host_name {
             if !hn.trim().is_empty() {
@@ -328,8 +354,17 @@ pub fn serialize_ssh_config(
             }
         }
         for (k, v) in &h.custom_directives {
-            if !k.trim().is_empty() && !v.trim().is_empty() {
-                out.push_str(&format!("    {} {}\n", k.trim(), v.trim()));
+            let k = k.trim();
+            let v = v.trim();
+            if k.is_empty() {
+                continue;
+            }
+            if v.is_empty() {
+                // Valueless directives (e.g. ClearAllForwardings) are valid
+                // OpenSSH syntax and must be preserved as bare keywords.
+                out.push_str(&format!("    {}\n", k));
+            } else {
+                out.push_str(&format!("    {} {}\n", k, v));
             }
         }
     }
@@ -617,9 +652,11 @@ pub fn remove_host_entry(host_id: &str, host_pattern: Option<&str>) -> Result<Ss
         }
     }
 
-    // 3. Fallback prefix match if still not found
+    // 3. Fallback prefix match if still not found.
+    // The id format is "{pattern}_{line_idx}", so split off the LAST underscore
+    // to recover the full pattern (patterns themselves may contain underscores).
     if config.hosts.len() == original_len && !host_id.is_empty() {
-        if let Some((prefix, _)) = host_id.split_once('_') {
+        if let Some((prefix, _)) = host_id.rsplit_once('_') {
             if let Some(pos) = config.hosts.iter().position(|h| h.host_pattern.eq_ignore_ascii_case(prefix)) {
                 config.hosts.remove(pos);
             }
@@ -691,6 +728,68 @@ Host github-personal
         assert!(serialized.contains("Host prod-web-01"));
         assert!(serialized.contains("Host github-personal"));
         assert!(serialized.contains("tags=prod,aws"));
+    }
+
+    #[test]
+    fn test_match_blocks_are_preserved_not_rewritten_as_host() {
+        let sample = r#"Host web-01
+    HostName 10.0.0.5
+    User ubuntu
+
+Match all
+    ServerAliveInterval 60
+
+Match host *.internal.example.com
+    ProxyJump bastion
+"#;
+        let parsed = parse_ssh_config(sample, "/tmp/config");
+        assert_eq!(parsed.hosts.len(), 3);
+        assert!(!parsed.hosts[0].is_match);
+        assert!(parsed.hosts[1].is_match);
+        assert_eq!(parsed.hosts[1].host_pattern, "all");
+        assert!(parsed.hosts[2].is_match);
+        assert_eq!(parsed.hosts[2].host_pattern, "host *.internal.example.com");
+
+        let serialized =
+            serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
+        assert!(serialized.contains("Match all\n"));
+        assert!(serialized.contains("Match host *.internal.example.com\n"));
+        assert!(!serialized.contains("Host all\n"));
+        assert_eq!(serialized.matches("Host web-01\n").count(), 1);
+    }
+
+    #[test]
+    fn test_equals_separator_syntax_is_preserved() {
+        let sample = "Host eq-test\n    HostName=example.com\n    Port=2222\n    User=deploy\n";
+        let parsed = parse_ssh_config(sample, "/tmp/config");
+        assert_eq!(parsed.hosts.len(), 1);
+        let h = &parsed.hosts[0];
+        assert_eq!(h.host_name, Some("example.com".to_string()));
+        assert_eq!(h.port, Some(2222));
+        assert_eq!(h.user, Some("deploy".to_string()));
+        // No directive should have been swallowed into custom_directives with an empty value
+        assert!(!h.custom_directives.iter().any(|(_, v)| v.is_empty()));
+
+        let serialized =
+            serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
+        assert!(serialized.contains("HostName example.com"));
+        assert!(serialized.contains("Port 2222"));
+        assert!(serialized.contains("User deploy"));
+    }
+
+    #[test]
+    fn test_valueless_directives_are_preserved() {
+        let sample = "Host fwd-test\n    HostName 10.0.0.9\n    ClearAllForwardings\n";
+        let parsed = parse_ssh_config(sample, "/tmp/config");
+        assert_eq!(parsed.hosts.len(), 1);
+        assert!(parsed.hosts[0]
+            .custom_directives
+            .iter()
+            .any(|(k, _)| k.eq_ignore_ascii_case("ClearAllForwardings")));
+
+        let serialized =
+            serialize_ssh_config(&parsed.global_comments, &parsed.global_directives, &parsed.hosts);
+        assert!(serialized.contains("ClearAllForwardings\n"));
     }
 
     #[test]
