@@ -170,6 +170,32 @@ pub fn run_security_audit() -> Result<SecurityAuditReport, String> {
                 fix_preview: None,
             });
         }
+
+        // Dangling IdentitiesOnly: `IdentitiesOnly yes` with no IdentityFile
+        // makes OpenSSH offer zero keys (agent and default keys are
+        // suppressed), so every connection fails with
+        // "Permission denied (publickey)" even when the right key exists.
+        let has_identity_file = h
+            .identity_file
+            .as_ref()
+            .map(|s| !s.trim().is_empty())
+            .unwrap_or(false);
+        if h.identities_only == Some(true) && !has_identity_file {
+            issues.push(AuditIssue {
+                id: format!("dangling_identities_only_{}", h.host_pattern),
+                severity: "warning".to_string(),
+                category: "hosts".to_string(),
+                title: format!(
+                    "Broken auth config: '{}' has IdentitiesOnly without a key",
+                    h.host_pattern
+                ),
+                description: "IdentitiesOnly yes with no IdentityFile makes OpenSSH offer no keys at all, so connections always fail with 'Permission denied (publickey)' even though a valid key exists. Either attach the key via IdentityFile or remove the IdentitiesOnly line.".to_string(),
+                path: Some(h.host_pattern.clone()),
+                fixable: true,
+                fix_action: Some("fix_dangling_identities_only".to_string()),
+                fix_preview: Some("Remove the ineffective 'IdentitiesOnly yes' line".to_string()),
+            });
+        }
     }
 
     // 5. Check for malformed / empty directives in raw config
@@ -285,6 +311,35 @@ pub fn fix_selected_issues(requests: Vec<SelectiveFixRequest>) -> Result<Selecti
                             // backup snapshot is taken before modifying the config.
                             if write_ssh_config_safe(&sanitized).is_ok() {
                                 messages.push(format!("Sanitized ~/.ssh/config: commented out {} incomplete directive(s)", count));
+                                fixed_count += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            "fix_dangling_identities_only" => {
+                // `IdentitiesOnly yes` with no `IdentityFile` makes ssh offer
+                // zero keys; the line is ineffective, so drop it (with backup).
+                if let Some(ref pattern) = req.path {
+                    if let Ok(mut config) = crate::config_parser::read_ssh_config() {
+                        let mut changed = false;
+                        for h in &mut config.hosts {
+                            if h.host_pattern == *pattern && h.identities_only == Some(true) {
+                                h.identities_only = None;
+                                changed = true;
+                            }
+                        }
+                        if changed {
+                            let serialized = crate::config_parser::serialize_ssh_config(
+                                &config.global_comments,
+                                &config.global_directives,
+                                &config.hosts,
+                            );
+                            if write_ssh_config_safe(&serialized).is_ok() {
+                                messages.push(format!(
+                                    "Removed ineffective 'IdentitiesOnly yes' from host '{}' (no IdentityFile configured)",
+                                    pattern
+                                ));
                                 fixed_count += 1;
                             }
                         }
