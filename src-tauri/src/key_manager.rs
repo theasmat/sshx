@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::process::Command;
+use std::io::Write;
+use std::process::{Command, Stdio};
 use crate::config_parser::get_ssh_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -170,10 +171,39 @@ pub fn generate_ssh_key(req: GenerateKeyRequest) -> Result<SshKeyInfo, String> {
     cmd.arg("-f").arg(&key_path_str);
     cmd.arg("-C").arg(&req.comment);
 
-    let passphrase = req.passphrase.unwrap_or_default();
-    cmd.arg("-N").arg(&passphrase);
+    // SECURITY: never pass the passphrase via argv (it would be visible in
+    // `ps` output). Instead, feed it to ssh-keygen's stdin prompts.
+    // Detach from any controlling terminal first so ssh-keygen cannot bypass
+    // our pipe by opening /dev/tty (e.g. when the app was launched from a shell).
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        unsafe {
+            cmd.pre_exec(|| {
+                libc::setsid();
+                Ok(())
+            });
+        }
+    }
+    cmd.stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-    let output = cmd.output().map_err(|e| format!("Failed to execute ssh-keygen: {}", e))?;
+    let passphrase = req.passphrase.unwrap_or_default();
+
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Failed to execute ssh-keygen: {}", e))?;
+
+    // Answer the two passphrase prompts: "Enter passphrase ..." and
+    // "Enter same passphrase again: ". An empty passphrase is just "\n\n".
+    if let Some(mut stdin) = child.stdin.take() {
+        let _ = stdin.write_all(format!("{}\n{}\n", passphrase, passphrase).as_bytes());
+    }
+
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("Failed to read ssh-keygen output: {}", e))?;
 
     if !output.status.success() {
         return Err(String::from_utf8_lossy(&output.stderr).to_string());
