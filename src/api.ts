@@ -314,7 +314,11 @@ export const api = {
 
   saveHost: async (hostToSave: SshHost): Promise<SshConfigFileData> => {
     if (!isTauri()) {
-      const idx = mockHosts.findIndex((h) => h.id === hostToSave.id);
+      let idx = mockHosts.findIndex((h) => h.id === hostToSave.id);
+      if (idx < 0 && hostToSave.host_pattern?.trim()) {
+        const pattern = hostToSave.host_pattern.trim();
+        idx = mockHosts.findIndex((h) => h.host_pattern?.trim() === pattern);
+      }
       if (idx >= 0) {
         mockHosts[idx] = hostToSave;
       } else {
@@ -323,7 +327,19 @@ export const api = {
       return getMockConfigData();
     }
     const current = await invoke<SshConfigFileData>("get_ssh_config");
-    const existingIdx = current.hosts.findIndex((h) => h.id === hostToSave.id);
+    // Match by id first (stable backend ids), then fall back to an exact
+    // host_pattern match. The fallback is essential: newly created hosts carry
+    // an ephemeral client-side id (e.g. "host_169...") that never matches the
+    // backend's regenerated ids, so without it every re-save (e.g. the
+    // pre-save before the Setup Guide + the save when the guide closes) would
+    // append a DUPLICATE Host block to ~/.ssh/config.
+    let existingIdx = current.hosts.findIndex((h) => h.id === hostToSave.id);
+    if (existingIdx < 0 && hostToSave.host_pattern?.trim()) {
+      const pattern = hostToSave.host_pattern.trim();
+      existingIdx = current.hosts.findIndex(
+        (h) => h.host_pattern?.trim() === pattern
+      );
+    }
     let updatedHosts: SshHost[];
     if (existingIdx >= 0) {
       updatedHosts = [...current.hosts];

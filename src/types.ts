@@ -11,6 +11,8 @@ export type NavTab =
 export interface SshHost {
   id: string;
   host_pattern: string;
+  /** True when this block was a `Match` block in ~/.ssh/config (not a `Host` block). */
+  is_match?: boolean | null;
   host_name?: string | null;
   user?: string | null;
   port?: number | null;
