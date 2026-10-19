@@ -220,15 +220,34 @@ export function isBareHostnameAlias(alias: string, hostName?: string | null): bo
   return !!a && !!h && a === h && /(github|gitlab|bitbucket)/.test(h);
 }
 
-/** Hosts whose IdentityFile points at this key (full path, ~/.ssh/<name>, or same file name). */
+/** Stable identity of a key path so `~/.ssh/k` and `/Users/me/.ssh/k` compare equal. */
+export function keyIdentity(path: string): string {
+  const p = path.trim();
+  if (p.startsWith("~/.ssh/")) return p.slice("~/.ssh/".length);
+  const i = p.lastIndexOf("/.ssh/");
+  return i >= 0 ? p.slice(i + "/.ssh/".length) : p;
+}
+
+/** Hosts whose IdentityFile points at this key, however the path is written. */
 export function hostsUsingKey(key: Pick<SshKeyInfo, "private_path" | "file_name">, hosts: SshHost[]): SshHost[] {
+  const target = keyIdentity(key.private_path);
   return hosts.filter((h) => {
     const id = (h.identity_file || "").trim();
-    if (!id) return false;
-    return (
-      id === key.private_path ||
-      id === `~/.ssh/${key.file_name}` ||
-      (id.split("/").pop() || id) === key.file_name
-    );
+    return !!id && (keyIdentity(id) === target || (id.split("/").pop() || id) === key.file_name);
   });
+}
+
+/** Hosts (other than `currentId`) that use this key on the same server, e.g. another GitHub account's alias. */
+export function keyConflictHosts(
+  identityFile: string,
+  hostName: string | null | undefined,
+  hosts: SshHost[],
+  currentId?: string
+): SshHost[] {
+  const server = (hostName || "").trim().toLowerCase();
+  if (!identityFile.trim() || !server) return [];
+  const probe = { private_path: identityFile, file_name: identityFile.split("/").pop() || identityFile };
+  return hostsUsingKey(probe, hosts).filter(
+    (h) => h.id !== currentId && (h.host_name || "").trim().toLowerCase() === server
+  );
 }

@@ -12,7 +12,7 @@ import { RawConfigView } from "./views/RawConfigView";
 import { SettingsView } from "./views/SettingsView";
 import { Toaster } from "./components/Toaster";
 import { ConfirmDialog } from "./components/ConfirmDialog";
-import { parseGitAccount } from "./utils/hostUtils";
+import { parseGitAccount, isGitHost, firstAlias } from "./utils/hostUtils";
 import { TestResultModal } from "./components/TestResultModal";
 import { DeleteHostConfirmationModal } from "./components/DeleteHostConfirmationModal";
 import {
@@ -457,6 +457,42 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
     });
   };
 
+  // Warn when two aliases on one server log in as the same account (a key was reused).
+  const warnIfSameAccount = (host: SshHost, account: string) => {
+    const twin = (configData?.hosts || []).find(
+      (o) =>
+        o.id !== host.id &&
+        (o.host_name || "").toLowerCase() === (host.host_name || "").toLowerCase() &&
+        hostAccounts[o.id] === account
+    );
+    if (twin) {
+      toast.error(
+        `${firstAlias(host)} signs in as @${account}, the same account as ${firstAlias(twin)}. Each account needs its own key.`
+      );
+      return true;
+    }
+    return false;
+  };
+
+  // After saving a git host, check which account its key signs in as.
+  const verifyIdentity = async (host: SshHost) => {
+    if (!isGitHost(host) || !host.identity_file) return;
+    try {
+      const res = await api.testHost(firstAlias(host));
+      const account = parseGitAccount(res.output);
+      if (account) {
+        recordAccount(host.id, res.output);
+      const detected = parseGitAccount(res.output);
+      if (detected) warnIfSameAccount(host, detected);
+        if (!warnIfSameAccount(host, account)) toast.success(`${firstAlias(host)} signs in as @${account}`);
+      } else if (!res.success) {
+        toast.info(`Add ${firstAlias(host)}'s public key to your git account, then press Test to confirm.`);
+      }
+    } catch {
+      /* verification is best effort */
+    }
+  };
+
   // Test every concrete host one after another; wildcard / Match blocks are skipped.
   const handleTestAllHosts = async () => {
     const targets = (configData?.hosts || []).filter(
@@ -591,6 +627,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
       setSelectedHostId(hostToSave.id);
       setEditingHost(null);
       setActiveTab("hosts");
+      void verifyIdentity(hostToSave);
     } catch (err: any) {
       toast.error(`Failed to save host: ${err}`);
     }
@@ -704,6 +741,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
               onRefreshKeys={loadAllData}
               onConnect={handleConnect}
               onOpenRawConfig={() => setActiveTab("raw-config")}
+              hostAccounts={hostAccounts}
             />
           )}
 

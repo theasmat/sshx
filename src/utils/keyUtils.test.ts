@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  hostsUsingKey,
+  keyConflictHosts,
   isBareHostnameAlias,
+  keyIdentity,
   keyNameAlternatives,
   providerSlug,
   suggestHostAlias,
   suggestKeyComment,
   suggestKeyName,
 } from "./keyUtils";
-import { SshKeyInfo } from "../types";
+import { SshHost, SshKeyInfo } from "../types";
 
 const key = (file_name: string): SshKeyInfo => ({
   file_name,
@@ -53,5 +56,49 @@ describe("suggestKeyComment / alias helpers", () => {
     expect(isBareHostnameAlias("github.com", "github.com")).toBe(true);
     expect(isBareHostnameAlias("github-work", "github.com")).toBe(false);
     expect(isBareHostnameAlias("my.box", "my.box")).toBe(false);
+  });
+});
+
+describe("keyIdentity / hostsUsingKey", () => {
+  it("treats ~/.ssh/k and /abs/.ssh/k as the same key", () => {
+    expect(keyIdentity("~/.ssh/id_x")).toBe("id_x");
+    expect(keyIdentity("/Users/as/.ssh/id_x")).toBe("id_x");
+    expect(keyIdentity("/keys/other")).toBe("/keys/other");
+  });
+
+  it("finds every host using a key however its path is written", () => {
+    const h = (id: string, identity_file: string): SshHost => ({
+      id,
+      host_pattern: id,
+      identity_file,
+      local_forward: [],
+      remote_forward: [],
+      custom_directives: [],
+      tags: [],
+      comments: [],
+    });
+    const hosts = [h("iam", "~/.ssh/id_work"), h("orvis", "/Users/as/.ssh/id_work"), h("other", "~/.ssh/id_other")];
+    expect(hostsUsingKey(key("id_work"), hosts).map((x) => x.id)).toEqual(["iam", "orvis"]);
+  });
+});
+
+describe("keyConflictHosts", () => {
+  const h = (id: string, host_name: string, identity_file: string): SshHost => ({
+    id,
+    host_pattern: id,
+    host_name,
+    identity_file,
+    local_forward: [],
+    remote_forward: [],
+    custom_directives: [],
+    tags: [],
+    comments: [],
+  });
+  const hosts = [h("iam", "github.com", "~/.ssh/id_work"), h("srv", "10.0.0.1", "~/.ssh/id_work")];
+
+  it("flags only hosts on the same server, ignoring the current host", () => {
+    expect(keyConflictHosts("/Users/as/.ssh/id_work", "GitHub.com", hosts).map((x) => x.id)).toEqual(["iam"]);
+    expect(keyConflictHosts("~/.ssh/id_work", "github.com", hosts, "iam")).toEqual([]);
+    expect(keyConflictHosts("~/.ssh/id_work", "", hosts)).toEqual([]);
   });
 });

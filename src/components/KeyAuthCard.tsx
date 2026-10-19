@@ -5,7 +5,7 @@ import {
   BsCheckCircleFill,
 } from "react-icons/bs";
 import { Button, Badge, Segmented, Switch } from "./ui";
-import { SshKeyInfo, PresetTemplate } from "../types";
+import { SshHost, SshKeyInfo, PresetTemplate } from "../types";
 import { api } from "../api";
 import {
   isKeyNameDuplicate,
@@ -14,6 +14,8 @@ import {
   suggestKeyName,
   suggestKeyComment,
   keyNameAlternatives,
+  hostsUsingKey,
+  keyConflictHosts,
 } from "../utils/keyUtils";
 
 interface KeyAuthCardProps {
@@ -26,6 +28,16 @@ interface KeyAuthCardProps {
   /** Account label (e.g. "work") used to name the key and its comment. */
   account?: string | null;
   preset?: PresetTemplate | null;
+  /** How this host authenticates: its own new account/key, an existing key, or agent defaults. */
+  mode: KeyMode;
+  onModeChange: (mode: KeyMode) => void;
+  existingHosts: SshHost[];
+  currentHostId?: string;
+  hostAccounts?: Record<string, string>;
+  /** Git providers allow one key per account, so reusing a key on the same server needs an explicit override. */
+  isGit: boolean;
+  allowShared: boolean;
+  onAllowSharedChange: (v: boolean) => void;
   onRefreshKeys: () => void;
   onOpenConflictModal: (conflictData: {
     conflictKeyName: string;
@@ -34,6 +46,8 @@ interface KeyAuthCardProps {
   }) => void;
   onOpenGuideModal: (keyInfo: SshKeyInfo | null, pubKey: string) => void;
 }
+
+export type KeyMode = "identity" | "new" | "existing" | "agent";
 
 export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   identityFile,
@@ -44,6 +58,14 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   hostName,
   account,
   preset,
+  mode,
+  onModeChange,
+  existingHosts,
+  currentHostId,
+  hostAccounts,
+  isGit,
+  allowShared,
+  onAllowSharedChange,
   onRefreshKeys,
   onOpenConflictModal,
   onOpenGuideModal,
@@ -65,7 +87,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   );
 
   useEffect(() => {
-    if (preset?.keyRecommendation) {
+    if (preset?.keyRecommendation && !account) {
       if (!nameTouched.current) setGenKeyName(getUniqueKeyName(preset.keyRecommendation.keyName, availableKeys));
       if (!commentTouched.current) setGenKeyComment(preset.keyRecommendation.comment || `${hostPattern}@sshx`);
       setGenKeyType(preset.keyRecommendation.keyType);
@@ -186,107 +208,181 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
     }
   };
 
+  const usersOf = (k: Pick<SshKeyInfo, "private_path" | "file_name">) =>
+    hostsUsingKey(k, existingHosts).filter((h) => h.id !== currentHostId);
+  const describeUsers = (hs: SshHost[]) =>
+    hs.map((h) => `${h.host_pattern.split(/\s+/)[0]}${hostAccounts?.[h.id] ? ` @${hostAccounts[h.id]}` : ""}`).join(", ");
+  const conflicts = identityFile ? keyConflictHosts(identityFile, hostName, existingHosts, currentHostId) : [];
+  const blockedShare = mode === "existing" && isGit && conflicts.length > 0 && !allowShared;
+
+  const selectMode = (m: KeyMode) => {
+    if (m === mode) return;
+    onModeChange(m);
+    setShowReplaceForm(false);
+    if (m === "agent") onChangeIdentity("", false);
+    // A new identity must never inherit a key another host on this server already uses.
+    if ((m === "identity" || m === "new") && identityFile && keyConflictHosts(identityFile, hostName, existingHosts, currentHostId).length > 0) {
+      onChangeIdentity("", true);
+    }
+    if (m === "identity") onChangeIdentity(identityFile, true);
+  };
+
+  const showGenerator = (mode === "identity" || mode === "new") && (!identityFile || showReplaceForm);
+
+  const modeCopy: Record<KeyMode, string> = {
+    identity: "A new account on this server (for example a second GitHub account). Gets its own alias and its own key.",
+    new: "Create a fresh key for this host. Use it for another machine or server on an account you already have.",
+    existing: "Reuse a key that is already in ~/.ssh.",
+    agent: "No key file: ssh tries the keys loaded in your agent.",
+  };
+
   const field =
     "w-full h-8 px-2.5 rounded-ctl bg-white/[0.06] text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.09] focus:ring-2 focus:ring-accent/70";
 
   return (
     <div className="rounded-card bg-card divide-y divide-white/[0.06] text-[13px]">
-      {/* Current key */}
-      <div className="px-4 py-3 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-label">{identityFile ? "Key" : "No key selected"}</span>
-            {identityFile && (
-              <>
-                <span className="font-mono text-label-2 truncate">~/.ssh/{connectedKeyObj?.file_name}</span>
-                <Badge>{(connectedKeyObj?.key_type || "ed25519").toUpperCase()}</Badge>
-              </>
-            )}
-          </div>
-          <div className="text-xs text-label-3">
-            {identityFile ? "ssh offers this key for this host." : "ssh will try the keys loaded in your agent."}
-          </div>
+      <div className="px-4 py-3 space-y-2">
+        <Segmented
+          label="How should this host sign in?"
+          value={mode}
+          options={[
+            { value: "identity" as const, label: "New identity" },
+            { value: "new" as const, label: "New key" },
+            { value: "existing" as const, label: "Existing key" },
+            { value: "agent" as const, label: "Agent default" },
+          ]}
+          onChange={selectMode}
+        />
+        <p className="text-xs text-label-3">{modeCopy[mode]}</p>
+      </div>
+
+      {mode === "identity" && (
+        <div className="px-4 py-3 space-y-1 text-xs">
+          {[
+            [!!account, "Account label", "Set it in the Account field above"],
+            [!!hostPattern.trim(), "Alias", "Give the host its own alias"],
+            [!!identityFile, "Dedicated key", "Generate it below"],
+          ].map(([ok, label, todo]) => (
+            <div key={String(label)} className={ok ? "text-emerald-300" : "text-label-3"}>
+              {ok ? "✓" : "○"} {label as string}
+              {!ok && <span className="text-label-3"> — {todo as string}</span>}
+            </div>
+          ))}
         </div>
-        {identityFile && (
+      )}
+
+      {(mode === "identity" || mode === "new" || mode === "existing") && identityFile && (
+        <div className="px-4 py-3 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-label">Key</span>
+              <span className="font-mono text-label-2 truncate">~/.ssh/{connectedKeyObj?.file_name}</span>
+              <Badge>{(connectedKeyObj?.key_type || "ed25519").toUpperCase()}</Badge>
+            </div>
+            {(() => {
+              const others = connectedKeyObj ? usersOf(connectedKeyObj) : [];
+              return others.length > 0 ? (
+                <div className="text-xs text-label-3">Also used by {describeUsers(others)}</div>
+              ) : (
+                <div className="text-xs text-label-3">Only this host uses it.</div>
+              );
+            })()}
+          </div>
           <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => onOpenGuideModal(connectedKeyObj, currentPubKey)}
-              className="text-accent hover:underline cursor-pointer"
-            >
+            <button type="button" onClick={() => onOpenGuideModal(connectedKeyObj, currentPubKey)} className="text-accent hover:underline cursor-pointer">
               Setup guide
             </button>
             <button type="button" onClick={handleCopyPubKey} className="text-accent hover:underline cursor-pointer">
               {copiedKey ? "Copied" : "Copy public key"}
             </button>
           </div>
-        )}
-      </div>
-
-      {/* Identities only */}
-      <div className="px-4 py-3 flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <div className="text-label">Use only this key</div>
-          <div className="text-xs text-label-3">
-            IdentitiesOnly: ignore other agent keys. Needed when several accounts share one server.
-          </div>
         </div>
-        <Switch
-          label="Use only this key"
-          checked={identitiesOnly}
-          onChange={(v) => onChangeIdentity(identityFile, v)}
-        />
-      </div>
+      )}
 
-      {/* Choose / switch key */}
-      <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
-        <select
-          aria-label={identityFile ? "Switch key" : "Choose existing key"}
-          value={identityFile}
-          onChange={(e) => onChangeIdentity(e.target.value, identityFile ? true : !!e.target.value)}
-          className={`${field} font-mono flex-1 min-w-[220px] cursor-pointer`}
-        >
-          {!identityFile && <option value="">Choose an existing key ({availableKeys.length})</option>}
-          {identityFile && <option value={identityFile}>{connectedKeyObj?.file_name}</option>}
-          {availableKeys
-            .filter((k) => k.private_path !== identityFile)
-            .map((k) => (
-              <option key={k.private_path} value={k.private_path}>
-                {k.file_name} ({k.key_type.toUpperCase()})
-              </option>
-            ))}
-        </select>
-        {identityFile && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowReplaceForm(!showReplaceForm)}
-              className="text-accent hover:underline cursor-pointer"
-            >
-              {showReplaceForm ? "Hide generator" : "Generate replacement"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onChangeIdentity("", false);
-                setShowReplaceForm(false);
-              }}
-              className="text-rose-300 hover:underline cursor-pointer"
-              title="Disconnect key and use default OpenSSH authentication"
-            >
-              Disconnect
-            </button>
-          </>
-        )}
-      </div>
+      {mode === "existing" && (
+        <div className="px-4 py-3 space-y-2">
+          <select
+            aria-label="Choose existing key"
+            value={identityFile}
+            onChange={(e) => {
+              onAllowSharedChange(false);
+              onChangeIdentity(e.target.value, !!e.target.value);
+            }}
+            className={`${field} font-mono cursor-pointer`}
+          >
+            <option value="">Choose a key ({availableKeys.length})</option>
+            {availableKeys.map((k) => {
+              const users = usersOf(k);
+              return (
+                <option key={k.private_path} value={k.private_path}>
+                  {k.file_name} ({k.key_type.toUpperCase()}){users.length ? ` · used by ${describeUsers(users)}` : ""}
+                </option>
+              );
+            })}
+          </select>
 
-      {/* Generator */}
-      {(!identityFile || showReplaceForm) && (
+          {conflicts.length > 0 && (
+            <div role="alert" className="rounded-ctl bg-amber-500/10 text-amber-200 px-3 py-2 text-xs space-y-1.5">
+              <div>
+                This key is already used by <strong>{describeUsers(conflicts)}</strong> on {hostName}.
+                {isGit ? " A git provider only accepts a key on one account, so this host would log in as the same account." : ""}
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button type="button" onClick={() => selectMode("identity")} className="underline cursor-pointer">
+                  Create a new identity instead
+                </button>
+                {isGit && (
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowShared}
+                      onChange={(e) => onAllowSharedChange(e.target.checked)}
+                      className="w-3.5 h-3.5 accent-[#0a84ff] cursor-pointer"
+                    />
+                    <span>I know, use it anyway</span>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+          {blockedShare && <p className="text-xs text-label-3">Choose another key, create a new identity, or confirm the override to continue.</p>}
+        </div>
+      )}
+
+      {mode !== "agent" && !(mode === "identity") && (
+        <div className="px-4 py-3 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-label">Use only this key</div>
+            <div className="text-xs text-label-3">IdentitiesOnly: ignore other agent keys. Needed when several accounts share one server.</div>
+          </div>
+          <Switch label="Use only this key" checked={identitiesOnly} onChange={(v) => onChangeIdentity(identityFile, v)} />
+        </div>
+      )}
+
+      {identityFile && (mode === "identity" || mode === "new") && (
+        <div className="px-4 py-3 flex items-center gap-3">
+          <button type="button" onClick={() => setShowReplaceForm(!showReplaceForm)} className="text-accent hover:underline cursor-pointer">
+            {showReplaceForm ? "Hide generator" : "Generate a different key"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onChangeIdentity("", false);
+              setShowReplaceForm(false);
+            }}
+            className="text-rose-300 hover:underline cursor-pointer"
+          >
+            Unlink
+          </button>
+        </div>
+      )}
+
+      {showGenerator && (
         <div className="px-4 py-3 space-y-2.5">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2 text-label">
-              <span>{identityFile ? "Generate replacement key" : "Or generate a dedicated key"}</span>
-              {preset?.keyRecommendation && <Badge tone="warn">{preset.title}</Badge>}
+              <span>{mode === "identity" ? "Create this identity's key" : "Generate a key"}</span>
+              {preset?.keyRecommendation && !account && <Badge tone="warn">{preset.title}</Badge>}
             </div>
             <Segmented
               label="Key type"
@@ -301,9 +397,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-label-3 font-mono text-xs pointer-events-none">
-                ~/.ssh/
-              </span>
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-label-3 font-mono text-xs pointer-events-none">~/.ssh/</span>
               <input
                 type="text"
                 aria-label="Key filename"
@@ -353,39 +447,22 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
               <span>
                 <code className="font-mono">{genKeyName.trim()}</code> already exists in ~/.ssh/.
               </span>
-              <span className="flex items-center gap-3">
-                {matchingExistingKey && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onChangeIdentity(matchingExistingKey.private_path, true);
-                      setShowReplaceForm(false);
-                    }}
-                    className="underline cursor-pointer"
-                  >
-                    Use existing
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() =>
-                    onOpenConflictModal({
-                      conflictKeyName: genKeyName.trim(),
-                      uniqueSuggestionName: uniqueSuggestion,
-                      existingKey: matchingExistingKey,
-                    })
-                  }
-                  className="underline cursor-pointer"
-                >
-                  More options
-                </button>
-              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  nameTouched.current = true;
+                  setGenKeyName(uniqueSuggestion);
+                }}
+                className="underline cursor-pointer"
+              >
+                Use “{uniqueSuggestion}”
+              </button>
             </div>
           )}
 
           <div className="flex items-center justify-end">
-            <Button type="button" variant="primary" icon={<BsKeyFill />} disabled={isGenerating} onClick={handleGenerateKey}>
-              {isGenerating ? "Generating..." : isDuplicate ? "Resolve & Generate" : "Generate & Connect"}
+            <Button type="button" variant="primary" icon={<BsKeyFill />} disabled={isGenerating || isDuplicate} onClick={handleGenerateKey}>
+              {isGenerating ? "Generating..." : "Generate & Link"}
             </Button>
           </div>
 

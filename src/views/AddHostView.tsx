@@ -2,7 +2,7 @@ import { Badge, Button, Field, Group, Hint, Notice, inputCls } from "../componen
 import { ConfigPreview } from "../components/ConfigPreview";
 import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   BsCheckLg,
   BsChevronDown,
@@ -12,15 +12,15 @@ import {
   BsBookmarkPlusFill,
 } from "react-icons/bs";
 import { BrandLogo } from "../components/BrandLogo";
-import { KeyAuthCard } from "../components/KeyAuthCard";
+import { KeyAuthCard, KeyMode } from "../components/KeyAuthCard";
 import { KeyConflictModal } from "../components/KeyConflictModal";
 import { PostCreationGuideModal } from "../components/PostCreationGuideModal";
 import { PresetEditorModal } from "../components/PresetEditorModal";
 import { SshHost, SshKeyInfo, PresetTemplate } from "../types";
 import { getAllPresets, saveCustomPreset, deleteCustomPreset } from "../presets";
 import { api } from "../api";
-import { findSiblingHosts, getAccountLabel } from "../utils/hostUtils";
-import { suggestHostAlias, isBareHostnameAlias } from "../utils/keyUtils";
+import { findSiblingHosts, getAccountLabel, isGitHost } from "../utils/hostUtils";
+import { suggestHostAlias, isBareHostnameAlias, keyConflictHosts, hostsUsingKey } from "../utils/keyUtils";
 import {
   isHostAliasDuplicate,
   getUniqueHostAlias,
@@ -38,6 +38,7 @@ interface AddHostViewProps {
   onRefreshKeys: () => void;
   onConnect?: (host: SshHost) => void;
   onOpenRawConfig?: () => void;
+  hostAccounts?: Record<string, string>;
 }
 
 export const AddHostView: React.FC<AddHostViewProps> = ({
@@ -51,11 +52,19 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
   onRefreshKeys,
   onConnect,
   onOpenRawConfig,
+  hostAccounts,
 }) => {
   // Screen state: "hub" (Entry 3-card selector) vs "interactive" vs "fast" vs "presets"
   const [activeScreen, setActiveScreen] = useState<"form" | "presets">(
     !initialHost && initialScreen === "presets" ? "presets" : "form"
   );
+
+  // How this host signs in; chosen explicitly so a key is never linked by accident.
+  const [keyMode, setKeyMode] = useState<KeyMode>(initialHost ? (initialHost.identity_file ? "existing" : "agent") : "new");
+  const modeTouched = useRef(false);
+  const [allowShared, setAllowShared] = useState(false);
+  // An existing key that matches the chosen template's recommended name; offered, never auto-linked.
+  const [presetKeyHint, setPresetKeyHint] = useState<SshKeyInfo | null>(null);
 
   // Preset gallery / search state
   const [presetsList, setPresetsList] = useState<PresetTemplate[]>([]);
@@ -157,6 +166,17 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
   );
 
   const account = getAccountLabel(formData);
+
+  // Default to "new identity" when other hosts already use this server or an account label is set.
+  useEffect(() => {
+    if (initialHost || modeTouched.current) return;
+    setKeyMode(sameTargetHosts.length > 0 || account ? "identity" : "new");
+  }, [initialHost, sameTargetHosts.length, account]);
+
+  const isGitTarget = isGitHost(formData);
+  const sharedKeyHosts = formData.identity_file
+    ? keyConflictHosts(formData.identity_file, formData.host_name, existingHosts, initialHost?.id ?? formData.id)
+    : [];
 
   const setAccount = (value: string) => {
     const clean = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
@@ -288,14 +308,11 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
       comments: preset.defaultHost.comments || [],
     };
 
-    if (preset.keyRecommendation) {
-      // If an existing key already exists with the recommended base name and host alias was not duplicate, pre-link it!
-      const existingMatch = findMatchingExistingKey(preset.keyRecommendation.keyName, availableKeys);
-      if (existingMatch && resolvedHostPattern === baseHostPattern && !newHost.identity_file) {
-        newHost.identity_file = existingMatch.private_path;
-        newHost.identities_only = true;
-      }
-    }
+    setPresetKeyHint(
+      preset.keyRecommendation && !newHost.identity_file
+        ? findMatchingExistingKey(preset.keyRecommendation.keyName, availableKeys) || null
+        : null
+    );
 
     setFormData(newHost);
     setActiveScreen("form");
@@ -345,6 +362,19 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
     }
 
     const toSave = hostToSave;
+
+    if (keyMode === "identity" && !account) {
+      toast.error("Add an account label (for example work or personal) for the new identity.");
+      return;
+    }
+    if ((keyMode === "identity" || keyMode === "new" || keyMode === "existing") && !formData.identity_file) {
+      toast.error(keyMode === "existing" ? "Choose a key, or pick Agent default." : "Generate the key first, or pick Agent default.");
+      return;
+    }
+    if (keyMode === "existing" && isGitTarget && sharedKeyHosts.length > 0 && !allowShared) {
+      toast.error(`That key already belongs to ${sharedKeyHosts[0].host_pattern}. Choose another key or create a new identity.`);
+      return;
+    }
 
     if (saveAsPreset && customPresetTitle.trim()) {
       const customPreset: PresetTemplate = {
@@ -561,6 +591,34 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
 
             <section className="space-y-1.5">
               <h3 className="px-1 text-[11px] font-medium uppercase tracking-wide text-label-3">Authentication</h3>
+              {presetKeyHint && !formData.identity_file && (
+                <Notice>
+                  This template suggests <code className="font-mono">{presetKeyHint.file_name}</code>, which already exists
+                  {hostsUsingKey(presetKeyHint, existingHosts).length > 0
+                    ? ` and is used by ${hostsUsingKey(presetKeyHint, existingHosts)
+                        .map((h) => h.host_pattern)
+                        .join(", ")}`
+                    : ""}
+                  .{" "}
+                  <button
+                    type="button"
+                    className="underline cursor-pointer"
+                    onClick={() => {
+                      modeTouched.current = true;
+                      setKeyMode("existing");
+                      setAllowShared(false);
+                      setFormData((prev) => ({ ...prev, identity_file: presetKeyHint.private_path, identities_only: true }));
+                      setPresetKeyHint(null);
+                    }}
+                  >
+                    Use it
+                  </button>
+                  {" · "}
+                  <button type="button" className="underline cursor-pointer" onClick={() => setPresetKeyHint(null)}>
+                    Create a new one
+                  </button>
+                </Notice>
+              )}
               <KeyAuthCard
                 identityFile={formData.identity_file || ""}
                 identitiesOnly={formData.identities_only || false}
@@ -568,6 +626,19 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   setFormData((prev) => ({ ...prev, identity_file: newFile, identities_only: idsOnly }));
                 }}
                 availableKeys={availableKeys}
+                mode={keyMode}
+                onModeChange={(m) => {
+                  modeTouched.current = true;
+                  setKeyMode(m);
+                  setAllowShared(false);
+                  setPresetKeyHint(null);
+                }}
+                existingHosts={existingHosts}
+                currentHostId={initialHost?.id ?? formData.id}
+                hostAccounts={hostAccounts}
+                isGit={isGitTarget}
+                allowShared={allowShared}
+                onAllowSharedChange={setAllowShared}
                 hostPattern={formData.host_pattern}
                 hostName={formData.host_name}
                 account={getAccountLabel(formData)}

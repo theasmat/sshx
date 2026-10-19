@@ -39,6 +39,81 @@ pub struct SelectiveFixResponse {
     pub report: SecurityAuditReport,
 }
 
+/// Stable identity of a key path so `~/.ssh/k` and `/Users/me/.ssh/k` compare equal.
+pub fn key_identity(path: &str) -> String {
+    let p = path.trim();
+    if let Some(rest) = p.strip_prefix("~/.ssh/") {
+        return rest.to_string();
+    }
+    if let Some(i) = p.rfind("/.ssh/") {
+        return p[i + "/.ssh/".len()..].to_string();
+    }
+    p.to_string()
+}
+
+fn key_slug(s: &str) -> String {
+    let t: String = s
+        .trim()
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .collect();
+    t.trim_matches('_').to_string()
+}
+
+/// First free `base`, `base_2`, `base_3`... according to `exists`.
+fn unique_key_name(base: &str, exists: impl Fn(&str) -> bool) -> String {
+    if !exists(base) {
+        return base.to_string();
+    }
+    let mut n = 2;
+    loop {
+        let cand = format!("{}_{}", base, n);
+        if !exists(&cand) {
+            return cand;
+        }
+        n += 1;
+    }
+}
+
+/// Give a host its own new Ed25519 key and point it (and only it) at that key.
+fn new_key_for_host(pattern: &str) -> Result<String, String> {
+    let mut config = crate::config_parser::read_ssh_config()?;
+    let ssh_dir = get_ssh_dir();
+    let alias = pattern.split_whitespace().next().unwrap_or(pattern);
+    let base = format!("id_ed25519_{}", key_slug(alias));
+    let name = unique_key_name(&base, |n| ssh_dir.join(n).exists() || ssh_dir.join(format!("{}.pub", n)).exists());
+
+    let host = config
+        .hosts
+        .iter_mut()
+        .find(|h| h.host_pattern == pattern)
+        .ok_or_else(|| format!("Host '{}' not found", pattern))?;
+
+    let info = crate::key_manager::generate_ssh_key(crate::key_manager::GenerateKeyRequest {
+        name: name.clone(),
+        key_type: "ed25519".to_string(),
+        bits: None,
+        comment: format!("{}@sshx", alias),
+        passphrase: None,
+    })?;
+    host.identity_file = Some(format!("~/.ssh/{}", info.file_name));
+    host.identities_only = Some(true);
+
+    let serialized = crate::config_parser::serialize_ssh_config(
+        &config.global_comments,
+        &config.global_directives,
+        &config.hosts,
+    );
+    write_ssh_config_safe(&serialized)?;
+    Ok(format!(
+        "Created ~/.ssh/{} for '{}'. Add this public key to the account it should log in as: {}",
+        info.file_name,
+        alias,
+        info.public_key_content.unwrap_or_default().trim()
+    ))
+}
+
 /// Hosts that share one server (same HostName/User/Port, e.g. two GitHub
 /// accounts) are only told apart by their key. Without `IdentitiesOnly yes`
 /// ssh offers agent keys first and may authenticate as the wrong account.
@@ -58,7 +133,7 @@ fn audit_shared_targets(hosts: &[crate::config_parser::SshHost]) -> Vec<AuditIss
         if group.len() < 2 {
             continue;
         }
-        let mut seen_keys = std::collections::HashSet::new();
+        let mut seen_keys = std::collections::HashSet::new(); // by key_identity, so ~/.ssh/k == /abs/.ssh/k
         for h in group {
             let key = h.identity_file.as_deref().map(str::trim).filter(|s| !s.is_empty());
             match key {
@@ -74,17 +149,17 @@ fn audit_shared_targets(hosts: &[crate::config_parser::SshHost]) -> Vec<AuditIss
                     fix_preview: None,
                 }),
                 Some(k) => {
-                    if !seen_keys.insert(k.to_string()) {
+                    if !seen_keys.insert(key_identity(k)) {
                         issues.push(AuditIssue {
                             id: format!("shared_dup_key_{}", h.host_pattern),
                             severity: "warning".to_string(),
                             category: "hosts".to_string(),
                             title: format!("'{}' reuses the same key as another host on {}", h.host_pattern, target),
                             description: "Two aliases for one server use the same IdentityFile, so they cannot be different accounts (GitHub/GitLab also refuse one key on two accounts).".to_string(),
-                            path: None,
-                            fixable: false,
-                            fix_action: None,
-                            fix_preview: None,
+                            path: Some(h.host_pattern.clone()),
+                            fixable: true,
+                            fix_action: Some("fix_duplicate_key_new_key".to_string()),
+                            fix_preview: Some(format!("Create a new key and link it to '{}'", h.host_pattern)),
                         });
                     }
                     if h.identities_only != Some(true) {
@@ -416,6 +491,17 @@ pub fn fix_selected_issues(requests: Vec<SelectiveFixRequest>) -> Result<Selecti
                     }
                 }
             }
+            "fix_duplicate_key_new_key" => {
+                if let Some(ref pattern) = req.path {
+                    match new_key_for_host(pattern) {
+                        Ok(msg) => {
+                            messages.push(msg);
+                            fixed_count += 1;
+                        }
+                        Err(e) => messages.push(format!("Could not create a new key for '{}': {}", pattern, e)),
+                    }
+                }
+            }
             "fix_shared_identities_only" => {
                 if let Some(ref pattern) = req.path {
                     if let Ok(mut config) = crate::config_parser::read_ssh_config() {
@@ -553,6 +639,37 @@ mod tests {
         let mut v: Vec<String> = issues.iter().map(|i| i.id.clone()).collect();
         v.sort();
         v
+    }
+
+    #[test]
+    fn key_identity_ignores_how_the_path_is_written() {
+        assert_eq!(key_identity("~/.ssh/id_x"), "id_x");
+        assert_eq!(key_identity("/Users/as/.ssh/id_x"), "id_x");
+        assert_eq!(key_identity("/home/u/.ssh/id_x"), "id_x");
+        assert_eq!(key_identity("/keys/other"), "/keys/other");
+    }
+
+    #[test]
+    fn same_key_written_two_ways_is_flagged_and_fixable() {
+        let hosts = [
+            host("github-iam", Some("~/.ssh/id_ed25519_github_work"), Some(true)),
+            host("github-orvis", Some("/Users/as/.ssh/id_ed25519_github_work"), Some(true)),
+        ];
+        let issues = audit_shared_targets(&hosts);
+        let dup = issues.iter().find(|i| i.id == "shared_dup_key_github-orvis").expect("dup flagged");
+        assert!(dup.fixable);
+        assert_eq!(dup.path.as_deref(), Some("github-orvis"));
+        assert_eq!(dup.fix_action.as_deref(), Some("fix_duplicate_key_new_key"));
+        // the first host keeps the key
+        assert!(issues.iter().all(|i| i.id != "shared_dup_key_github-iam"));
+    }
+
+    #[test]
+    fn unique_key_name_skips_taken_names() {
+        let taken = ["id_a", "id_a_2"];
+        assert_eq!(unique_key_name("id_a", |n| taken.contains(&n)), "id_a_3");
+        assert_eq!(unique_key_name("id_b", |n| taken.contains(&n)), "id_b");
+        assert_eq!(key_slug("GitHub Orvis!"), "github_orvis");
     }
 
     #[test]
