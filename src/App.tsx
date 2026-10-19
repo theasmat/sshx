@@ -1,3 +1,4 @@
+import { toast } from "./utils/toast";
 import { useState, useEffect, useMemo } from "react";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
@@ -8,6 +9,8 @@ import { KnownHostsView } from "./views/KnownHostsView";
 import { SecurityAuditView } from "./views/SecurityAuditView";
 import { RawConfigView } from "./views/RawConfigView";
 import { SettingsView } from "./views/SettingsView";
+import { Toaster } from "./components/Toaster";
+import { parseGitAccount } from "./utils/hostUtils";
 import { TestResultModal } from "./components/TestResultModal";
 import { DeleteHostConfirmationModal } from "./components/DeleteHostConfirmationModal";
 import {
@@ -81,6 +84,15 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
   const [selectedHostId, setSelectedHostId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [editingHost, setEditingHost] = useState<SshHost | null>(null);
+
+  // Account each git host actually authenticates as (from `ssh -T`), by host id.
+  const [hostAccounts, setHostAccounts] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("sshx_host_accounts") || "{}");
+    } catch {
+      return {};
+    }
+  });
 
   // Delete Host Modal State
   const [isDeleteHostModalOpen, setIsDeleteHostModalOpen] = useState(false);
@@ -354,6 +366,16 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
         }
       }
 
+      if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (e.key === "/") {
+          e.preventDefault();
+          document.getElementById("global-sshx-search-input")?.focus();
+        } else if (e.key === "e" && activeTab === "hosts" && selectedHost) {
+          e.preventDefault();
+          handleOpenEditHost(selectedHost);
+        }
+      }
+
       // Shortcut: Cmd+N -> Add Host
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
         e.preventDefault();
@@ -395,7 +417,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
     try {
       await api.launchTerminal(host.host_pattern, selectedTerminal);
     } catch (err: any) {
-      alert(`Failed to launch terminal: ${err}`);
+      toast.error(`Failed to launch terminal: ${err}`);
     }
   };
 
@@ -431,6 +453,18 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
 
     try {
       const res = await api.testHost(host.host_pattern);
+      const account = parseGitAccount(res.output);
+      if (account) {
+        setHostAccounts((prev) => {
+          const next = { ...prev, [host.id]: account };
+          try {
+            localStorage.setItem("sshx_host_accounts", JSON.stringify(next));
+          } catch {
+            /* storage unavailable: the label just isn't remembered */
+          }
+          return next;
+        });
+      }
       setTestModalState((prev) => ({
         ...prev,
         result: res,
@@ -469,7 +503,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
       setSelectedHostId(duplicated.id);
       setActiveTab("hosts");
     } catch (err: any) {
-      alert(`Failed to duplicate host: ${err}`);
+      toast.error(`Failed to duplicate host: ${err}`);
     }
   };
 
@@ -481,15 +515,29 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
 
   // Confirmed Host Deletion Handler
   const handleConfirmDeleteHost = async (host: SshHost) => {
+    const previousRaw = configData?.raw_content;
     try {
       await api.deleteHost(host.id, host.host_pattern);
       await loadAllData();
+      if (previousRaw !== undefined) {
+        toast.info(`Deleted ${host.host_pattern}`, {
+          label: "Undo",
+          run: async () => {
+            try {
+              await api.saveSshConfigRaw(previousRaw);
+              await loadAllData();
+            } catch (err: any) {
+              toast.error(`Undo failed: ${err}`);
+            }
+          },
+        });
+      }
       if (selectedHostId === host.id) {
         setSelectedHostId(null);
       }
       setActiveTab("hosts");
     } catch (err: any) {
-      alert(`Failed to delete host: ${err}`);
+      toast.error(`Failed to delete host: ${err}`);
       throw err;
     }
   };
@@ -503,7 +551,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
       setEditingHost(null);
       setActiveTab("hosts");
     } catch (err: any) {
-      alert(`Failed to save host: ${err}`);
+      toast.error(`Failed to save host: ${err}`);
     }
   };
 
@@ -593,6 +641,8 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
               copiedId={copiedId}
               terminalName={activeTerminalName}
               keys={keys}
+              allHosts={configData?.hosts || []}
+              hostAccounts={hostAccounts}
               onOpenRawConfig={() => setActiveTab("raw-config")}
             />
           )}
@@ -676,6 +726,8 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
           )}
         </main>
       </div>
+
+      <Toaster />
 
       {/* Transient Test Output Modal */}
       <TestResultModal

@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   BsKeyFill,
@@ -162,7 +163,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
       // Show Setup Guidance Modal
       onOpenGuideModal(newKeyObj, result.public_key_content || "");
     } catch (err: any) {
-      alert(`Key generation failed: ${err}`);
+      toast.error(`Key generation failed: ${err}`);
     } finally {
       setIsGenerating(false);
     }

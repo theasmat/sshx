@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
 import {
   BsFileEarmarkCode,
@@ -88,7 +89,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
       const content = await api.readBackupPreview(backupName);
       setPreviewBackup({ name: backupName, content });
     } catch (e: any) {
-      alert(`Failed to load backup preview: ${e}`);
+      toast.error(`Failed to load backup preview: ${e}`);
     } finally {
       setIsLoadingPreview(false);
     }
@@ -113,7 +114,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
       setIsBackupsModalOpen(false);
       setPreviewBackup(null);
     } catch (err: any) {
-      alert(`Failed to restore backup: ${err}`);
+      toast.error(`Failed to restore backup: ${err}`);
     } finally {
       setRestoringBackup(null);
     }

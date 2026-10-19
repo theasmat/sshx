@@ -39,6 +39,74 @@ pub struct SelectiveFixResponse {
     pub report: SecurityAuditReport,
 }
 
+/// Hosts that share one server (same HostName/User/Port, e.g. two GitHub
+/// accounts) are only told apart by their key. Without `IdentitiesOnly yes`
+/// ssh offers agent keys first and may authenticate as the wrong account.
+fn audit_shared_targets(hosts: &[crate::config_parser::SshHost]) -> Vec<AuditIssue> {
+    let mut issues = Vec::new();
+    let mut by_target: std::collections::HashMap<(String, String, u16), Vec<&crate::config_parser::SshHost>> =
+        std::collections::HashMap::new();
+    for h in hosts {
+        let name = h.host_name.as_deref().unwrap_or("").trim().to_lowercase();
+        if name.is_empty() || h.is_match || h.host_pattern.contains(['*', '?']) {
+            continue;
+        }
+        let user = h.user.as_deref().unwrap_or("").to_lowercase();
+        by_target.entry((name, user, h.port.unwrap_or(22))).or_default().push(h);
+    }
+    for ((target, _, _), group) in &by_target {
+        if group.len() < 2 {
+            continue;
+        }
+        let mut seen_keys = std::collections::HashSet::new();
+        for h in group {
+            let key = h.identity_file.as_deref().map(str::trim).filter(|s| !s.is_empty());
+            match key {
+                None => issues.push(AuditIssue {
+                    id: format!("shared_no_key_{}", h.host_pattern),
+                    severity: "warning".to_string(),
+                    category: "hosts".to_string(),
+                    title: format!("'{}' shares {} but has no IdentityFile", h.host_pattern, target),
+                    description: "Several hosts point at the same server, so each needs its own IdentityFile or ssh may log in with the wrong account.".to_string(),
+                    path: None,
+                    fixable: false,
+                    fix_action: None,
+                    fix_preview: None,
+                }),
+                Some(k) => {
+                    if !seen_keys.insert(k.to_string()) {
+                        issues.push(AuditIssue {
+                            id: format!("shared_dup_key_{}", h.host_pattern),
+                            severity: "warning".to_string(),
+                            category: "hosts".to_string(),
+                            title: format!("'{}' reuses the same key as another host on {}", h.host_pattern, target),
+                            description: "Two aliases for one server use the same IdentityFile, so they cannot be different accounts (GitHub/GitLab also refuse one key on two accounts).".to_string(),
+                            path: None,
+                            fixable: false,
+                            fix_action: None,
+                            fix_preview: None,
+                        });
+                    }
+                    if h.identities_only != Some(true) {
+                        issues.push(AuditIssue {
+                            id: format!("shared_identities_only_{}", h.host_pattern),
+                            severity: "warning".to_string(),
+                            category: "hosts".to_string(),
+                            title: format!("'{}' shares {} without IdentitiesOnly", h.host_pattern, target),
+                            description: "Without IdentitiesOnly yes, ssh offers every agent key before the configured one and can authenticate as the wrong account.".to_string(),
+                            path: Some(h.host_pattern.clone()),
+                            fixable: true,
+                            fix_action: Some("fix_shared_identities_only".to_string()),
+                            fix_preview: Some("Add 'IdentitiesOnly yes'".to_string()),
+                        });
+                    }
+                }
+            }
+        }
+    }
+    issues
+}
+
 pub fn run_security_audit() -> Result<SecurityAuditReport, String> {
     let mut issues = Vec::new();
     let ssh_dir = get_ssh_dir();
@@ -198,6 +266,8 @@ pub fn run_security_audit() -> Result<SecurityAuditReport, String> {
         }
     }
 
+    issues.extend(audit_shared_targets(&config_data.hosts));
+
     // 5. Check for malformed / empty directives in raw config
     let keywords_requiring_arg = [
         "dynamicforward",
@@ -346,6 +416,31 @@ pub fn fix_selected_issues(requests: Vec<SelectiveFixRequest>) -> Result<Selecti
                     }
                 }
             }
+            "fix_shared_identities_only" => {
+                if let Some(ref pattern) = req.path {
+                    if let Ok(mut config) = crate::config_parser::read_ssh_config() {
+                        let mut changed = false;
+                        for h in &mut config.hosts {
+                            let has_key = h.identity_file.as_deref().map_or(false, |s| !s.trim().is_empty());
+                            if h.host_pattern == *pattern && has_key && h.identities_only != Some(true) {
+                                h.identities_only = Some(true);
+                                changed = true;
+                            }
+                        }
+                        if changed {
+                            let serialized = crate::config_parser::serialize_ssh_config(
+                                &config.global_comments,
+                                &config.global_directives,
+                                &config.hosts,
+                            );
+                            if write_ssh_config_safe(&serialized).is_ok() {
+                                messages.push(format!("Added 'IdentitiesOnly yes' to host '{}'", pattern));
+                                fixed_count += 1;
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -437,3 +532,57 @@ pub fn fix_all_permissions() -> Result<(), String> {
     Ok(())
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config_parser::SshHost;
+
+    fn host(alias: &str, key: Option<&str>, only: Option<bool>) -> SshHost {
+        SshHost {
+            host_pattern: alias.to_string(),
+            host_name: Some("github.com".to_string()),
+            user: Some("git".to_string()),
+            identity_file: key.map(str::to_string),
+            identities_only: only,
+            ..Default::default()
+        }
+    }
+
+    fn ids(issues: &[AuditIssue]) -> Vec<String> {
+        let mut v: Vec<String> = issues.iter().map(|i| i.id.clone()).collect();
+        v.sort();
+        v
+    }
+
+    #[test]
+    fn single_host_is_clean() {
+        assert!(audit_shared_targets(&[host("a", None, None)]).is_empty());
+    }
+
+    #[test]
+    fn flags_missing_identities_only_missing_key_and_reused_key() {
+        let hosts = [
+            host("work", Some("~/.ssh/k1"), Some(true)),
+            host("personal", Some("~/.ssh/k1"), None),
+            host("bare", None, None),
+        ];
+        assert_eq!(
+            ids(&audit_shared_targets(&hosts)),
+            vec![
+                "shared_dup_key_personal",
+                "shared_identities_only_personal",
+                "shared_no_key_bare"
+            ]
+        );
+    }
+
+    #[test]
+    fn wildcard_and_different_port_are_ignored() {
+        let mut star = host("gh-*", Some("k"), None);
+        star.host_pattern = "gh-*".to_string();
+        let mut other_port = host("p", Some("k2"), None);
+        other_port.port = Some(2222);
+        assert!(audit_shared_targets(&[host("a", Some("k"), Some(true)), star, other_port]).is_empty());
+    }
+}

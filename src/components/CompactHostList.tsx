@@ -2,6 +2,7 @@ import React from "react";
 import { BsKeyFill, BsShieldLock, BsArrowLeftRight, BsTrash3 } from "react-icons/bs";
 import { BrandLogo } from "./BrandLogo";
 import { SshHost } from "../types";
+import { getAccountLabel, clusterHosts } from "../utils/hostUtils";
 
 interface CompactHostListProps {
   hosts: SshHost[];
@@ -12,6 +13,7 @@ interface CompactHostListProps {
   onTest?: (host: SshHost) => void;
   onDelete?: (host: SshHost) => void;
   copiedId?: string | null;
+  hostAccounts?: Record<string, string>;
 }
 
 export const CompactHostList: React.FC<CompactHostListProps> = ({
@@ -19,7 +21,19 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
   selectedHostId,
   onSelectHost,
   onDelete,
+  hostAccounts,
 }) => {
+  const clusters = clusterHosts(hosts);
+
+  // Arrow keys move selection; the app-level handler covers focus outside the list.
+  const moveSelection = (e: React.KeyboardEvent, host: SshHost) => {
+    const i = hosts.findIndex((h) => h.id === host.id);
+    const next = e.key === "ArrowDown" ? hosts[i + 1] : e.key === "ArrowUp" ? hosts[i - 1] : null;
+    if (next) {
+      e.preventDefault();
+      onSelectHost(next);
+    }
+  };
   const getColorDot = (color?: string | null) => {
     switch (color) {
       case "emerald":
@@ -42,15 +56,35 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto divide-y divide-[#172138]/50 select-none">
-      {hosts.map((host) => {
+    <div role="listbox" aria-label="SSH hosts" className="flex-1 overflow-y-auto divide-y divide-[#172138]/50 select-none">
+      {clusters.map((cluster) => (
+       <div key={cluster.hosts[0].id}>
+        {cluster.target && (
+          <div className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-amber-300/80 bg-amber-500/5 border-l-2 border-amber-500/40">
+            {cluster.target} · {cluster.hosts.length} identities
+          </div>
+        )}
+        {cluster.hosts.map((host) => {
         const isSelected = selectedHostId === host.id;
+        const shared = cluster.target !== null;
+        const account = hostAccounts?.[host.id] || getAccountLabel(host);
 
         return (
           <div
             key={host.id}
+            role="option"
+            aria-selected={isSelected}
+            tabIndex={isSelected ? 0 : -1}
             onClick={() => onSelectHost(host)}
-            className={`group px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelectHost(host);
+              } else {
+                moveSelection(e, host);
+              }
+            }}
+            className={`group px-2.5 py-1.5 flex focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 items-center justify-between gap-2 cursor-pointer transition-colors ${
               isSelected
                 ? "bg-blue-600/15 border-l-2 border-blue-500 pl-2"
                 : "hover:bg-[#121829]/60"
@@ -104,6 +138,15 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
                     </span>
                   )}
                 </div>
+                {(shared || account) && (
+                  <div
+                    className="text-[11px] font-mono text-amber-300 truncate leading-tight mt-0.5"
+                    title="Another host uses the same address — the key tells them apart"
+                  >
+                    → {account ? `@${account} · ` : ""}
+                    {host.identity_file ? host.identity_file.split("/").pop() : "default key"}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -123,7 +166,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
                 </button>
               )}
 
-              {host.identity_file && (
+              {host.identity_file && !(shared || account) && (
                 <span
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#0e172a] text-blue-300 border border-blue-500/25 font-mono text-[11px] truncate max-w-[100px] leading-none"
                   title={host.identity_file}
@@ -157,7 +200,9 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
             </div>
           </div>
         );
-      })}
+        })}
+       </div>
+      ))}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   BsLightningChargeFill,
@@ -28,6 +29,7 @@ import { PresetEditorModal } from "../components/PresetEditorModal";
 import { SshHost, SshKeyInfo, PresetTemplate } from "../types";
 import { getAllPresets, saveCustomPreset, deleteCustomPreset } from "../presets";
 import { api } from "../api";
+import { findSiblingHosts } from "../utils/hostUtils";
 import {
   isHostAliasDuplicate,
   getUniqueHostAlias,
@@ -163,6 +165,11 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
   }, []);
 
 
+
+  const sameTargetHosts = useMemo(
+    () => findSiblingHosts({ ...formData, id: initialHost?.id ?? "" }, existingHosts),
+    [formData, existingHosts, initialHost]
+  );
 
   const isAliasDuplicate = useMemo(
     () => isHostAliasDuplicate(formData.host_pattern, existingHosts, initialHost?.id),
@@ -305,9 +312,16 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!formData.host_pattern.trim()) {
-      alert("Host alias is required.");
+      toast.error("Host alias is required.");
       return;
     }
+
+    // Hosts sharing one server need IdentitiesOnly, or ssh offers agent keys
+    // first and may log in as the wrong account.
+    const toSave =
+      sameTargetHosts.length > 0 && formData.identity_file && formData.identities_only == null
+        ? { ...formData, identities_only: true }
+        : formData;
 
     if (saveAsPreset && customPresetTitle.trim()) {
       const customPreset: PresetTemplate = {
@@ -325,7 +339,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
     // For newly created hosts from presets or with configured keys, open PostCreationGuideModal
     if (!initialHost && (selectedPreset?.postCreationGuide || formData.identity_file)) {
       try {
-        await api.saveHost(formData);
+        await api.saveHost(toSave);
         onRefreshKeys();
       } catch (err) {
         console.error("Auto pre-saving host before guide modal:", err);
@@ -338,7 +352,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
       );
       setGuideModalState({
         isOpen: true,
-        host: formData,
+        host: toSave,
         keyInfo: currentKey || null,
         publicKeyContent: currentKey?.public_key_content || null,
         preset: selectedPreset,
@@ -347,7 +361,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
       return;
     }
 
-    onSave(formData);
+    onSave(toSave);
   };
 
   // Filtered Presets for Search & Gallery
@@ -949,6 +963,15 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                         />
                       </div>
+                      {sameTargetHosts.length > 0 && (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 text-xs text-amber-200">
+                          {formData.host_name} is already configured as:{" "}
+                          {sameTargetHosts
+                            .map((h) => `${h.host_pattern} (${h.identity_file ? h.identity_file.split("/").pop() : "default key"})`)
+                            .join(", ")}
+                          . Give this one its own alias and its own key so they don't get mixed up.
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1125,7 +1148,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                         type="button"
                         onClick={() => {
                           if (currentStepInfo.id === "alias" && !formData.host_pattern.trim()) {
-                            alert("Host alias is required to proceed.");
+                            toast.error("Host alias is required to proceed.");
                             return;
                           }
                           setWizardStep((prev) => Math.min(prev + 1, totalSteps));
@@ -1285,7 +1308,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                   <div className="flex gap-1.5">
                     <input
                       type="text"
-                      placeholder="Add tag & Enter"
+                      placeholder="Add tag & Enter (e.g. account:work)"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -1712,7 +1735,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
               pendingSaveAfterGuide: true,
             });
           } catch (err) {
-            alert(`Auto-resolve key generation failed: ${err}`);
+            toast.error(`Auto-resolve key generation failed: ${err}`);
           }
         }}
         onManualSelect={() => {

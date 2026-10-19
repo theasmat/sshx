@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import { CompactHostList } from "../components/CompactHostList";
 import { HostDetailPane } from "../components/HostDetailPane";
 import { BsServer, BsPlusLg } from "react-icons/bs";
@@ -19,6 +19,8 @@ interface HostsViewProps {
   terminalName: string;
   keys?: SshKeyInfo[];
   onOpenRawConfig?: () => void;
+  allHosts?: SshHost[];
+  hostAccounts?: Record<string, string>;
 }
 
 export const HostsView: React.FC<HostsViewProps> = ({
@@ -36,7 +38,38 @@ export const HostsView: React.FC<HostsViewProps> = ({
   terminalName,
   keys,
   onOpenRawConfig,
+  allHosts,
+  hostAccounts,
 }) => {
+  const [listWidth, setListWidth] = useState<number>(() => {
+    try {
+      const w = parseInt(localStorage.getItem("sshx_list_width") || "", 10);
+      return w >= 240 && w <= 640 ? w : 320;
+    } catch {
+      return 320;
+    }
+  });
+  const dragging = useRef(false);
+
+  const startResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragging.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    const left = e.currentTarget.parentElement!.getBoundingClientRect().left;
+    setListWidth(Math.min(640, Math.max(240, e.clientX - left)));
+  };
+  const endResize = () => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    try {
+      localStorage.setItem("sshx_list_width", String(listWidth));
+    } catch {
+      /* width just is not remembered */
+    }
+  };
+
   if (hosts.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[#070a10] select-none">
@@ -45,7 +78,9 @@ export const HostsView: React.FC<HostsViewProps> = ({
         </div>
         <h3 className="text-base font-bold text-white mb-1">No SSH Hosts Found</h3>
         <p className="text-xs text-gray-400 max-w-sm mb-5 leading-relaxed">
-          Your ~/.ssh/config is empty or no hosts match your active search filters.
+          {allHosts && allHosts.length > 0
+            ? "No hosts match your current search or filters. Clear them to see all hosts."
+            : "Your ~/.ssh/config has no hosts yet. Add one to get started."}
         </p>
         <button
           onClick={onOpenAddHost}
@@ -61,7 +96,7 @@ export const HostsView: React.FC<HostsViewProps> = ({
   return (
     <div className="h-full flex flex-row overflow-hidden bg-[#070a10]">
       {/* Left Pane: Host List */}
-      <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-[#1f2942] bg-[#070a10]">
+      <div style={{ width: listWidth }} className="shrink-0 h-full flex flex-col bg-[#070a10]">
         {/* Navigation / Host count header */}
         <div className="px-3 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between text-xs text-gray-400 select-none">
           <span className="font-semibold text-gray-300">
@@ -91,8 +126,19 @@ export const HostsView: React.FC<HostsViewProps> = ({
           onTest={onTest}
           onDelete={onDelete}
           copiedId={copiedId}
+          hostAccounts={hostAccounts}
         />
       </div>
+
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize host list"
+        onPointerDown={startResize}
+        onPointerMove={onResize}
+        onPointerUp={endResize}
+        className="w-1 shrink-0 cursor-col-resize bg-[#1f2942] hover:bg-blue-500/60 transition-colors"
+      />
 
       {/* Right Pane: Host Detail View */}
       <div className="flex-1 min-w-0 h-full overflow-hidden bg-[#0b0f19]">
@@ -105,6 +151,8 @@ export const HostsView: React.FC<HostsViewProps> = ({
           onTest={onTest}
           terminalName={terminalName}
           keys={keys}
+          allHosts={allHosts ?? hosts}
+          hostAccounts={hostAccounts}
           onOpenRawConfig={onOpenRawConfig}
         />
       </div>

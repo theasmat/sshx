@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState } from "react";
 import {
   BsXLg,
@@ -82,7 +83,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
         }, 1000);
       }
     } catch (err: any) {
-      alert(`Auto-fix failed: ${err}`);
+      toast.error(`Auto-fix failed: ${err}`);
     } finally {
       setIsFixingHost(false);
     }
