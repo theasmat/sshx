@@ -1,3 +1,4 @@
+import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
 import {
@@ -96,13 +97,13 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
   };
 
   const handleRestoreBackup = async (backupName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to restore '${backupName}'?\nThis will replace your current ~/.ssh/config.`
-      )
-    ) {
-      return;
-    }
+    const ok = await askConfirm({
+      title: "Restore backup?",
+      message: `Restore '${backupName}'?\nThis will replace your current ~/.ssh/config.`,
+      confirmLabel: "Restore",
+      danger: true,
+    });
+    if (!ok) return;
 
     setRestoringBackup(backupName);
     try {
@@ -135,10 +136,14 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
     }
   };
 
-  const handleRevert = () => {
-    if (confirm("Discard unsaved changes and revert to file content?")) {
-      setContent(initialContent);
-    }
+  const handleRevert = async () => {
+    const ok = await askConfirm({
+      title: "Discard changes?",
+      message: "Discard unsaved changes and revert to the file content?",
+      confirmLabel: "Discard",
+      danger: true,
+    });
+    if (ok) setContent(initialContent);
   };
 
   // Keyboard shortcut Cmd+S / Ctrl+S

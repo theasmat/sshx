@@ -1,3 +1,4 @@
+import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
 import {
@@ -566,8 +567,14 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
               {editingPreset && onDeletePreset && isCustomPreset && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (confirm(`Delete preset "${editingPreset.title}"?`)) {
+                  onClick={async () => {
+                    const ok = await askConfirm({
+                      title: "Delete preset?",
+                      message: `Delete preset "${editingPreset.title}"?`,
+                      confirmLabel: "Delete",
+                      danger: true,
+                    });
+                    if (ok) {
                       onDeletePreset(editingPreset.id);
                       onClose();
                     }

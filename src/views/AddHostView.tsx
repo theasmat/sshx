@@ -1,3 +1,4 @@
+import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -29,7 +30,8 @@ import { PresetEditorModal } from "../components/PresetEditorModal";
 import { SshHost, SshKeyInfo, PresetTemplate } from "../types";
 import { getAllPresets, saveCustomPreset, deleteCustomPreset } from "../presets";
 import { api } from "../api";
-import { findSiblingHosts } from "../utils/hostUtils";
+import { findSiblingHosts, getAccountLabel } from "../utils/hostUtils";
+import { suggestHostAlias, isBareHostnameAlias } from "../utils/keyUtils";
 import {
   isHostAliasDuplicate,
   getUniqueHostAlias,
@@ -170,6 +172,48 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
     () => findSiblingHosts({ ...formData, id: initialHost?.id ?? "" }, existingHosts),
     [formData, existingHosts, initialHost]
   );
+
+  const account = getAccountLabel(formData);
+
+  const setAccount = (value: string) => {
+    const clean = value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
+    setFormData((prev) => ({
+      ...prev,
+      tags: [
+        ...prev.tags.filter((t) => !t.toLowerCase().startsWith("account:")),
+        ...(clean ? [`account:${clean}`] : []),
+      ],
+    }));
+  };
+
+  // Alias that names the account ("github-work") instead of the bare hostname.
+  const aliasSuggestion = useMemo(
+    () => suggestHostAlias(formData.host_name || "", account, existingHosts, initialHost?.id),
+    [formData.host_name, account, existingHosts, initialHost]
+  );
+  const aliasIsBare = isBareHostnameAlias(formData.host_pattern, formData.host_name);
+  const showAliasSuggestion =
+    !!aliasSuggestion &&
+    aliasSuggestion !== formData.host_pattern &&
+    (!formData.host_pattern.trim() || aliasIsBare || formData.host_pattern === formData.host_name);
+
+  const aliasHint = showAliasSuggestion ? (
+    <div className="p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-between gap-2 text-xs text-blue-200">
+      <span className="min-w-0">
+        {aliasIsBare
+          ? `"${formData.host_pattern}" would make every repo use this key by default. `
+          : "Suggested alias: "}
+        <code className="font-mono">{aliasSuggestion}</code>
+      </span>
+      <button
+        type="button"
+        onClick={() => setFormData((prev) => ({ ...prev, host_pattern: aliasSuggestion }))}
+        className="px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 rounded-lg font-semibold shrink-0 cursor-pointer"
+      >
+        Use it
+      </button>
+    </div>
+  ) : null;
 
   const isAliasDuplicate = useMemo(
     () => isHostAliasDuplicate(formData.host_pattern, existingHosts, initialHost?.id),
@@ -936,6 +980,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           </button>
                         </div>
                       )}
+                      {aliasHint}
                     </div>
                   )}
 
@@ -972,6 +1017,22 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           . Give this one its own alias and its own key so they don't get mixed up.
                         </div>
                       )}
+                      <div>
+                        <label className="block text-gray-300 font-semibold mb-1 text-xs">
+                          Account label (optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. work, personal"
+                          value={account || ""}
+                          onChange={(e) => setAccount(e.target.value)}
+                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                        />
+                        <span className="text-[11px] text-gray-500 mt-1 block">
+                          Used to name the alias and key, and shown next to this host in the list.
+                        </span>
+                      </div>
+                      {aliasHint}
                     </div>
                   )}
 
@@ -1035,6 +1096,8 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                         }}
                         availableKeys={availableKeys}
                         hostPattern={formData.host_pattern}
+                        hostName={formData.host_name}
+                        account={getAccountLabel(formData)}
                         preset={selectedPreset}
                         onRefreshKeys={onRefreshKeys}
                         onOpenConflictModal={(data) => {
@@ -1237,6 +1300,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                   <span className="text-[11px] text-gray-500 mt-1 block leading-none">
                     Terminal shortcut: <code className="text-blue-400 font-mono">ssh {formData.host_pattern || "alias"}</code>
                   </span>
+                  {aliasHint && <div className="mt-1.5">{aliasHint}</div>}
                 </div>
 
                 <div>
@@ -1361,6 +1425,8 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
               }}
               availableKeys={availableKeys}
               hostPattern={formData.host_pattern}
+              hostName={formData.host_name}
+              account={getAccountLabel(formData)}
               preset={selectedPreset}
               onRefreshKeys={onRefreshKeys}
               onOpenConflictModal={(data) => {
@@ -1616,9 +1682,15 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                           {isCustom && (
                             <button
                               type="button"
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                if (confirm(`Delete custom preset "${preset.title}"?`)) {
+                                const ok = await askConfirm({
+                                  title: "Delete preset?",
+                                  message: `Delete custom preset "${preset.title}"?`,
+                                  confirmLabel: "Delete",
+                                  danger: true,
+                                });
+                                if (ok) {
                                   deleteCustomPreset(preset.id);
                                   setPresetsList(getAllPresets());
                                 }

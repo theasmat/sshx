@@ -20,6 +20,7 @@ import { BrandLogo } from "../components/BrandLogo";
 import { SshKeyInfo, SshHost } from "../types";
 import { api } from "../api";
 import { isKeyNameDuplicate, getUniqueKeyName } from "../utils/keyUtils";
+import { KeyUsagePanel } from "../components/KeyUsagePanel";
 import { DeleteKeyConfirmationModal } from "../components/DeleteKeyConfirmationModal";
 
 interface KeyManagementViewProps {
@@ -431,6 +432,16 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                   </button>
                 </div>
               </div>
+
+              <KeyUsagePanel
+                keyInfo={selectedKey}
+                keys={keys}
+                hosts={hosts}
+                onRenamed={(newPath) => {
+                  setSelectedKeyPath(newPath);
+                  onRefresh();
+                }}
+              />
 
               {/* Secure Privacy Box for Fingerprint (Masked) - Clean & Responsive */}
               <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md flex items-center justify-between gap-3">

@@ -292,3 +292,63 @@ pub fn delete_ssh_key(private_path: &str) -> Result<String, String> {
 }
 
 
+
+fn valid_key_name(name: &str) -> bool {
+    !name.is_empty()
+        && !name.starts_with('.')
+        && !name.ends_with(".pub")
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.'))
+}
+
+/// Rename a key pair on disk and repoint every host that uses it. The config
+/// update goes through the safe writer (backup); if it fails the files are put back.
+pub fn rename_ssh_key(private_path: &str, new_name: &str) -> Result<String, String> {
+    if !valid_key_name(new_name) {
+        return Err("Key name may only contain letters, digits, '.', '_' and '-'.".to_string());
+    }
+    let old = std::path::PathBuf::from(private_path);
+    if !old.exists() {
+        return Err(format!("Key file '{}' does not exist.", private_path));
+    }
+    let dir = old.parent().ok_or("Invalid key path")?;
+    let new = dir.join(new_name);
+    let old_pub = std::path::PathBuf::from(format!("{}.pub", private_path));
+    let new_pub = dir.join(format!("{}.pub", new_name));
+    if new.exists() || new_pub.exists() {
+        return Err(format!("A key named '{}' already exists.", new_name));
+    }
+
+    let _ = remove_key_from_agent(private_path);
+    fs::rename(&old, &new).map_err(|e| format!("Failed to rename private key: {}", e))?;
+    let had_pub = old_pub.exists();
+    if had_pub {
+        if let Err(e) = fs::rename(&old_pub, &new_pub) {
+            let _ = fs::rename(&new, &old);
+            return Err(format!("Failed to rename public key: {}", e));
+        }
+    }
+
+    if let Err(e) = crate::config_parser::rename_key_in_hosts(private_path, new_name) {
+        let _ = fs::rename(&new, &old);
+        if had_pub {
+            let _ = fs::rename(&new_pub, &old_pub);
+        }
+        return Err(format!("Could not update ~/.ssh/config, rename undone: {}", e));
+    }
+    Ok(new.to_string_lossy().to_string())
+}
+
+#[cfg(test)]
+mod rename_tests {
+    use super::valid_key_name;
+
+    #[test]
+    fn key_name_validation() {
+        assert!(valid_key_name("id_ed25519_github_work"));
+        assert!(!valid_key_name(""));
+        assert!(!valid_key_name("../evil"));
+        assert!(!valid_key_name("a b"));
+        assert!(!valid_key_name("k.pub"));
+        assert!(!valid_key_name(".hidden"));
+    }
+}

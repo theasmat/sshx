@@ -434,6 +434,25 @@ export const api = {
     });
   },
 
+  renameKey: async (privatePath: string, newName: string): Promise<string> => {
+    if (!isTauri()) {
+      const k = mockKeys.find((x) => x.private_path === privatePath);
+      if (!k) throw new Error("Key not found");
+      const oldName = k.file_name;
+      const newPath = privatePath.replace(/[^/]+$/, newName);
+      mockHosts = mockHosts.map((h) =>
+        h.identity_file && h.identity_file.endsWith(`/${oldName}`)
+          ? { ...h, identity_file: h.identity_file.replace(/[^/]+$/, newName) }
+          : h
+      );
+      k.file_name = newName;
+      k.private_path = newPath;
+      if (k.public_path) k.public_path = `${newPath}.pub`;
+      return newPath;
+    }
+    return await invoke<string>("rename_key", { privatePath, newName });
+  },
+
   unlinkKey: async (keyPath: string): Promise<SshConfigFileData> => {
     if (!isTauri()) return getMockConfigData();
     return await invoke<SshConfigFileData>("unlink_key", { keyPath });

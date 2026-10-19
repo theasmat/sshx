@@ -1,3 +1,4 @@
+import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -175,13 +176,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleRestoreDeviceSnapshot = async (snapshotName?: string) => {
     const target = snapshotName || "config.sshx.bak";
-    if (
-      !confirm(
-        `Are you sure you want to restore '${target}'?\nThis will revert your current ~/.ssh/config to this snapshot.`
-      )
-    ) {
-      return;
-    }
+    const ok = await askConfirm({
+      title: "Restore snapshot?",
+      message: `Restore '${target}'?\nThis will revert your current ~/.ssh/config to this snapshot.`,
+      confirmLabel: "Restore",
+      danger: true,
+    });
+    if (!ok) return;
 
     setRestoringSnapshotName(target);
     try {

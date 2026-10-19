@@ -11,7 +11,7 @@ use config_parser::{
 };
 use key_manager::{
     add_key_to_agent as add_key_to_agent_fn, delete_ssh_key as delete_ssh_key_fn,
-    generate_ssh_key, list_ssh_keys, remove_key_from_agent as remove_key_from_agent_fn,
+    generate_ssh_key, list_ssh_keys, rename_ssh_key as rename_ssh_key_fn, remove_key_from_agent as remove_key_from_agent_fn,
     GenerateKeyRequest, SshKeyInfo,
 };
 use known_hosts::{
@@ -70,6 +70,11 @@ fn delete_key(private_path: String, unlink_hosts: bool) -> Result<String, String
         let _ = unlink_key_from_hosts(&private_path);
     }
     delete_ssh_key_fn(&private_path)
+}
+
+#[tauri::command]
+fn rename_key(private_path: String, new_name: String) -> Result<String, String> {
+    rename_ssh_key_fn(&private_path, &new_name)
 }
 
 #[tauri::command]
@@ -193,6 +198,7 @@ pub fn run() {
             create_ssh_key,
             delete_key,
             unlink_key,
+            rename_key,
             add_key_to_agent,
             remove_key_from_agent,
             get_detected_terminals,

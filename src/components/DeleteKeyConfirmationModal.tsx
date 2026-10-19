@@ -1,3 +1,4 @@
+import { hostsUsingKey } from "../utils/keyUtils";
 import { toast } from "../utils/toast";
 import React, { useState, useMemo } from "react";
 import {
@@ -39,21 +40,7 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
   // Find all hosts that use this key
   const dependentHosts = useMemo(() => {
     if (!keyInfo) return [];
-    const targetPath = keyInfo.private_path;
-    const targetName = keyInfo.file_name;
-
-    return hosts.filter((h) => {
-      if (!h.identity_file) return false;
-      const idFile = h.identity_file.trim();
-      const idName = idFile.split("/").pop() || idFile;
-
-      return (
-        idFile === targetPath ||
-        idFile === `~/.ssh/${targetName}` ||
-        idName === targetName ||
-        idFile.endsWith(`/${targetName}`)
-      );
-    });
+    return hostsUsingKey(keyInfo, hosts);
   }, [keyInfo, hosts]);
 
   if (!isOpen || !keyInfo) return null;

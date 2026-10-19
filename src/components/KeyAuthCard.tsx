@@ -1,5 +1,5 @@
 import { toast } from "../utils/toast";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   BsKeyFill,
   BsCheckCircleFill,
@@ -18,7 +18,9 @@ import {
   isKeyNameDuplicate,
   findMatchingExistingKey,
   getUniqueKeyName,
-  suggestKeyNameForHost,
+  suggestKeyName,
+  suggestKeyComment,
+  keyNameAlternatives,
 } from "../utils/keyUtils";
 
 interface KeyAuthCardProps {
@@ -27,6 +29,9 @@ interface KeyAuthCardProps {
   onChangeIdentity: (identityFile: string, identitiesOnly: boolean) => void;
   availableKeys: SshKeyInfo[];
   hostPattern: string;
+  hostName?: string | null;
+  /** Account label (e.g. "work") used to name the key and its comment. */
+  account?: string | null;
   preset?: PresetTemplate | null;
   onRefreshKeys: () => void;
   onOpenConflictModal: (conflictData: {
@@ -43,6 +48,8 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   onChangeIdentity,
   availableKeys,
   hostPattern,
+  hostName,
+  account,
   preset,
   onRefreshKeys,
   onOpenConflictModal,
@@ -56,20 +63,37 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   const [copiedKey, setCopiedKey] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Sync / Derive recommended key name when hostPattern or preset changes
+  // Re-suggest the name/comment as alias, address or account change, until the user edits them.
+  const nameTouched = useRef(false);
+  const commentTouched = useRef(false);
+  const nameCtx = useMemo(
+    () => ({ alias: hostPattern, hostName, account, keyType: genKeyType }),
+    [hostPattern, hostName, account, genKeyType]
+  );
+
   useEffect(() => {
     if (preset?.keyRecommendation) {
-      setGenKeyName(getUniqueKeyName(preset.keyRecommendation.keyName, availableKeys));
-      setGenKeyComment(preset.keyRecommendation.comment || `${hostPattern}@sshx`);
+      if (!nameTouched.current) setGenKeyName(getUniqueKeyName(preset.keyRecommendation.keyName, availableKeys));
+      if (!commentTouched.current) setGenKeyComment(preset.keyRecommendation.comment || `${hostPattern}@sshx`);
       setGenKeyType(preset.keyRecommendation.keyType);
-    } else if (hostPattern.trim()) {
-      setGenKeyName(suggestKeyNameForHost(hostPattern, "ed25519", availableKeys));
-      setGenKeyComment(`${hostPattern.trim()}@sshx`);
-    } else {
-      setGenKeyName(getUniqueKeyName("id_ed25519_custom", availableKeys));
-      setGenKeyComment("");
+      return;
     }
-  }, [hostPattern, preset, availableKeys]);
+    if (!nameTouched.current) {
+      setGenKeyName(
+        hostPattern.trim()
+          ? suggestKeyName(nameCtx, availableKeys)
+          : getUniqueKeyName("id_ed25519_custom", availableKeys)
+      );
+    }
+    if (!commentTouched.current) {
+      setGenKeyComment(hostPattern.trim() ? suggestKeyComment(nameCtx) : "");
+    }
+  }, [hostPattern, preset, availableKeys, nameCtx]);
+
+  const alternatives = useMemo(
+    () => (hostPattern.trim() ? keyNameAlternatives(nameCtx, availableKeys) : []),
+    [hostPattern, nameCtx, availableKeys]
+  );
 
   // Find currently connected key object if present
   const connectedKeyObj = useMemo(() => {
@@ -435,7 +459,10 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                   type="text"
                   placeholder="Key filename"
                   value={genKeyName}
-                  onChange={(e) => setGenKeyName(e.target.value)}
+                  onChange={(e) => {
+                    nameTouched.current = true;
+                    setGenKeyName(e.target.value);
+                  }}
                   className={`w-full bg-[#0b0f19] border ${
                     isDuplicate ? "border-amber-500/60 text-amber-200" : "border-[#1f2942] text-white"
                   } rounded-lg pl-14 pr-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-blue-500`}
@@ -446,7 +473,10 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                 type="text"
                 placeholder="Comment / Email (optional)"
                 value={genKeyComment}
-                onChange={(e) => setGenKeyComment(e.target.value)}
+                onChange={(e) => {
+                  commentTouched.current = true;
+                  setGenKeyComment(e.target.value);
+                }}
                 className="bg-[#0b0f19] border border-[#1f2942] rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
               />
 
@@ -466,6 +496,25 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                 </span>
               </button>
             </div>
+
+            {alternatives.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-400">
+                <span>Other names:</span>
+                {alternatives.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => {
+                      nameTouched.current = true;
+                      setGenKeyName(n);
+                    }}
+                    className="px-1.5 py-0.5 rounded bg-[#101726] border border-[#1e293b] font-mono text-gray-300 hover:text-white hover:border-blue-500/50 cursor-pointer"
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Conflict Notice if key name exists on disk */}
             {isDuplicate && (

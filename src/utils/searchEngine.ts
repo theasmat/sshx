@@ -21,6 +21,9 @@ export interface SearchActionHandler {
     | "open_export_backup"
     | "open_restore_backup"
     | "reload_config"
+    | "test_all_hosts"
+    | "new_git_host"
+    | "open_audit_fix"
     | "zoom_in"
     | "zoom_out"
     | "zoom_reset";
@@ -397,6 +400,36 @@ export const STATIC_SEARCH_ITEMS: SearchItem[] = [
       type: "TRIGGER_ACTION",
       actionName: "reload_config",
     },
+  },
+  {
+    id: "action_test_all_hosts",
+    title: "Test All Hosts",
+    note: "Run a connection test on every host and detect which git account each key logs in as",
+    category: "action",
+    badge: "Test",
+    iconName: "terminal",
+    keywords: ["test", "check", "all", "hosts", "connection", "account", "verify"],
+    handler: { type: "TRIGGER_ACTION", actionName: "test_all_hosts" },
+  },
+  {
+    id: "action_new_git_host",
+    title: "New Host for GitHub Account",
+    note: "Add another GitHub identity with its own alias and key",
+    category: "action",
+    badge: "Git",
+    iconName: "key",
+    keywords: ["github", "git", "account", "identity", "work", "personal", "new", "add"],
+    handler: { type: "TRIGGER_ACTION", actionName: "new_git_host" },
+  },
+  {
+    id: "action_open_audit_fix",
+    title: "Fix Audit Issues",
+    note: "Review security audit findings and apply one-click fixes",
+    category: "action",
+    badge: "Audit",
+    iconName: "shield-check",
+    keywords: ["fix", "audit", "issues", "security", "identitiesonly", "permissions"],
+    handler: { type: "TRIGGER_ACTION", actionName: "open_audit_fix" },
   },
 ];
 

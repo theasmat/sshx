@@ -128,3 +128,107 @@ export function getUniqueHostAlias(
     counter++;
   }
 }
+
+export interface KeyNameContext {
+  alias: string;
+  hostName?: string | null;
+  /** Account label ("work", "personal") from the `account:` tag or a detected username. */
+  account?: string | null;
+  keyType?: "ed25519" | "rsa" | "ecdsa";
+}
+
+const slug = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+/** "github.com" -> "github", "git.example.co.uk" -> "git_example", IPs keep their dots as "_". */
+export function providerSlug(hostName?: string | null): string {
+  const h = (hostName || "").trim().toLowerCase();
+  if (!h) return "";
+  if (/^[\d.]+$/.test(h) || h.includes(":")) return slug(h);
+  const labels = h.split(".").filter(Boolean);
+  const known = ["github", "gitlab", "bitbucket"].find((p) => labels.includes(p));
+  if (known) return known;
+  return slug(labels.length > 1 ? labels.slice(0, -1).join("_") : labels[0]);
+}
+
+/**
+ * Candidate key filenames, best first. A bare alias like "github.com" says nothing
+ * about which account the key is for, so prefer provider + account when known.
+ */
+export function keyNameCandidates(ctx: KeyNameContext): string[] {
+  const type = ctx.keyType || "ed25519";
+  const aliasSlug = slug(ctx.alias.trim().split(/\s+/)[0] || "");
+  const provider = providerSlug(ctx.hostName);
+  const account = slug(ctx.account || "");
+  // alias that is just the hostname ("github.com") carries no identity
+  const aliasIsHostname =
+    !!aliasSlug &&
+    (aliasSlug === slug(ctx.hostName || "") || aliasSlug === provider || aliasSlug === provider.replace(/_/g, ""));
+
+  const parts: string[][] = [];
+  if (account && provider) parts.push([provider, account]);
+  if (aliasSlug && !aliasIsHostname) parts.push([aliasSlug]);
+  if (provider) parts.push([provider]);
+  if (aliasSlug) parts.push([aliasSlug]);
+  const names = parts.map((p) => `id_${type}_${p.join("_")}`);
+  return Array.from(new Set(names.length ? names : [`id_${type}_custom`]));
+}
+
+/** Best non-colliding name for a new key. */
+export function suggestKeyName(ctx: KeyNameContext, keys: SshKeyInfo[] = []): string {
+  return getUniqueKeyName(keyNameCandidates(ctx)[0], keys);
+}
+
+/** Up to `max` other free names to offer as one-click alternatives. */
+export function keyNameAlternatives(ctx: KeyNameContext, keys: SshKeyInfo[], max = 3): string[] {
+  const best = suggestKeyName(ctx, keys);
+  return keyNameCandidates(ctx)
+    .filter((n) => !isKeyNameDuplicate(n, keys) && n !== best)
+    .slice(0, max);
+}
+
+/** Key comment that is recognisable on a provider's key page and in `ssh-add -l`. */
+export function suggestKeyComment(ctx: KeyNameContext): string {
+  const alias = slug(ctx.alias.trim().split(/\s+/)[0] || "") || "host";
+  return ctx.account ? `${slug(ctx.account)}@${alias}` : `${alias}@sshx`;
+}
+
+/**
+ * Alias that identifies the account instead of the bare hostname:
+ * ("github.com", "work") -> "github-work". Returns "" when nothing to suggest.
+ */
+export function suggestHostAlias(
+  hostName: string,
+  account: string | null | undefined,
+  hosts: SshHost[],
+  currentHostId?: string
+): string {
+  const provider = providerSlug(hostName).replace(/_/g, "-");
+  if (!provider) return "";
+  const acct = slug(account || "").replace(/_/g, "-");
+  return getUniqueHostAlias(acct ? `${provider}-${acct}` : provider, hosts, currentHostId);
+}
+
+/** A bare provider hostname as alias makes every repo use this host's key by default. */
+export function isBareHostnameAlias(alias: string, hostName?: string | null): boolean {
+  const a = alias.trim().toLowerCase();
+  const h = (hostName || "").trim().toLowerCase();
+  return !!a && !!h && a === h && /(github|gitlab|bitbucket)/.test(h);
+}
+
+/** Hosts whose IdentityFile points at this key (full path, ~/.ssh/<name>, or same file name). */
+export function hostsUsingKey(key: Pick<SshKeyInfo, "private_path" | "file_name">, hosts: SshHost[]): SshHost[] {
+  return hosts.filter((h) => {
+    const id = (h.identity_file || "").trim();
+    if (!id) return false;
+    return (
+      id === key.private_path ||
+      id === `~/.ssh/${key.file_name}` ||
+      (id.split("/").pop() || id) === key.file_name
+    );
+  });
+}

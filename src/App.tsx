@@ -1,3 +1,4 @@
+
 import { toast } from "./utils/toast";
 import { useState, useEffect, useMemo } from "react";
 import { Header } from "./components/Header";
@@ -10,6 +11,7 @@ import { SecurityAuditView } from "./views/SecurityAuditView";
 import { RawConfigView } from "./views/RawConfigView";
 import { SettingsView } from "./views/SettingsView";
 import { Toaster } from "./components/Toaster";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 import { parseGitAccount } from "./utils/hostUtils";
 import { TestResultModal } from "./components/TestResultModal";
 import { DeleteHostConfirmationModal } from "./components/DeleteHostConfirmationModal";
@@ -301,6 +303,18 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
           case "reload_config":
             loadAllData();
             break;
+          case "test_all_hosts":
+            handleTestAllHosts();
+            break;
+          case "new_git_host":
+            setEditingHost(null);
+            setAddHostInitialPreset(getAllPresets().find((p) => p.id === "github-work") || null);
+            setAddHostInitialScreen("interactive");
+            setActiveTab("add-host");
+            break;
+          case "open_audit_fix":
+            setActiveTab("audit");
+            break;
           case "zoom_in":
             setZoomLevel((prev) => Math.min(prev + 10, 150));
             break;
@@ -429,6 +443,44 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
     setTimeout(() => setCopiedId(null), 1500);
   };
 
+  const recordAccount = (hostId: string, output: string) => {
+    const account = parseGitAccount(output);
+    if (!account) return;
+    setHostAccounts((prev) => {
+      const next = { ...prev, [hostId]: account };
+      try {
+        localStorage.setItem("sshx_host_accounts", JSON.stringify(next));
+      } catch {
+        /* storage unavailable: the label just isn't remembered */
+      }
+      return next;
+    });
+  };
+
+  // Test every concrete host one after another; wildcard / Match blocks are skipped.
+  const handleTestAllHosts = async () => {
+    const targets = (configData?.hosts || []).filter(
+      (h) => !h.is_match && !/[*?]/.test(h.host_pattern) && h.host_name
+    );
+    if (targets.length === 0) {
+      toast.info("No hosts to test.");
+      return;
+    }
+    toast.info(`Testing ${targets.length} host${targets.length === 1 ? "" : "s"}...`);
+    let ok = 0;
+    for (const h of targets) {
+      try {
+        const res = await api.testHost(h.host_pattern.trim().split(/\s+/)[0]);
+        if (res.success) ok++;
+        recordAccount(h.id, res.output);
+      } catch {
+        /* counted as failed */
+      }
+    }
+    const failed = targets.length - ok;
+    (failed ? toast.error : toast.success)(`Tested ${targets.length}: ${ok} ok${failed ? `, ${failed} failed` : ""}`);
+  };
+
   // Test Connection
   const handleTestConnection = async (host: SshHost) => {
     // Resolve the key configured for this host so the result modal can show
@@ -453,18 +505,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
 
     try {
       const res = await api.testHost(host.host_pattern);
-      const account = parseGitAccount(res.output);
-      if (account) {
-        setHostAccounts((prev) => {
-          const next = { ...prev, [host.id]: account };
-          try {
-            localStorage.setItem("sshx_host_accounts", JSON.stringify(next));
-          } catch {
-            /* storage unavailable: the label just isn't remembered */
-          }
-          return next;
-        });
-      }
+      recordAccount(host.id, res.output);
       setTestModalState((prev) => ({
         ...prev,
         result: res,
@@ -728,6 +769,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
       </div>
 
       <Toaster />
+      <ConfirmDialog />
 
       {/* Transient Test Output Modal */}
       <TestResultModal

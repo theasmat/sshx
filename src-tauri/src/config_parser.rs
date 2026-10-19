@@ -706,6 +706,42 @@ pub fn unlink_key_from_hosts(key_path_or_name: &str) -> Result<SshConfigFileData
     read_ssh_config()
 }
 
+/// `~/.ssh/old` -> `~/.ssh/new`, keeping whatever directory prefix was written.
+fn replace_identity_name(id_file: &str, new_name: &str) -> String {
+    match id_file.rfind('/') {
+        Some(i) => format!("{}{}", &id_file[..=i], new_name),
+        None => new_name.to_string(),
+    }
+}
+
+/// Point every host that uses `old_path` (or a key with the same file name) at `new_name`.
+/// Returns how many hosts changed. Writes through the safe writer, so a backup is taken.
+pub fn rename_key_in_hosts(old_path: &str, new_name: &str) -> Result<usize, String> {
+    let mut config = read_ssh_config()?;
+    let old_name = std::path::Path::new(old_path)
+        .file_name()
+        .map(|f| f.to_string_lossy().to_string())
+        .unwrap_or_else(|| old_path.to_string());
+    let mut changed = 0;
+    for h in &mut config.hosts {
+        if let Some(ref id_file) = h.identity_file {
+            let id_name = std::path::Path::new(id_file)
+                .file_name()
+                .map(|f| f.to_string_lossy().to_string())
+                .unwrap_or_else(|| id_file.clone());
+            if id_file == old_path || id_name == old_name {
+                h.identity_file = Some(replace_identity_name(id_file, new_name));
+                changed += 1;
+            }
+        }
+    }
+    if changed > 0 {
+        let serialized = serialize_ssh_config(&config.global_comments, &config.global_directives, &config.hosts);
+        write_ssh_config_safe(&serialized)?;
+    }
+    Ok(changed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -867,5 +903,12 @@ Match host *.internal.example.com
         assert!(valid_backup.exists(), "Primary sshx backup must NOT be removed");
 
         let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn replace_identity_name_keeps_directory() {
+        assert_eq!(replace_identity_name("~/.ssh/old", "new"), "~/.ssh/new");
+        assert_eq!(replace_identity_name("/h/u/.ssh/old", "new"), "/h/u/.ssh/new");
+        assert_eq!(replace_identity_name("old", "new"), "new");
     }
 }
