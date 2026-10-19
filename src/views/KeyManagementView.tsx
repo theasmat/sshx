@@ -5,23 +5,22 @@ import {
   BsPlusLg,
   BsCopy,
   BsCheckLg,
-  BsShieldLock,
   BsArrowClockwise,
-  BsXLg,
   BsEye,
   BsEyeSlash,
   BsCheckCircleFill,
-  BsLockFill,
-  BsStars,
-  BsExclamationTriangleFill,
   BsTrash3,
 } from "react-icons/bs";
 import { BrandLogo } from "../components/BrandLogo";
 import { SshKeyInfo, SshHost } from "../types";
 import { api } from "../api";
 import { isKeyNameDuplicate, getUniqueKeyName } from "../utils/keyUtils";
+import { Button, Badge, Dialog, Group, Row, Segmented } from "../components/ui";
 import { KeyUsagePanel } from "../components/KeyUsagePanel";
 import { DeleteKeyConfirmationModal } from "../components/DeleteKeyConfirmationModal";
+
+const modalField =
+  "w-full h-8 px-2.5 rounded-ctl bg-white/[0.06] text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.09] focus:ring-2 focus:ring-accent/70";
 
 interface KeyManagementViewProps {
   keys: SshKeyInfo[];
@@ -187,168 +186,107 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
   const loadedCount = keys.filter((k) => k.is_agent_loaded).length;
 
   return (
-    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
-      {/* Top Header with Prominent Create Key Button */}
-      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-1.5">
-          <div className="w-5.5 h-5.5 rounded-md bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-            <BsKeyFill className="w-3 h-3" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white text-xs">Key Management</h2>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Main Prominent Create Key Button */}
-          <button
-            onClick={handleOpenCreateModal}
-            className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-md font-semibold text-xs transition-all shadow-sm shadow-blue-500/20 active:scale-95 cursor-pointer"
-          >
-            <BsPlusLg className="w-3.5 h-3.5" />
-            <span>Create SSH Key</span>
-          </button>
-
+    <div className="h-full flex flex-col bg-app text-[13px] select-none overflow-hidden">
+      {/* Title bar */}
+      <div className="px-5 h-12 flex items-center justify-between shrink-0">
+        <h2 className="text-[15px] font-semibold text-label">Keys</h2>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" icon={<BsPlusLg />} onClick={handleOpenCreateModal}>
+            New Key
+          </Button>
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong transition-colors disabled:opacity-50 cursor-pointer"
-            title="Refresh ~/.ssh/ keys"
+            className="h-8 w-8 flex items-center justify-center rounded-ctl text-label-2 hover:text-label hover:bg-white/[0.06] disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+            title="Refresh ~/.ssh keys"
+            aria-label="Refresh keys"
           >
-            <BsArrowClockwise
-              className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-400" : ""}`}
-            />
+            <BsArrowClockwise className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* Top Summary Status Bar (Clean & Space-Efficient) */}
-      <div className="px-3 py-1.5 border-b border-line bg-bar/70 shrink-0 flex items-center justify-between flex-wrap gap-2 text-xs">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-raised-2 border border-line text-gray-300 text-xs">
-            <BsKeyFill className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="font-bold text-white font-mono">{keys.length}</span>
-            <span className="text-gray-400">
-              {keys.length === 1 ? "key found in ~/.ssh" : "keys found in ~/.ssh"}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-raised-2 border border-line text-gray-300 text-xs">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                loadedCount > 0 ? "bg-emerald-400 ring-2 ring-emerald-400/20" : "bg-gray-500"
-              }`}
-            />
-            <span className="font-bold text-emerald-400 font-mono">{loadedCount}</span>
-            <span className="text-gray-400">in ssh-agent</span>
-          </div>
-        </div>
-
-        {/* Default Algorithm with Switch Button */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-gray-400 text-xs">Default:</span>
-          <button
-            onClick={() => setIsAlgoModalOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-control hover:bg-line text-purple-300 border border-purple-500/30 font-mono font-semibold text-xs transition-colors cursor-pointer"
-            title="Click to switch preferred key algorithm"
-          >
-            <BsStars className="w-3 h-3 text-purple-400" />
-            <span className="uppercase">{defaultAlgo}</span>
-            <span className="text-gray-400 font-sans font-normal text-[11px]">Switch</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Split View: Left List of Keys | Right Selected Key Detail (Persistent Side-by-Side) */}
       <div className="flex-1 flex flex-row overflow-hidden">
-        {/* Left Pane: Keys List */}
-        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-line bg-app">
-          {/* Search bar */}
-          <div className="p-2 border-b border-line bg-bar">
+        {/* Left: key list */}
+        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col">
+          <div className="px-3 pb-2 space-y-2">
             <input
               type="text"
-              placeholder="Filter keys by name, comment..."
+              placeholder="Filter keys"
+              aria-label="Filter keys"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-7 px-2.5 text-xs bg-raised-2 border border-line rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full h-8 px-3 bg-white/[0.07] rounded-ctl text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-accent/70"
             />
+            <div className="flex items-center justify-between px-1 text-xs text-label-3">
+              <span>
+                {keys.length} {keys.length === 1 ? "key" : "keys"} · {loadedCount} in ssh-agent
+              </span>
+              <button
+                onClick={() => setIsAlgoModalOpen(true)}
+                className="hover:text-label-2 cursor-pointer"
+                title="Switch preferred key algorithm"
+              >
+                Default: <span className="uppercase">{defaultAlgo}</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-[#172138]/50">
+          <div role="listbox" aria-label="SSH keys" className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
             {filteredKeys.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 text-xs">
-                No matching keys found in ~/.ssh/
-              </div>
+              <div className="p-6 text-center text-label-3">No matching keys in ~/.ssh</div>
             ) : (
               filteredKeys.map((k) => {
                 const isSelected = selectedKeyPath === k.private_path;
-
                 return (
                   <div
                     key={k.private_path}
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
                     onClick={() => setSelectedKeyPath(k.private_path)}
-                    className={`group px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                      isSelected
-                        ? "bg-blue-600/15 border-l-2 border-blue-500 pl-2"
-                        : "hover:bg-card/60"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedKeyPath(k.private_path);
+                      }
+                    }}
+                    className={`group flex items-center gap-3 px-2.5 py-2 rounded-ctl cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 ${
+                      isSelected ? "bg-accent/20" : "hover:bg-white/[0.05]"
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div
-                        className={`w-6 h-6 rounded flex items-center justify-center shrink-0 border ${
-                          isSelected
-                            ? "bg-blue-600/20 text-blue-400 border-blue-500/40"
-                            : "bg-control text-gray-400 border-line-strong"
-                        }`}
-                      >
-                        <BrandLogo
-                          name={k.file_name}
-                          hostName={k.comment}
-                          className="w-3.5 h-3.5"
-                          fallbackIcon={<BsKeyFill className="w-3 h-3" />}
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 leading-tight">
-                          <span
-                            className={`font-semibold text-[13px] truncate ${
-                              isSelected ? "text-blue-400 font-bold" : "text-white"
-                            }`}
-                          >
-                            {k.file_name}
-                          </span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded font-mono uppercase bg-blue-500/10 text-blue-300 border border-blue-500/20 leading-none">
-                            {k.key_type}
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-gray-400 font-mono truncate leading-tight mt-0.5">
-                          {k.comment || k.private_path.replace(/^.*[\\/]/, "")}
-                        </div>
+                    <div className="w-8 h-8 rounded-ctl flex items-center justify-center bg-card shrink-0 text-label">
+                      <BrandLogo
+                        name={k.file_name}
+                        hostName={k.comment}
+                        className="w-4 h-4"
+                        fallbackIcon={<BsKeyFill className="w-3.5 h-3.5 text-label-2" />}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-label truncate">{k.file_name}</div>
+                      <div className="text-xs text-label-2 truncate">
+                        <span className="uppercase">{k.key_type}</span>
+                        {k.comment ? ` · ${k.comment}` : ""}
                       </div>
                     </div>
-
-                    <div className="shrink-0 flex items-center gap-1.5">
-                      {k.is_agent_loaded ? (
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/20" title="Loaded in ssh-agent" />
-                      ) : (
-                        <span className="w-2 h-2 rounded-full bg-gray-600" title="Not in ssh-agent" />
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setKeyToDelete(k);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-1 rounded text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        title={`Delete key ${k.file_name}`}
-                      >
-                        <BsTrash3 className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${k.is_agent_loaded ? "bg-emerald-400" : "bg-label-3/60"}`}
+                      title={k.is_agent_loaded ? "Loaded in ssh-agent" : "Not in ssh-agent"}
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setKeyToDelete(k);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="p-1.5 rounded-ctl text-label-3 hover:text-rose-300 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer"
+                      aria-label={`Delete key ${k.file_name}`}
+                      title={`Delete key ${k.file_name}`}
+                    >
+                      <BsTrash3 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 );
               })
@@ -356,83 +294,59 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
           </div>
         </div>
 
-        {/* Right Pane: Selected Key Inspector Detail */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel p-3">
+        <div className="w-px bg-white/[0.08] shrink-0" />
+
+        {/* Right: selected key */}
+        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel">
           {selectedKey ? (
-            <div className="max-w-3xl mx-auto space-y-2.5">
-              {/* Header Title & Badges */}
-              <div className="pb-2 border-b border-line flex items-center justify-between flex-wrap gap-2">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
-                      <BrandLogo
-                        name={selectedKey.file_name}
-                        hostName={selectedKey.comment}
-                        className="w-4 h-4"
-                        fallbackIcon={<BsKeyFill className="w-3.5 h-3.5 text-blue-400" />}
-                      />
-                    </div>
-                    <h3 className="text-sm font-bold text-white font-mono">
-                      {selectedKey.file_name}
-                    </h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold leading-none">
-                      {selectedKey.key_type} {selectedKey.bits ? `${selectedKey.bits}-bit` : ""}
-                    </span>
-                    {selectedKey.is_agent_loaded && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1 font-medium leading-none">
-                        <span>⚡ Loaded</span>
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400 font-mono pl-8">
+            <div className="max-w-2xl px-8 py-7 space-y-6">
+              <header className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-card flex items-center justify-center bg-card shrink-0 text-label">
+                  <BrandLogo
+                    name={selectedKey.file_name}
+                    hostName={selectedKey.comment}
+                    className="w-7 h-7"
+                    fallbackIcon={<BsKeyFill className="w-5 h-5 text-label-2" />}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xl font-semibold text-label tracking-tight truncate">{selectedKey.file_name}</h3>
+                  <p className="font-mono text-label-2 truncate" title={selectedKey.private_path}>
                     {selectedKey.private_path}
                   </p>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <Badge>
+                      {selectedKey.key_type.toUpperCase()}
+                      {selectedKey.bits ? ` ${selectedKey.bits}-bit` : ""}
+                    </Badge>
+                    {selectedKey.is_agent_loaded && <Badge tone="ok">Loaded in agent</Badge>}
+                  </div>
                 </div>
+              </header>
 
-                {/* Top Action Buttons */}
-                <div className="flex items-center gap-1.5">
-                  {selectedKey.public_key_content && (
-                    <button
-                      onClick={() =>
-                        handleCopyPublic(selectedKey.public_key_content!)
-                      }
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold text-xs transition-colors shadow-sm cursor-pointer whitespace-nowrap"
-                      title="Copy public key to clipboard"
-                    >
-                      {copiedKey ? (
-                        <BsCheckLg className="w-3.5 h-3.5 text-emerald-300" />
-                      ) : (
-                        <BsCopy className="w-3.5 h-3.5" />
-                      )}
-                      <span>{copiedKey ? "Copied!" : "Copy Public Key"}</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => handleCopyPath(selectedKey.private_path)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer whitespace-nowrap"
-                    title="Copy absolute key file path"
+              <div className="flex items-center gap-2">
+                {selectedKey.public_key_content && (
+                  <Button
+                    variant="primary"
+                    icon={copiedKey ? <BsCheckLg /> : <BsCopy />}
+                    onClick={() => handleCopyPublic(selectedKey.public_key_content!)}
                   >
-                    {copiedPath ? (
-                      <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <BsCopy className="w-3.5 h-3.5 text-gray-400" />
-                    )}
-                    <span>{copiedPath ? "Copied!" : "Copy Path"}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setKeyToDelete(selectedKey);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-md border border-rose-500/30 font-medium text-xs transition-colors cursor-pointer whitespace-nowrap"
-                    title="Delete this SSH key"
-                  >
-                    <BsTrash3 className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Delete Key</span>
-                  </button>
-                </div>
+                    {copiedKey ? "Copied" : "Copy Public Key"}
+                  </Button>
+                )}
+                <Button icon={copiedPath ? <BsCheckLg /> : <BsCopy />} onClick={() => handleCopyPath(selectedKey.private_path)}>
+                  {copiedPath ? "Copied" : "Copy Path"}
+                </Button>
+                <Button
+                  variant="danger"
+                  icon={<BsTrash3 />}
+                  onClick={() => {
+                    setKeyToDelete(selectedKey);
+                    setIsDeleteModalOpen(true);
+                  }}
+                >
+                  Delete
+                </Button>
               </div>
 
               <KeyUsagePanel
@@ -446,440 +360,202 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 }}
               />
 
-              {/* Secure Privacy Box for Fingerprint (Masked) - Clean & Responsive */}
-              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                    <BsLockFill className="w-3 h-3 text-amber-400 shrink-0" />
-                    <span className="truncate">SHA256 Fingerprint (Protected)</span>
-                  </div>
-                  <div className="font-mono text-gray-400 text-xs tracking-widest select-none truncate">
-                    SHA256:••••••••••••••••••••••••••••••••
-                  </div>
-                </div>
-
-                <button
-                  onClick={() =>
-                    handleCopyFingerprint(selectedKey.fingerprint_sha256)
-                  }
-                  className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-control hover:bg-line text-amber-300 hover:text-white rounded-md border border-amber-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Copy full SHA256 fingerprint to clipboard"
-                >
-                  {copiedFingerprint ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" /> : <BsCopy className="w-3.5 h-3.5 text-amber-400" />}
-                  <span>{copiedFingerprint ? "Copied!" : "Copy"}</span>
-                </button>
-              </div>
-
-              {/* Secure Public Key Card (Copy-Only for Privacy) - Clean & Responsive */}
-              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                    <BsShieldLock className="w-3 h-3 text-blue-400 shrink-0" />
-                    <span className="truncate">Public Key (.pub)</span>
-                  </div>
-                  <div
-                    className="text-xs text-gray-400 font-mono truncate"
-                    title={selectedKey.public_path || `${selectedKey.private_path}.pub`}
-                  >
-                    {selectedKey.public_path || `${selectedKey.private_path}.pub`}
-                  </div>
-                </div>
-
-                {selectedKey.public_key_content && (
-                  <button
-                    onClick={() =>
-                      handleCopyPublic(selectedKey.public_key_content!)
-                    }
-                    className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white rounded-md border border-blue-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                    title="Copy full public key string to clipboard"
-                  >
-                    {copiedKey ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-300" /> : <BsCopy className="w-3.5 h-3.5 text-blue-400" />}
-                    <span>{copiedKey ? "Copied!" : "Copy .pub"}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Parameters Table */}
-              <div className="bg-raised-2 border border-line rounded-md divide-y divide-line text-xs">
-                <div className="flex items-center justify-between px-2.5 py-1.5">
-                  <span className="text-gray-400">Algorithm</span>
-                  <span className="font-mono text-white font-semibold uppercase">
-                    {selectedKey.key_type}
-                  </span>
-                </div>
-
-                {selectedKey.bits && (
-                  <div className="flex items-center justify-between px-2.5 py-1.5">
-                    <span className="text-gray-400">Key Length</span>
-                    <span className="font-mono text-gray-200">
-                      {selectedKey.bits} bits
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between px-2.5 py-1.5">
-                  <span className="text-gray-400">Comment / Email</span>
-                  <span className="font-mono text-gray-200">
-                    {selectedKey.comment || "(none)"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between px-2.5 py-1.5">
-                  <span className="text-gray-400">Public Key Status</span>
-                  <span className="font-mono text-gray-200">
-                    {selectedKey.public_path ? "Paired (.pub available)" : "Private only"}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between px-2.5 py-1.5">
-                  <span className="text-gray-400">SSH-Agent Status</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-gray-200 flex items-center gap-1.5">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          selectedKey.is_agent_loaded
-                            ? "bg-emerald-400 ring-2 ring-emerald-400/20"
-                            : "bg-gray-500"
-                        }`}
-                      />
-                      <span>
-                        {selectedKey.is_agent_loaded
-                          ? "Active in ssh-agent"
-                          : "Not currently loaded"}
-                      </span>
-                    </span>
-
+              <Group title="Details">
+                <Row label="Algorithm">{selectedKey.key_type.toUpperCase()}</Row>
+                {selectedKey.bits && <Row label="Length">{selectedKey.bits} bits</Row>}
+                <Row label="Comment">{selectedKey.comment || "(none)"}</Row>
+                <Row label="Public key">{selectedKey.public_path ? "Paired (.pub)" : "Private only"}</Row>
+                <Row label="Fingerprint">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="tracking-widest text-label-3">SHA256:••••••••••••</span>
                     <button
-                      onClick={() =>
-                        handleToggleAgent(
-                          selectedKey.private_path,
-                          selectedKey.is_agent_loaded
-                        )
-                      }
-                      disabled={isTogglingAgent}
-                      className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors cursor-pointer disabled:opacity-50 ${
-                        selectedKey.is_agent_loaded
-                          ? "bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-500/20"
-                          : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20"
-                      }`}
-                      title={
-                        selectedKey.is_agent_loaded
-                          ? "Run `ssh-add -d` to unload from memory"
-                          : "Run `ssh-add` to load into active ssh-agent"
-                      }
+                      onClick={() => handleCopyFingerprint(selectedKey.fingerprint_sha256)}
+                      className="font-sans text-accent hover:underline cursor-pointer"
+                      title="Copy the full SHA256 fingerprint"
                     >
-                      {isTogglingAgent
-                        ? "Updating..."
-                        : selectedKey.is_agent_loaded
-                        ? "Unload (ssh-add -d)"
-                        : "Load into Agent (ssh-add)"}
+                      {copiedFingerprint ? "Copied" : "Copy"}
                     </button>
-                  </div>
-                </div>
-              </div>
+                  </span>
+                </Row>
+                <Row label="ssh-agent">
+                  <span className="inline-flex items-center gap-3">
+                    <span className="font-sans">{selectedKey.is_agent_loaded ? "Loaded" : "Not loaded"}</span>
+                    <button
+                      onClick={() => handleToggleAgent(selectedKey.private_path, selectedKey.is_agent_loaded)}
+                      disabled={isTogglingAgent}
+                      className="font-sans text-accent hover:underline disabled:opacity-50 cursor-pointer"
+                      title={selectedKey.is_agent_loaded ? "Run ssh-add -d to unload" : "Run ssh-add to load"}
+                    >
+                      {isTogglingAgent ? "Updating..." : selectedKey.is_agent_loaded ? "Unload" : "Load"}
+                    </button>
+                  </span>
+                </Row>
+              </Group>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500 text-xs">
-              Select a key from the list to view its details.
-            </div>
+            <div className="h-full flex items-center justify-center text-label-3">Select a key to see its details</div>
           )}
         </div>
       </div>
 
-      {/* MODAL 1: CREATE KEY (Apple/Google Auth-Style Clean Modal) */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl shadow-black/80 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-                  <BsKeyFill className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">
-                    {createStep === "form" ? "Create New SSH Key" : "Key Generated Successfully!"}
-                  </h3>
-                  <p className="text-[11px] text-gray-400">
-                    {createStep === "form"
-                      ? "Generate a secure cryptographic key pair in ~/.ssh/"
-                      : "Your new SSH key has been created and loaded"}
-                  </p>
-                </div>
+        <Dialog
+          title={createStep === "form" ? "New SSH Key" : "Key created"}
+          subtitle={createStep === "form" ? "Generates a key pair in ~/.ssh/" : generatedResult?.private_path}
+          onClose={() => setIsCreateModalOpen(false)}
+          footer={
+            createStep === "form" ? (
+              <>
+                <Button type="button" onClick={() => setIsCreateModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" form="create-key-form" variant="primary" icon={<BsKeyFill />} disabled={isGenerating}>
+                  {isGenerating ? "Generating..." : "Generate"}
+                </Button>
+              </>
+            ) : (
+              <>
+                {generatedResult?.public_key_content && (
+                  <Button
+                    icon={copiedKey ? <BsCheckLg /> : <BsCopy />}
+                    onClick={() => handleCopyPublic(generatedResult.public_key_content!)}
+                  >
+                    {copiedKey ? "Copied" : "Copy Public Key"}
+                  </Button>
+                )}
+                <Button variant="primary" onClick={() => setIsCreateModalOpen(false)}>
+                  Done
+                </Button>
+              </>
+            )
+          }
+        >
+          {createStep === "form" ? (
+            <form id="create-key-form" onSubmit={handleGenerateKeySubmit} className="space-y-4 text-[13px]">
+              <div className="space-y-1.5">
+                <div className="text-label-2">Algorithm</div>
+                <Segmented
+                  label="Algorithm"
+                  value={keyType}
+                  options={[
+                    { value: "ed25519" as const, label: "Ed25519" },
+                    { value: "rsa" as const, label: "RSA 4096" },
+                    { value: "ecdsa" as const, label: "ECDSA" },
+                  ]}
+                  onChange={setKeyType}
+                />
+                <p className="text-xs text-label-3">Ed25519 is recommended. RSA works with very old servers.</p>
               </div>
 
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-              >
-                <BsXLg className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            {createStep === "form" ? (
-              <form onSubmit={handleGenerateKeySubmit} className="p-5 space-y-4 text-xs">
-                {/* Row 1: Algorithm Selector */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1.5">
-                    Algorithm Type
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setKeyType("ed25519")}
-                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        keyType === "ed25519"
-                          ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-app border-line text-gray-400 hover:text-gray-200"
-                      }`}
-                    >
-                      <div className="text-xs">Ed25519</div>
-                      <div className="text-[10px] text-emerald-400 font-medium">Recommended</div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setKeyType("rsa")}
-                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        keyType === "rsa"
-                          ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-app border-line text-gray-400 hover:text-gray-200"
-                      }`}
-                    >
-                      <div className="text-xs">RSA</div>
-                      <div className="text-[10px] text-gray-500 font-medium">4096-bit</div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setKeyType("ecdsa")}
-                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        keyType === "ecdsa"
-                          ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-app border-line text-gray-400 hover:text-gray-200"
-                      }`}
-                    >
-                      <div className="text-xs">ECDSA</div>
-                      <div className="text-[10px] text-gray-500 font-medium">NIST P-256</div>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Row 2: Key Filename */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">
-                    Key Filename <span className="text-rose-400">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-xs">
-                      ~/.ssh/
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. id_ed25519_github_work"
-                      value={keyName}
-                      onChange={(e) => setKeyName(e.target.value)}
-                      className={`w-full bg-app border ${
-                        isModalKeyDuplicate ? "border-amber-500/60 text-amber-200" : "border-line text-white"
-                      } rounded-xl pl-16 pr-3 py-2 font-mono text-xs focus:outline-none focus:border-blue-500`}
-                    />
-                  </div>
-
-                  {/* Duplicate Warning & Auto-Rename */}
-                  {isModalKeyDuplicate && (
-                    <div className="mt-1.5 p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between gap-2 text-xs text-amber-300 animate-in fade-in">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <BsExclamationTriangleFill className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate">Key already exists on disk</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setKeyName(uniqueModalKeySuggestion)}
-                        className="px-2 py-0.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 rounded font-semibold text-[11px] shrink-0 cursor-pointer transition-colors"
-                      >
-                        Rename to "{uniqueModalKeySuggestion}"
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Row 3: Comment / Email */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1">
-                    Comment / Email Label
-                  </label>
+              <div className="space-y-1.5">
+                <label htmlFor="create-key-name" className="text-label-2">
+                  Filename
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-label-3 font-mono text-xs pointer-events-none">
+                    ~/.ssh/
+                  </span>
                   <input
+                    id="create-key-name"
                     type="text"
-                    placeholder="e.g. your-email@company.com"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                    required
+                    placeholder="e.g. id_ed25519_github_work"
+                    value={keyName}
+                    onChange={(e) => setKeyName(e.target.value)}
+                    className={`${modalField} font-mono pl-14 ${isModalKeyDuplicate ? "ring-2 ring-amber-400/60" : ""}`}
                   />
                 </div>
-
-                {/* Row 4: Passphrase */}
-                <div>
-                  <label className="block text-gray-300 font-semibold mb-1 flex items-center justify-between">
-                    <span>Passphrase (Optional)</span>
-                    <span className="text-[10px] text-gray-500">Leave blank for no password</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassphrase ? "text" : "password"}
-                      placeholder="Enter passphrase to encrypt key"
-                      value={passphrase}
-                      onChange={(e) => setPassphrase(e.target.value)}
-                      className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600 font-mono"
-                    />
+                {isModalKeyDuplicate && (
+                  <div role="status" className="rounded-ctl bg-amber-500/10 text-amber-200 px-3 py-2 text-xs flex items-center justify-between gap-2">
+                    <span>Already exists on disk.</span>
                     <button
                       type="button"
-                      onClick={() => setShowPassphrase(!showPassphrase)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer"
+                      onClick={() => setKeyName(uniqueModalKeySuggestion)}
+                      className="underline cursor-pointer shrink-0"
                     >
-                      {showPassphrase ? <BsEyeSlash className="w-3.5 h-3.5" /> : <BsEye className="w-3.5 h-3.5" />}
+                      Use “{uniqueModalKeySuggestion}”
                     </button>
                   </div>
-                </div>
+                )}
+              </div>
 
-                {/* Modal Footer */}
-                <div className="pt-2 flex items-center justify-between border-t border-line">
+              <div className="space-y-1.5">
+                <label htmlFor="create-key-comment" className="text-label-2">
+                  Comment
+                </label>
+                <input
+                  id="create-key-comment"
+                  type="text"
+                  placeholder="e.g. you@company.com"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className={modalField}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="create-key-pass" className="text-label-2">
+                  Passphrase <span className="text-label-3">(optional)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    id="create-key-pass"
+                    type={showPassphrase ? "text" : "password"}
+                    placeholder="Leave blank for no passphrase"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className={`${modalField} font-mono pr-9`}
+                  />
                   <button
                     type="button"
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
+                    aria-label={showPassphrase ? "Hide passphrase" : "Show passphrase"}
+                    onClick={() => setShowPassphrase(!showPassphrase)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-label-3 hover:text-label cursor-pointer"
                   >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isGenerating}
-                    className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold transition-all shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
-                  >
-                    <BsKeyFill className="w-4 h-4" />
-                    <span>{isGenerating ? "Generating Key..." : "Generate Key Pair"}</span>
-                  </button>
-                </div>
-              </form>
-            ) : (
-              /* Success Step - Privacy Masked */
-              <div className="p-6 space-y-4 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
-                  <BsCheckCircleFill className="w-6 h-6" />
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="font-bold text-white text-base">
-                    {generatedResult?.file_name} Created & Loaded!
-                  </h4>
-                  <p className="text-xs text-gray-400 font-mono">
-                    {generatedResult?.private_path}
-                  </p>
-                </div>
-
-                <div className="p-3.5 bg-app border border-line rounded-xl text-left space-y-1.5">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                    <BsShieldLock className="w-3 h-3 text-emerald-400" />
-                    <span>Public Key Ready to Paste</span>
-                  </div>
-                  <p className="text-[11px] text-gray-300">
-                    Your key is generated securely in <code className="text-blue-400 font-mono">~/.ssh/</code>. Click the button below to copy the public key directly to your clipboard for GitHub, GitLab, or remote servers.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-center gap-2 pt-2">
-                  {generatedResult?.public_key_content && (
-                    <button
-                      onClick={() =>
-                        handleCopyPublic(generatedResult.public_key_content!)
-                      }
-                      className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-md shadow-emerald-600/20 cursor-pointer"
-                    >
-                      {copiedKey ? <BsCheckLg className="w-4 h-4" /> : <BsCopy className="w-4 h-4" />}
-                      <span>{copiedKey ? "Copied Public Key!" : "Copy Public Key"}</span>
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => setIsCreateModalOpen(false)}
-                    className="px-5 py-2 bg-control hover:bg-line text-gray-200 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    Done
+                    {showPassphrase ? <BsEyeSlash /> : <BsEye />}
                   </button>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
+            </form>
+          ) : (
+            <div className="space-y-3 text-[13px]">
+              <div className="flex items-center gap-2 text-emerald-300">
+                <BsCheckCircleFill className="shrink-0" />
+                <span className="font-medium">{generatedResult?.file_name} created and loaded</span>
+              </div>
+              <p className="text-label-2 leading-relaxed">
+                Copy the public key and add it to GitHub, GitLab or your server's authorized_keys.
+              </p>
+            </div>
+          )}
+        </Dialog>
       )}
 
-      {/* MODAL 2: SWITCH DEFAULT ALGORITHM POPUP */}
       {isAlgoModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-[#0c101a] border border-line rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2">
-                <BsStars className="w-4 h-4 text-purple-400" />
-                <h3 className="font-bold text-white text-xs">Preferred Default Algorithm</h3>
-              </div>
+        <Dialog title="Default algorithm" subtitle="Used when creating new keys" onClose={() => setIsAlgoModalOpen(false)}>
+          <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden text-[13px]">
+            {(
+              [
+                ["ed25519", "Ed25519", "Modern, fast and secure. Recommended."],
+                ["rsa", "RSA 4096", "Maximum compatibility with legacy servers."],
+                ["ecdsa", "ECDSA P-256", "NIST standard elliptic curve."],
+              ] as const
+            ).map(([id, name, desc]) => (
               <button
-                onClick={() => setIsAlgoModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-white cursor-pointer"
-              >
-                <BsXLg className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <button
-                onClick={() => handleSelectDefaultAlgo("ed25519")}
-                className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                  defaultAlgo === "ed25519"
-                    ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-app border-line text-gray-300 hover:bg-control"
-                }`}
+                key={id}
+                type="button"
+                onClick={() => handleSelectDefaultAlgo(id)}
+                className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-white/[0.05] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/70"
               >
                 <div>
-                  <div className="font-semibold text-xs text-white">Ed25519 (Recommended)</div>
-                  <div className="text-[10px] text-gray-400">Modern elliptic curve, ultra fast and secure.</div>
+                  <div className="text-label">{name}</div>
+                  <div className="text-xs text-label-3">{desc}</div>
                 </div>
-                {defaultAlgo === "ed25519" && <BsCheckLg className="w-4 h-4 text-purple-400" />}
+                {defaultAlgo === id && <BsCheckLg className="text-accent shrink-0" />}
               </button>
-
-              <button
-                onClick={() => handleSelectDefaultAlgo("rsa")}
-                className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                  defaultAlgo === "rsa"
-                    ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-app border-line text-gray-300 hover:bg-control"
-                }`}
-              >
-                <div>
-                  <div className="font-semibold text-xs text-white">RSA (4096-bit)</div>
-                  <div className="text-[10px] text-gray-400">Maximum compatibility with older legacy servers.</div>
-                </div>
-                {defaultAlgo === "rsa" && <BsCheckLg className="w-4 h-4 text-purple-400" />}
-              </button>
-
-              <button
-                onClick={() => handleSelectDefaultAlgo("ecdsa")}
-                className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                  defaultAlgo === "ecdsa"
-                    ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-app border-line text-gray-300 hover:bg-control"
-                }`}
-              >
-                <div>
-                  <div className="font-semibold text-xs text-white">ECDSA (NIST P-256)</div>
-                  <div className="text-[10px] text-gray-400">NIST standardized elliptic curve.</div>
-                </div>
-                {defaultAlgo === "ecdsa" && <BsCheckLg className="w-4 h-4 text-purple-400" />}
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Key Deletion Impact & Confirmation Modal */}

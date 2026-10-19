@@ -1,19 +1,16 @@
 import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
+import { Button, Badge, Dialog } from "../components/ui";
 import {
-  BsFileEarmarkCode,
   BsSave,
   BsArrowCounterclockwise,
   BsCheckLg,
   BsExclamationCircleFill,
   BsClock,
   BsClockHistory,
-  BsXLg,
   BsArrowClockwise,
   BsArchive,
-  BsShieldCheck,
-  BsEye,
 } from "react-icons/bs";
 import { api } from "../api";
 import { SshxBackupInfo } from "../types";
@@ -161,271 +158,147 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
   const isModified = content !== initialContent;
 
   return (
-    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
-      {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
-            <BsFileEarmarkCode className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white text-sm">Raw ~/.ssh/config Editor</h2>
-          </div>
+    <div className="h-full flex flex-col bg-app text-[13px] select-none overflow-hidden">
+      <div className="px-5 h-12 flex items-center justify-between shrink-0">
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-semibold text-label leading-tight">Raw Config</h2>
+          <p className="text-xs text-label-3 font-mono truncate">
+            {filePath || "~/.ssh/config"}
+            {isModified && <span className="ml-2 text-amber-300 font-sans">Edited</span>}
+          </p>
         </div>
-
-        <div className="flex items-center gap-1.5">
-          {/* Backups Button */}
-          <button
-            onClick={handleOpenBackups}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-            title="View automated backup snapshots"
-          >
-            <BsClockHistory className="w-3.5 h-3.5 text-amber-400" />
-            <span>Snapshots</span>
-          </button>
-
+        <div className="flex items-center gap-2">
+          <Button icon={<BsClockHistory />} onClick={handleOpenBackups} title="Automatic backup snapshots">
+            Snapshots
+          </Button>
           {isModified && (
-            <button
-              onClick={handleRevert}
-              disabled={isSaving}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-            >
-              <BsArrowCounterclockwise className="w-3.5 h-3.5" />
-              <span>Revert</span>
-            </button>
+            <Button icon={<BsArrowCounterclockwise />} onClick={handleRevert} disabled={isSaving}>
+              Revert
+            </Button>
           )}
-
-          <button
+          <Button
+            variant="primary"
+            icon={saveSuccess ? <BsCheckLg /> : <BsSave />}
             onClick={handleSave}
             disabled={isSaving || !isModified}
-            className="flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-md font-semibold text-xs transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
           >
-            {saveSuccess ? (
-              <BsCheckLg className="w-3.5 h-3.5 text-emerald-300" />
-            ) : (
-              <BsSave className="w-3.5 h-3.5" />
-            )}
-            <span>{saveSuccess ? "Saved!" : isSaving ? "Saving..." : "Save (⌘S)"}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Helper Bar */}
-      <div className="px-3.5 py-1 bg-bar/80 border-b border-line flex items-center justify-between text-xs text-gray-400">
-        <div className="flex items-center gap-2 font-mono">
-          <span>File: {filePath || "~/.ssh/config"}</span>
-          {isModified && (
-            <span className="text-amber-400 font-sans font-semibold text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 leading-none">
-              ● Unsaved Changes
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1 text-gray-500 text-xs">
-          <BsClock className="w-3.5 h-3.5" />
-          <span>Auto-backup snapshot saved on write</span>
+            {saveSuccess ? "Saved" : isSaving ? "Saving..." : "Save"}
+          </Button>
         </div>
       </div>
 
       {restoreSuccessMsg && (
-        <div className="px-3 py-1 bg-emerald-500/10 border-b border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-1.5">
-          <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
+        <div role="status" className="mx-5 mb-2 rounded-ctl bg-emerald-500/10 text-emerald-300 px-3 py-2 flex items-center gap-2">
+          <BsCheckLg className="shrink-0" />
           <span>{restoreSuccessMsg}</span>
         </div>
       )}
 
       {errorMsg && (
-        <div className="px-3 py-1 bg-rose-500/10 border-b border-rose-500/30 text-rose-300 text-xs flex items-center gap-1.5">
-          <BsExclamationCircleFill className="w-3.5 h-3.5 text-rose-400" />
+        <div role="alert" className="mx-5 mb-2 rounded-ctl bg-rose-500/10 text-rose-300 px-3 py-2 flex items-center gap-2">
+          <BsExclamationCircleFill className="shrink-0" />
           <span>{errorMsg}</span>
         </div>
       )}
 
-      {/* Code Editor Textarea */}
-      <div className="flex-1 p-2.5 overflow-hidden">
-        <div className="h-full bg-well border border-line rounded-lg overflow-hidden flex flex-col shadow-inner">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            spellCheck={false}
-            placeholder="# ~/.ssh/config"
-            className="flex-1 w-full p-3 bg-transparent text-emerald-400 font-mono text-xs focus:outline-none resize-none leading-relaxed select-text"
-          />
-        </div>
+      <div className="flex-1 min-h-0 px-5 pb-4 flex flex-col">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          spellCheck={false}
+          aria-label="Raw SSH config"
+          placeholder="# ~/.ssh/config"
+          className="flex-1 min-h-0 w-full p-4 rounded-card bg-well text-label font-mono text-xs focus:outline-none focus:ring-2 focus:ring-accent/70 resize-none leading-relaxed select-text"
+        />
+        <p className="mt-2 px-1 text-xs text-label-3 flex items-center gap-1.5">
+          <BsClock /> A backup snapshot is saved automatically on every write. Save with ⌘S.
+        </p>
       </div>
 
-      {/* Backups & Snapshots Modal */}
       {isBackupsModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[80vh]">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
-                  <BsClockHistory className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Config Backup Snapshots</h3>
-                  <p className="text-[10px] text-gray-400">
-                    Automatic timestamped snapshots stored in ~/.ssh/
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={loadBackups}
-                  disabled={isLoadingBackups}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-                  title="Refresh list"
-                >
-                  <BsArrowClockwise
-                    className={`w-3.5 h-3.5 ${isLoadingBackups ? "animate-spin" : ""}`}
-                  />
-                </button>
-                <button
-                  onClick={() => setIsBackupsModalOpen(false)}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-                >
-                  <BsXLg className="w-4 h-4" />
-                </button>
-              </div>
+        <Dialog
+          title="Config Snapshots"
+          subtitle="Automatic backups stored in ~/.ssh/"
+          onClose={() => setIsBackupsModalOpen(false)}
+          footer={
+            <>
+              <Button icon={<BsArrowClockwise className={isLoadingBackups ? "animate-spin" : ""} />} onClick={loadBackups} disabled={isLoadingBackups}>
+                Refresh
+              </Button>
+              <Button variant="primary" onClick={() => setIsBackupsModalOpen(false)}>
+                Done
+              </Button>
+            </>
+          }
+        >
+          {isLoadingBackups ? (
+            <div className="py-8 text-center text-label-3">Loading snapshots...</div>
+          ) : backups.length === 0 ? (
+            <div className="py-8 text-center text-label-3 space-y-1">
+              <div className="text-label-2">No snapshots yet</div>
+              <div className="text-xs">sshX keeps a snapshot (config.sshx.bak) each time you save.</div>
             </div>
-
-            {/* Backups List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
-              {isLoadingBackups ? (
-                <div className="p-8 text-center text-gray-500">Loading snapshots...</div>
-              ) : backups.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 space-y-1">
-                  <div className="font-medium">No previous backup snapshots found.</div>
-                  <div className="text-[11px] text-gray-600">
-                    sshX automatically maintains a single clean snapshot (`config.sshx.bak`) on each edit.
-                  </div>
-                </div>
-              ) : (
-                backups.map((b) => (
-                  <div
-                    key={b.filename}
-                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
-                      b.is_primary
-                        ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500/60 shadow-sm"
-                        : "bg-app hover:bg-raised-2 border-line"
-                    }`}
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-white font-mono text-xs">
-                          {b.filename}
-                        </span>
-                        {b.is_primary ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            <BsShieldCheck className="w-3 h-3 text-emerald-400" />
-                            sshX Device Snapshot (Latest)
-                          </span>
-                        ) : b.filename === "config.sshx.bak.previous" ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            Previous Snapshot
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center gap-3 text-[10px] text-gray-400 font-mono">
-                        <span className="flex items-center gap-1 text-gray-300">
-                          <BsClock className="w-3 h-3 text-amber-400/80" />
-                          {formatBackupTime(b)}
-                        </span>
-                        <span>•</span>
-                        <span>{formatSize(b.size_bytes)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handlePreview(b.filename)}
-                        disabled={isLoadingPreview}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white border border-line-strong rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
-                        title="Preview contents"
-                      >
-                        <BsEye className="w-3 h-3 text-cyan-400" />
-                        <span>Preview</span>
-                      </button>
-
-                      <button
-                        onClick={() => handleRestoreBackup(b.filename)}
-                        disabled={restoringBackup === b.filename}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
-                      >
-                        <BsArchive className="w-3.5 h-3.5" />
-                        <span>{restoringBackup === b.filename ? "Restoring..." : "Restore"}</span>
-                      </button>
+          ) : (
+            <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden">
+              {backups.map((b) => (
+                <div key={b.filename} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-mono text-label truncate">{b.filename}</div>
+                    <div className="text-xs text-label-2 flex items-center gap-2">
+                      <span>{formatBackupTime(b)}</span>
+                      <span>·</span>
+                      <span>{formatSize(b.size_bytes)}</span>
+                      {b.is_primary && <Badge tone="ok">Latest</Badge>}
+                      {b.filename === "config.sshx.bak.previous" && <Badge>Previous</Badge>}
                     </div>
                   </div>
-                ))
-              )}
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      onClick={() => handlePreview(b.filename)}
+                      disabled={isLoadingPreview}
+                      className="text-accent hover:underline cursor-pointer disabled:opacity-50"
+                    >
+                      Preview
+                    </button>
+                    <button
+                      onClick={() => handleRestoreBackup(b.filename)}
+                      disabled={restoringBackup === b.filename}
+                      className="text-accent hover:underline cursor-pointer disabled:opacity-50"
+                    >
+                      {restoringBackup === b.filename ? "Restoring..." : "Restore"}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-
-            {/* Modal Footer */}
-            <div className="p-3 border-t border-line bg-bar flex justify-end">
-              <button
-                onClick={() => setIsBackupsModalOpen(false)}
-                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
+        </Dialog>
       )}
 
-      {/* Snapshot Preview Modal */}
       {previewBackup && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-                  <BsEye className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Snapshot Preview</h3>
-                  <p className="text-[10px] text-gray-400 font-mono">
-                    ~/.ssh/{previewBackup.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setPreviewBackup(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-              >
-                <BsXLg className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 p-3 overflow-hidden">
-              <pre className="h-full max-h-[50vh] p-3 bg-well border border-line rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
-                {previewBackup.content || "# (Empty file)"}
-              </pre>
-            </div>
-
-            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
-              <button
-                onClick={() => setPreviewBackup(null)}
-                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-              >
-                Close Preview
-              </button>
-
-              <button
+        <Dialog
+          size="lg"
+          title="Snapshot Preview"
+          subtitle={`~/.ssh/${previewBackup.name}`}
+          onClose={() => setPreviewBackup(null)}
+          footer={
+            <>
+              <Button onClick={() => setPreviewBackup(null)}>Close</Button>
+              <Button
+                variant="primary"
+                icon={<BsArchive />}
                 onClick={() => handleRestoreBackup(previewBackup.name)}
                 disabled={restoringBackup === previewBackup.name}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
               >
-                <BsArchive className="w-3.5 h-3.5" />
-                <span>Restore This Snapshot</span>
-              </button>
-            </div>
-          </div>
-        </div>
+                Restore This Snapshot
+              </Button>
+            </>
+          }
+        >
+          <pre className="max-h-[50vh] p-4 bg-well rounded-card overflow-y-auto text-label font-mono text-xs leading-relaxed select-text">
+            {previewBackup.content || "# (Empty file)"}
+          </pre>
+        </Dialog>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BsServer,
   BsPlusLg,
@@ -6,10 +6,10 @@ import {
   BsJournalBookmark,
   BsShieldCheck,
   BsFileEarmarkCode,
-  BsTerminalFill,
-  BsFolder2Open,
-  BsTag,
+  BsFolder2,
   BsGear,
+  BsChevronDown,
+  BsChevronRight,
   BsLayoutSidebarInset,
   BsLayoutSidebar,
 } from "react-icons/bs";
@@ -54,366 +54,205 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
 }) => {
+  const [filtersOpen, setFiltersOpen] = useState(true);
+
+  const allHostsActive = activeTab === "hosts" && activeGroup === null && activeTag === null;
+  const nav: {
+    tab: NavTab;
+    label: string;
+    icon: React.ReactNode;
+    active: boolean;
+    trailing?: React.ReactNode;
+    onClick?: () => void;
+  }[] = [
+    {
+      tab: "hosts",
+      label: "All Hosts",
+      icon: <BsServer />,
+      active: allHostsActive,
+      trailing: totalHosts,
+      onClick: () => {
+        onSelectTab("hosts");
+        onSelectGroup(null);
+        onSelectTag(null);
+      },
+    },
+    { tab: "keys", label: "Keys", icon: <BsKeyFill />, active: activeTab === "keys", trailing: totalKeys },
+    { tab: "known-hosts", label: "Known Hosts", icon: <BsJournalBookmark />, active: activeTab === "known-hosts", trailing: totalKnownHosts },
+    {
+      tab: "audit",
+      label: "Security Audit",
+      icon: <BsShieldCheck />,
+      active: activeTab === "audit",
+      trailing: (
+        <span className={auditScore === 100 ? "text-emerald-400" : "text-amber-400"}>{auditScore}%</span>
+      ),
+    },
+    { tab: "raw-config", label: "Raw Config", icon: <BsFileEarmarkCode />, active: activeTab === "raw-config" },
+    { tab: "settings", label: "Settings", icon: <BsGear />, active: activeTab === "settings" },
+  ];
+
+  const focus = "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70";
+
   if (isCollapsed) {
-    /* COLLAPSED ICON-ONLY MODE */
     return (
-      <aside className="w-12 border-r border-line bg-bar flex flex-col justify-between items-center py-2 select-none shrink-0 text-xs transition-all duration-200">
-        <div className="flex flex-col items-center gap-1.5 w-full px-1">
-          {/* Add Host Icon Button */}
+      <aside className="w-14 bg-bar flex flex-col justify-between items-center py-3 select-none shrink-0">
+        <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => onSelectTab("add-host")}
-            title="Add New SSH Host (⌘N)"
-            className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold transition-all cursor-pointer shadow-sm ${
-              activeTab === "add-host"
-                ? "bg-blue-500 text-white ring-2 ring-blue-400/40"
-                : "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/20"
-            }`}
+            title="Add host (⌘N)"
+            aria-label="Add host"
+            className={`w-9 h-9 mb-2 rounded-ctl flex items-center justify-center bg-accent hover:bg-accent-hover text-white cursor-pointer ${focus}`}
           >
-            <BsPlusLg className="w-3.5 h-3.5" />
+            <BsPlusLg className="w-4 h-4" />
           </button>
-
-          {/* Nav Icons Divider */}
-          <div className="w-6 h-px bg-line my-0.5" />
-
-          {/* All Hosts */}
-          <button
-            onClick={() => {
-              onSelectTab("hosts");
-              onSelectGroup(null);
-              onSelectTag(null);
-            }}
-            title={`All Hosts (${totalHosts})`}
-            className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "hosts"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsServer className="w-3.5 h-3.5" />
-            {totalHosts > 0 && (
-              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-control border border-line-strong text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
-                {totalHosts}
-              </span>
-            )}
-          </button>
-
-          {/* Key Management */}
-          <button
-            onClick={() => onSelectTab("keys")}
-            title={`Key Management (${totalKeys})`}
-            className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "keys"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsKeyFill className="w-3.5 h-3.5 text-blue-400" />
-            {totalKeys > 0 && (
-              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-control border border-line-strong text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
-                {totalKeys}
-              </span>
-            )}
-          </button>
-
-          {/* Host Manager (Known Hosts) */}
-          <button
-            onClick={() => onSelectTab("known-hosts")}
-            title={`Host Manager (${totalKnownHosts})`}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "known-hosts"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsJournalBookmark className="w-3.5 h-3.5 text-yellow-400" />
-          </button>
-
-          {/* Security Audit */}
-          <button
-            onClick={() => onSelectTab("audit")}
-            title={`Security Audit (${auditScore}%)`}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "audit"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          </button>
-
-          {/* Raw Config */}
-          <button
-            onClick={() => onSelectTab("raw-config")}
-            title="Raw ~/.ssh/config Editor"
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "raw-config"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsFileEarmarkCode className="w-3.5 h-3.5 text-purple-400" />
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={() => onSelectTab("settings")}
-            title="Settings"
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-              activeTab === "settings"
-                ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-control hover:text-white"
-            }`}
-          >
-            <BsGear className="w-3.5 h-3.5 text-gray-400" />
-          </button>
+          {nav.map((n) => (
+            <button
+              key={n.tab}
+              onClick={n.onClick || (() => onSelectTab(n.tab))}
+              title={n.label}
+              aria-label={n.label}
+              aria-current={n.active ? "page" : undefined}
+              className={`w-9 h-9 rounded-ctl flex items-center justify-center text-base cursor-pointer transition-colors ${focus} ${
+                n.active ? "bg-accent/20 text-accent" : "text-label-2 hover:bg-white/[0.06] hover:text-label"
+              }`}
+            >
+              {n.icon}
+            </button>
+          ))}
         </div>
-
-        {/* Bottom Expand Toggle Button */}
-        <div className="w-full px-1 pt-1.5 border-t border-line/60 flex flex-col items-center">
-          <button
-            onClick={onToggleCollapse}
-            title="Expand Sidebar"
-            className="w-8 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-control transition-colors cursor-pointer"
-          >
-            <BsLayoutSidebar className="w-3.5 h-3.5 text-blue-400" />
-          </button>
-        </div>
+        <button
+          onClick={onToggleCollapse}
+          title="Expand sidebar"
+          aria-label="Expand sidebar"
+          className={`w-9 h-9 rounded-ctl flex items-center justify-center text-label-2 hover:bg-white/[0.06] hover:text-label cursor-pointer ${focus}`}
+        >
+          <BsLayoutSidebar className="w-4 h-4" />
+        </button>
       </aside>
     );
   }
 
-  /* EXPANDED FULL MODE */
   return (
-    <aside className="w-52 border-r border-line bg-bar flex flex-col justify-between select-none shrink-0 text-xs overflow-y-auto transition-all duration-200">
-      <div className="p-2 space-y-2">
-        {/* 1. At First: Add Host Button */}
+    <aside className="w-56 bg-bar flex flex-col justify-between select-none shrink-0 overflow-y-auto text-[13px]">
+      <div className="p-3 space-y-4">
         <button
           onClick={() => onSelectTab("add-host")}
-          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md font-semibold text-xs shadow-sm transition-all cursor-pointer ${
-            activeTab === "add-host"
-              ? "bg-blue-500 text-white ring-2 ring-blue-400/40 shadow-blue-500/20"
-              : "bg-blue-600 hover:bg-blue-500 text-white"
+          className={`w-full h-8 flex items-center justify-center gap-1.5 rounded-ctl font-medium text-white cursor-pointer ${focus} ${
+            activeTab === "add-host" ? "bg-accent-hover" : "bg-accent hover:bg-accent-hover"
           }`}
         >
-          <div className="flex items-center gap-1.5">
-            <BsPlusLg className="w-3.5 h-3.5" />
-            <span>Add Host</span>
-          </div>
-          <kbd className="text-[10px] bg-blue-700/60 px-1.5 py-0.5 rounded font-mono leading-none">
-            ⌘N
-          </kbd>
+          <BsPlusLg className="w-3.5 h-3.5" />
+          <span>Add Host</span>
+          <span className="ml-1 text-[11px] text-white/60">⌘N</span>
         </button>
 
-        {/* Navigation Items */}
-        <div className="space-y-0.5 pt-1 border-t border-line/80">
-          {/* 2. All Hosts */}
-          <button
-            onClick={() => {
-              onSelectTab("hosts");
-              onSelectGroup(null);
-              onSelectTag(null);
-            }}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "hosts" && activeGroup === null && activeTag === null
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsServer className="w-3.5 h-3.5" />
-              <span className="text-xs">All Hosts</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
-              {totalHosts}
-            </span>
-          </button>
-
-          {/* 3. Key Management */}
-          <button
-            onClick={() => onSelectTab("keys")}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "keys"
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsKeyFill className="w-3.5 h-3.5 text-blue-400" />
-              <span className="text-xs">Key Management</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
-              {totalKeys}
-            </span>
-          </button>
-
-          {/* 4. Host Manager (Known Hosts) */}
-          <button
-            onClick={() => onSelectTab("known-hosts")}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "known-hosts"
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsJournalBookmark className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-xs">Host Manager</span>
-            </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
-              {totalKnownHosts}
-            </span>
-          </button>
-
-          {/* 5. Security Audit */}
-          <button
-            onClick={() => onSelectTab("audit")}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "audit"
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-xs">Security Audit</span>
-            </div>
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-semibold leading-none ${
-                auditScore === 100
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : "bg-amber-500/10 text-amber-400"
+        <nav className="space-y-0.5" aria-label="Sections">
+          {nav.map((n) => (
+            <button
+              key={n.tab}
+              onClick={n.onClick || (() => onSelectTab(n.tab))}
+              aria-current={n.active ? "page" : undefined}
+              className={`w-full flex items-center gap-2.5 px-2.5 h-8 rounded-ctl cursor-pointer transition-colors ${focus} ${
+                n.active ? "bg-accent/20 text-label" : "text-label hover:bg-white/[0.06]"
               }`}
             >
-              {auditScore}%
-            </span>
-          </button>
+              <span className={`text-[15px] ${n.active ? "text-accent" : "text-label-2"}`}>{n.icon}</span>
+              <span className="flex-1 text-left truncate">{n.label}</span>
+              {n.trailing !== undefined && (
+                <span className="text-xs text-label-3 tabular-nums">{n.trailing}</span>
+              )}
+            </button>
+          ))}
+        </nav>
 
-          {/* 6. Raw Config */}
-          <button
-            onClick={() => onSelectTab("raw-config")}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "raw-config"
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsFileEarmarkCode className="w-3.5 h-3.5 text-purple-400" />
-              <span className="text-xs">Raw Config</span>
-            </div>
-          </button>
+        {activeTab === "hosts" && (groups.length > 0 || tags.length > 0) && (
+          <section>
+            <button
+              onClick={() => setFiltersOpen((o) => !o)}
+              aria-expanded={filtersOpen}
+              className={`w-full flex items-center gap-1 px-2.5 mb-1 text-[11px] font-medium uppercase tracking-wide text-label-3 hover:text-label-2 cursor-pointer ${focus} rounded-ctl`}
+            >
+              {filtersOpen ? <BsChevronDown className="w-2.5 h-2.5" /> : <BsChevronRight className="w-2.5 h-2.5" />}
+              <span>Filters</span>
+            </button>
 
-          {/* 7. Settings */}
-          <button
-            onClick={() => onSelectTab("settings")}
-            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
-              activeTab === "settings"
-                ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-control hover:text-white"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <BsGear className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-xs">Settings</span>
-            </div>
-          </button>
-        </div>
+            {filtersOpen && (
+              <div className="space-y-3">
+                {groups.length > 0 && (
+                  <div className="space-y-0.5">
+                    {groups.map((grp) => (
+                      <button
+                        key={grp.name}
+                        onClick={() => {
+                          onSelectTag(null);
+                          onSelectGroup(activeGroup === grp.name ? null : grp.name);
+                        }}
+                        aria-pressed={activeGroup === grp.name}
+                        className={`w-full flex items-center gap-2.5 px-2.5 h-7 rounded-ctl cursor-pointer transition-colors ${focus} ${
+                          activeGroup === grp.name ? "bg-accent/20 text-label" : "text-label hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <BsFolder2 className="text-label-2 shrink-0" />
+                        <span className="flex-1 text-left truncate">{grp.name}</span>
+                        <span className="text-xs text-label-3 tabular-nums">{grp.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
-        {/* Contextual Groups Filter (when on hosts tab) */}
-        {activeTab === "hosts" && groups.length > 0 && (
-          <div className="space-y-1 pt-1.5 border-t border-line">
-            <div className="px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Groups</span>
-              <BsFolder2Open className="w-3 h-3 text-gray-500" />
-            </div>
-            {groups.map((grp) => (
-              <button
-                key={grp.name}
-                onClick={() => {
-                  onSelectTag(null);
-                  onSelectGroup(activeGroup === grp.name ? null : grp.name);
-                }}
-                className={`w-full flex items-center justify-between px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                  activeGroup === grp.name
-                    ? "bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30"
-                    : "text-gray-300 hover:bg-control hover:text-white"
-                }`}
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <BsFolder2Open className="w-3 h-3 text-amber-400 shrink-0" />
-                  <span className="truncate text-xs">{grp.name}</span>
-                </div>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-control text-gray-400 font-mono shrink-0 leading-none">
-                  {grp.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Contextual Tags Filter (when on hosts tab) */}
-        {activeTab === "hosts" && tags.length > 0 && (
-          <div className="space-y-1 pt-1.5 border-t border-line">
-            <div className="px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center justify-between">
-              <span>Tags</span>
-              <BsTag className="w-3 h-3 text-gray-500" />
-            </div>
-            <div className="flex flex-wrap gap-1 px-0.5">
-              {tags.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => {
-                    onSelectGroup(null);
-                    onSelectTag(activeTag === t.name ? null : t.name);
-                  }}
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors border cursor-pointer leading-none ${
-                    activeTag === t.name
-                      ? "bg-blue-500/20 text-blue-300 border-blue-500/50 font-medium"
-                      : "bg-raised-2 text-gray-400 border-line hover:text-gray-200 hover:border-gray-500"
-                  }`}
-                >
-                  <span>#{t.name}</span>
-                  <span className="text-[10px] text-gray-500 font-mono">
-                    {t.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 px-1.5">
+                    {tags.map((t) => (
+                      <button
+                        key={t.name}
+                        onClick={() => {
+                          onSelectGroup(null);
+                          onSelectTag(activeTag === t.name ? null : t.name);
+                        }}
+                        aria-pressed={activeTag === t.name}
+                        className={`h-6 px-2 rounded-full text-xs cursor-pointer transition-colors ${focus} ${
+                          activeTag === t.name
+                            ? "bg-accent text-white"
+                            : "bg-white/[0.06] text-label-2 hover:text-label"
+                        }`}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
         )}
       </div>
 
-      {/* Footer: Launch Target Selector & Collapse Button */}
-      <div className="p-2 border-t border-line bg-app space-y-2">
-        <div>
-          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-            <BsTerminalFill className="w-3 h-3 text-blue-400" />
-            <span>Launch Target</span>
-          </div>
+      <div className="p-3 space-y-2">
+        <label className="block">
+          <span className="block px-0.5 mb-1 text-[11px] font-medium uppercase tracking-wide text-label-3">
+            Open in
+          </span>
           <select
             value={selectedTerminal}
             onChange={(e) => onSelectTerminal(e.target.value)}
-            className="w-full bg-raised-2 border border-line rounded text-gray-200 text-xs px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+            className={`w-full h-8 bg-control text-label rounded-ctl px-2 cursor-pointer ${focus}`}
           >
             {terminals.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.name} {t.is_installed ? "✓" : ""}
+                {t.name} {t.is_installed ? "" : "(not installed)"}
               </option>
             ))}
-            {terminals.length === 0 && (
-              <option value="terminal">Terminal.app</option>
-            )}
+            {terminals.length === 0 && <option value="terminal">Terminal.app</option>}
           </select>
-        </div>
-
-        {/* Collapse Toggle */}
+        </label>
         <button
           onClick={onToggleCollapse}
-          className="w-full flex items-center justify-between px-2 py-1 text-gray-400 hover:text-white hover:bg-control rounded transition-colors text-xs cursor-pointer"
-          title="Collapse sidebar to icon-only mode"
+          title="Collapse sidebar"
+          className={`w-full flex items-center gap-2.5 px-2.5 h-8 rounded-ctl text-label-2 hover:bg-white/[0.06] hover:text-label cursor-pointer ${focus}`}
         >
-          <span className="text-xs">Collapse</span>
-          <BsLayoutSidebarInset className="w-3.5 h-3.5 text-gray-400" />
+          <BsLayoutSidebarInset />
+          <span>Collapse</span>
         </button>
       </div>
     </aside>

@@ -1,15 +1,10 @@
 import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
+import { Button, Field, Group, Segmented, Switch, inputCls } from "./ui";
 import React, { useState, useEffect } from "react";
 import {
-  BsXLg,
-  BsSliders,
-  BsFolder2Open,
-  BsKeyFill,
   BsCheckLg,
   BsTrash3,
-  BsLink45Deg,
-  BsBookmarkStarFill,
 } from "react-icons/bs";
 import { PresetTemplate, SshHost } from "../types";
 
@@ -202,226 +197,153 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
   const isCustomPreset = editingPreset?.id.startsWith("preset_custom_") || !editingPreset;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-xl bg-panel border border-purple-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
-        {/* Header */}
-        <div className="px-5 py-3.5 border-b border-line bg-[#110d1c] flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shadow-sm">
-              <BsBookmarkStarFill className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-white text-sm">
-                  {editingPreset ? "Edit Connection Preset" : "Create Custom Preset"}
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono text-[10px] font-bold border border-purple-500/30">
-                  Preset Hub
-                </span>
-              </div>
-              <p className="text-gray-400 text-[11px]">
-                Define reusable SSH configuration templates and key recommendations.
-              </p>
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm select-none" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Template editor" onClick={(e) => e.stopPropagation()} className="w-full max-w-xl bg-raised rounded-card shadow-pop overflow-hidden flex flex-col max-h-[92vh] text-[13px]">
+        <div className="px-5 pt-4 pb-3 flex items-start justify-between gap-3 shrink-0">
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold text-label">{editingPreset ? "Edit template" : "New template"}</h3>
+            <p className="text-xs text-label-2">Reusable host settings and key recommendations.</p>
           </div>
-
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            aria-label="Close"
+            className="h-7 w-7 flex items-center justify-center rounded-full text-label-2 hover:text-label hover:bg-white/[0.08] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
           >
-            <BsXLg className="w-4 h-4" />
+            ✕
           </button>
         </div>
 
-        {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-          {/* Preset Metadata */}
-          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
-            <h4 className="text-[11px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
-              <BsSliders className="w-3.5 h-3.5" />
-              <span>Preset Information</span>
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Preset Title <span className="text-purple-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. GitLab Corporate, Hetzner VPS"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-white font-medium text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
-                >
-                  <option value="git">Git Provider</option>
-                  <option value="cloud">Cloud VM</option>
-                  <option value="bastion">Bastion / Jump Host</option>
-                  <option value="homelab">HomeLab / IoT</option>
-                  <option value="tunnel">Port Tunnel</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                Subtitle / Description
-              </label>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 pb-5 space-y-5">
+          <Group title="Template">
+            <Field label="Title">
               <input
                 type="text"
-                placeholder="Short description of this template"
+                required
+                aria-label="Template title"
+                placeholder="e.g. GitLab Corporate, Hetzner VPS"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Description">
+              <input
+                type="text"
+                aria-label="Description"
+                placeholder="Short description"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-white text-xs outline-none"
+                className={inputCls}
               />
-            </div>
+            </Field>
+            <Field label="Category">
+              <select
+                aria-label="Category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as any)}
+                className={`${inputCls} cursor-pointer`}
+              >
+                <option value="git">Git Provider</option>
+                <option value="cloud">Cloud VM</option>
+                <option value="bastion">Bastion / Jump Host</option>
+                <option value="homelab">HomeLab / IoT</option>
+                <option value="tunnel">Port Tunnel</option>
+                <option value="custom">Custom</option>
+              </select>
+            </Field>
+            <Field label="Icon">
+              <input
+                type="text"
+                aria-label="Brand icon name"
+                placeholder="Brand name, e.g. gitlab, digitalocean"
+                value={iconName}
+                onChange={(e) => setIconName(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
+            </Field>
+            <Field label="Badge">
+              <input
+                type="text"
+                aria-label="Badge label"
+                placeholder="e.g. Internal, Verified"
+                value={badge}
+                onChange={(e) => setBadge(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+          </Group>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Brand / Icon Name
-                </label>
+          <Group title="Host defaults">
+            <Field label="Alias">
+              <input
+                type="text"
+                aria-label="Default alias"
+                placeholder="e.g. gitlab-work"
+                value={hostPattern}
+                onChange={(e) => setHostPattern(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
+            </Field>
+            <Field label="Address">
+              <input
+                type="text"
+                aria-label="Default address"
+                placeholder="e.g. gitlab.company.com"
+                value={hostName}
+                onChange={(e) => setHostName(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
+            </Field>
+            <Field label="User">
+              <input
+                type="text"
+                aria-label="Default user"
+                placeholder="e.g. git, root, ubuntu"
+                value={user}
+                onChange={(e) => setUser(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
+            </Field>
+            <Field label="Port">
+              <input
+                type="number"
+                aria-label="Default port"
+                value={port}
+                onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
+                className={`${inputCls} font-mono w-28`}
+              />
+            </Field>
+            <Field label="Group">
+              <input
+                type="text"
+                aria-label="Group"
+                placeholder="e.g. Work, Infrastructure"
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Color">
+              <select
+                aria-label="Accent color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className={`${inputCls} cursor-pointer w-40`}
+              >
+                {["blue", "purple", "emerald", "cyan", "amber", "rose", "orange"].map((c) => (
+                  <option key={c} value={c}>
+                    {c[0].toUpperCase() + c.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Tags">
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="e.g. gitlab, oracle, digitalocean"
-                  value={iconName}
-                  onChange={(e) => setIconName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Badge Label
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Internal, Verified"
-                  value={badge}
-                  onChange={(e) => setBadge(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Default SSH Host Configuration */}
-          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
-            <h4 className="text-[11px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
-              <BsFolder2Open className="w-3.5 h-3.5" />
-              <span>Default Host Template</span>
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Default Host Pattern (Alias)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. gitlab-work, my-vps"
-                  value={hostPattern}
-                  onChange={(e) => setHostPattern(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-blue-300 font-mono text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  HostName / Domain / IP
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. gitlab.company.com, 192.168.1.100"
-                  value={hostName}
-                  onChange={(e) => setHostName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  User
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. git, root, ubuntu"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Port
-                </label>
-                <input
-                  type="number"
-                  placeholder="22"
-                  value={port}
-                  onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Group Folder
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Work, Infrastructure"
-                  value={group}
-                  onChange={(e) => setGroup(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Accent Color
-                </label>
-                <select
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
-                >
-                  <option value="blue">Blue</option>
-                  <option value="purple">Purple</option>
-                  <option value="emerald">Emerald</option>
-                  <option value="cyan">Cyan</option>
-                  <option value="amber">Amber</option>
-                  <option value="rose">Rose</option>
-                  <option value="orange">Orange</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Tags input */}
-            <div>
-              <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                Default Tags
-              </label>
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <input
-                  type="text"
-                  placeholder="Type tag and press Enter"
+                  aria-label="Add tag"
+                  placeholder="Add tag and press Return"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -430,28 +352,25 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                       handleAddTag();
                     }
                   }}
-                  className="flex-1 px-2.5 py-1 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className={inputCls}
                 />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors"
-                >
-                  Add Tag
-                </button>
+                <Button type="button" onClick={handleAddTag}>
+                  Add
+                </Button>
               </div>
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {tags.map((t) => (
                     <span
                       key={t}
-                      className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-mono flex items-center gap-1"
+                      className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1.5 rounded-full bg-white/[0.08] text-label text-xs"
                     >
-                      <span>#{t}</span>
+                      {t}
                       <button
                         type="button"
+                        aria-label={`Remove tag ${t}`}
                         onClick={() => handleRemoveTag(t)}
-                        className="hover:text-white"
+                        className="text-label-3 hover:text-label cursor-pointer"
                       >
                         ×
                       </button>
@@ -459,107 +378,75 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   ))}
                 </div>
               )}
-            </div>
-          </div>
+            </Field>
+          </Group>
 
-          {/* Key Recommendation Settings */}
-          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                <BsKeyFill className="w-3.5 h-3.5" />
-                <span>SSH Key Recommendation</span>
-              </h4>
-              <label className="flex items-center gap-1.5 text-xs text-gray-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={enableKeyRec}
-                  onChange={(e) => setEnableKeyRec(e.target.checked)}
-                  className="rounded text-emerald-500 focus:ring-0 bg-raised border-line"
-                />
-                <span>Recommend dedicated key</span>
+          <Group title="Key recommendation">
+            <Field label="Dedicated key">
+              <label className="flex items-center gap-2 cursor-pointer text-label">
+                <Switch label="Recommend a dedicated key" checked={enableKeyRec} onChange={setEnableKeyRec} />
+                <span>Recommend a dedicated key</span>
               </label>
-            </div>
-
+            </Field>
             {enableKeyRec && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                    Recommended Key Filename
-                  </label>
+              <>
+                <Field label="Filename">
                   <input
                     type="text"
+                    aria-label="Recommended key filename"
                     placeholder="e.g. id_ed25519_gitlab"
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-emerald-500 rounded-lg text-emerald-300 font-mono text-xs outline-none"
+                    className={`${inputCls} font-mono`}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                    Algorithm
-                  </label>
-                  <select
+                </Field>
+                <Field label="Algorithm">
+                  <Segmented
+                    label="Algorithm"
                     value={keyType}
-                    onChange={(e) => setKeyType(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-emerald-500 rounded-lg text-gray-200 text-xs outline-none"
-                  >
-                    <option value="ed25519">Ed25519 (Recommended)</option>
-                    <option value="rsa">RSA (4096-bit)</option>
-                  </select>
-                </div>
-              </div>
+                    options={[
+                      { value: "ed25519" as const, label: "Ed25519" },
+                      { value: "rsa" as const, label: "RSA 4096" },
+                    ]}
+                    onChange={setKeyType}
+                  />
+                </Field>
+              </>
             )}
-          </div>
+          </Group>
 
-          {/* Post-Creation Guide & External Links */}
-          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
-            <h4 className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-              <BsLink45Deg className="w-4 h-4" />
-              <span>Setup Guide & Portal URL</span>
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Portal / Settings URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://gitlab.com/-/profile/keys"
-                  value={guideUrl}
-                  onChange={(e) => setGuideUrl(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                  Button Label
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Open GitLab SSH Settings"
-                  value={guideUrlLabel}
-                  onChange={(e) => setGuideUrlLabel(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 text-xs outline-none"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-gray-300 mb-1">
-                Post-Creation Instructions (1 step per line)
-              </label>
+          <Group title="Setup guide">
+            <Field label="Portal URL">
+              <input
+                type="url"
+                aria-label="Portal URL"
+                placeholder="https://gitlab.com/-/profile/keys"
+                value={guideUrl}
+                onChange={(e) => setGuideUrl(e.target.value)}
+                className={`${inputCls} font-mono`}
+              />
+            </Field>
+            <Field label="Button label">
+              <input
+                type="text"
+                aria-label="Button label"
+                placeholder="e.g. Open GitLab SSH Settings"
+                value={guideUrlLabel}
+                onChange={(e) => setGuideUrlLabel(e.target.value)}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Steps">
               <textarea
                 rows={3}
-                placeholder={"1. Open the remote console\n2. Add your public SSH key\n3. Test the connection"}
+                aria-label="Setup steps, one per line"
+                placeholder={"One step per line, e.g.\nOpen the remote console\nAdd your public SSH key"}
                 value={guideInstructions}
                 onChange={(e) => setGuideInstructions(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none resize-y"
+                className="w-full px-2.5 py-1.5 rounded-ctl bg-white/[0.06] text-label placeholder-label-3 font-mono text-xs focus:outline-none focus:bg-white/[0.09] focus:ring-2 focus:ring-accent/70 resize-y"
               />
-            </div>
-          </div>
+            </Field>
+          </Group>
 
           {/* Actions & Delete Option */}
           <div className="flex items-center justify-between pt-2">
@@ -579,7 +466,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                       onClose();
                     }
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg border border-rose-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-ctl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-[13px] font-medium transition-colors cursor-pointer"
                 >
                   <BsTrash3 className="w-3.5 h-3.5" />
                   <span>Delete Preset</span>
@@ -588,21 +475,12 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-              >
+              <Button type="button" onClick={onClose}>
                 Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-xs transition-all shadow-md shadow-purple-600/20 cursor-pointer active:scale-95"
-              >
-                <BsCheckLg className="w-3.5 h-3.5" />
-                <span>{editingPreset ? "Update Preset" : "Save Preset"}</span>
-              </button>
+              </Button>
+              <Button type="submit" variant="primary" icon={<BsCheckLg />}>
+                {editingPreset ? "Update Template" : "Save Template"}
+              </Button>
             </div>
           </div>
         </form>

@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react";
 import {
   BsJournalBookmark,
-  BsSearch,
   BsTrash3,
   BsArrowClockwise,
   BsCopy,
   BsCheckLg,
-  BsTerminalFill,
-  BsInfoCircleFill,
-  BsLockFill,
 } from "react-icons/bs";
+import { Button, Badge, Group } from "../components/ui";
 import { BrandLogo } from "../components/BrandLogo";
 import { KnownHostEntry } from "../types";
 import { api } from "../api";
@@ -82,107 +79,76 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
-      {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-yellow-500/20 text-yellow-400 flex items-center justify-center border border-yellow-500/30">
-            <BsJournalBookmark className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white text-sm">Host Manager (Known Hosts)</h2>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 font-mono">
-            {entries.length} Known Hosts
-          </span>
-          <button
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="p-1.5 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong transition-colors disabled:opacity-50 cursor-pointer"
-            title="Refresh known_hosts"
-          >
-            <BsArrowClockwise
-              className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-yellow-400" : ""}`}
-            />
-          </button>
-        </div>
+    <div className="h-full flex flex-col bg-app text-[13px] select-none overflow-hidden">
+      <div className="px-5 h-12 flex items-center justify-between shrink-0">
+        <h2 className="text-[15px] font-semibold text-label">Known Hosts</h2>
+        <button
+          onClick={onRefresh}
+          disabled={isLoading}
+          className="h-8 w-8 flex items-center justify-center rounded-ctl text-label-2 hover:text-label hover:bg-white/[0.06] disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+          title="Refresh known_hosts"
+          aria-label="Refresh known hosts"
+        >
+          <BsArrowClockwise className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
-      {/* Main Split View: Left Known Hosts List | Right Selected Host Inspector (Persistent Side-by-Side) */}
       <div className="flex-1 flex flex-row overflow-hidden">
-        {/* Left Pane: Known Hosts List */}
-        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-line bg-app">
-          {/* Search bar */}
-          <div className="p-2 border-b border-line bg-bar relative">
-            <BsSearch className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col">
+          <div className="px-3 pb-2 space-y-2">
             <input
               type="text"
-              placeholder="Search host or IP..."
+              aria-label="Search known hosts"
+              placeholder="Search host or key type"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-raised-2 border border-line rounded pl-7 pr-2.5 py-1 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-xs"
+              className="w-full h-8 px-3 bg-white/[0.07] rounded-ctl text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-accent/70"
             />
+            <div className="px-1 text-xs text-label-3">
+              {entries.length} {entries.length === 1 ? "entry" : "entries"}
+            </div>
           </div>
 
-          {/* List items */}
-          <div className="flex-1 overflow-y-auto divide-y divide-line/50">
+          <div role="listbox" aria-label="Known hosts" className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
             {filteredEntries.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-xs">
-                {search ? "No matching known hosts." : "Your ~/.ssh/known_hosts is empty."}
+              <div className="p-6 text-center text-label-3">
+                {search ? "No matching known hosts" : "Your ~/.ssh/known_hosts is empty"}
               </div>
             ) : (
               filteredEntries.map((entry) => {
                 const isSelected = selectedEntry?.line_number === entry.line_number;
-
                 return (
                   <div
                     key={entry.line_number}
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
                     onClick={() => setSelectedEntryLine(entry.line_number)}
-                    className={`px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                      isSelected
-                        ? "bg-yellow-500/10 border-l-2 border-yellow-500 pl-2"
-                        : "hover:bg-control/60"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedEntryLine(entry.line_number);
+                      }
+                    }}
+                    className={`flex items-center gap-3 px-2.5 py-2 rounded-ctl cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 ${
+                      isSelected ? "bg-accent/20" : "hover:bg-white/[0.05]"
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-5 h-5 rounded flex items-center justify-center bg-[#131a29] border border-[#202c46] shrink-0 text-gray-300">
-                        <BrandLogo
-                          name={entry.host}
-                          className="w-3.5 h-3.5"
-                          fallbackIcon={<BsJournalBookmark className="w-3 h-3 text-yellow-400" />}
-                        />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 leading-tight">
-                          <span
-                            className={`font-semibold text-[13px] font-mono truncate ${
-                              isSelected ? "text-yellow-400 font-bold" : "text-white"
-                            }`}
-                          >
-                            {entry.host}
-                          </span>
-                          {entry.is_hashed && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-sans shrink-0 leading-none">
-                              Hashed
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-xs text-gray-400 font-mono leading-tight mt-0.5">
-                          <span className="text-blue-400 font-semibold uppercase">
-                            {entry.key_type}
-                          </span>
-                        </div>
+                    <div className="w-8 h-8 rounded-ctl flex items-center justify-center bg-card shrink-0 text-label">
+                      <BrandLogo
+                        name={entry.host}
+                        className="w-4 h-4"
+                        fallbackIcon={<BsJournalBookmark className="w-3.5 h-3.5 text-label-2" />}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono text-label truncate">{entry.host}</div>
+                      <div className="text-xs text-label-2">
+                        <span className="uppercase">{entry.key_type}</span>
+                        {entry.is_hashed ? " · hashed" : ""}
                       </div>
                     </div>
-
-                    <span className="text-[11px] text-gray-500 font-mono shrink-0">
-                      L{entry.line_number}
-                    </span>
+                    <span className="text-xs text-label-3 tabular-nums">L{entry.line_number}</span>
                   </div>
                 );
               })
@@ -190,106 +156,65 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
           </div>
         </div>
 
-        {/* Right Pane: Selected Host Inspector */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel p-3">
+        <div className="w-px bg-white/[0.08] shrink-0" />
+
+        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel">
           {selectedEntry ? (
-            <div className="max-w-3xl mx-auto space-y-2.5">
-              {/* Header Title */}
-              <div className="pb-2 border-b border-line flex items-center justify-between flex-wrap gap-2">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
-                      <BrandLogo
-                        name={selectedEntry.host}
-                        className="w-4 h-4"
-                        fallbackIcon={<BsJournalBookmark className="w-3.5 h-3.5 text-yellow-400" />}
-                      />
-                    </div>
-                    <h3 className="text-sm font-bold text-white font-mono truncate max-w-md">
-                      {selectedEntry.host}
-                    </h3>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold leading-none">
-                      {selectedEntry.key_type}
-                    </span>
-                    {selectedEntry.is_hashed && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium leading-none">
-                        Hashed Hostname
-                      </span>
-                    )}
+            <div className="max-w-2xl px-8 py-7 space-y-6">
+              <header className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-card flex items-center justify-center bg-card shrink-0 text-label">
+                  <BrandLogo
+                    name={selectedEntry.host}
+                    className="w-7 h-7"
+                    fallbackIcon={<BsJournalBookmark className="w-5 h-5 text-label-2" />}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xl font-semibold text-label tracking-tight font-mono truncate">
+                    {selectedEntry.host}
+                  </h3>
+                  <p className="text-label-2">Line {selectedEntry.line_number} of ~/.ssh/known_hosts</p>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    <Badge>{selectedEntry.key_type.toUpperCase()}</Badge>
+                    {selectedEntry.is_hashed && <Badge>Hashed hostname</Badge>}
                   </div>
-                  <p className="text-xs text-gray-400 font-mono pl-8">
-                    Found on line {selectedEntry.line_number} of ~/.ssh/known_hosts
-                  </p>
                 </div>
+              </header>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => handleCopyHost(selectedEntry.host)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-                  >
-                    {copiedHost ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" /> : <BsCopy className="w-3.5 h-3.5" />}
-                    <span>{copiedHost ? "Copied!" : "Copy Host"}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleDelete(selectedEntry.host, selectedEntry.line_number)}
-                    disabled={deletingHost === selectedEntry.host}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-md border border-rose-500/30 font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    <BsTrash3 className="w-3.5 h-3.5" />
-                    <span>{deletingHost === selectedEntry.host ? "Removing..." : "Remove Entry"}</span>
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <Button icon={copiedHost ? <BsCheckLg /> : <BsCopy />} onClick={() => handleCopyHost(selectedEntry.host)}>
+                  {copiedHost ? "Copied" : "Copy Host"}
+                </Button>
+                <Button
+                  variant="danger"
+                  icon={<BsTrash3 />}
+                  disabled={deletingHost === selectedEntry.host}
+                  onClick={() => handleDelete(selectedEntry.host, selectedEntry.line_number)}
+                >
+                  {deletingHost === selectedEntry.host ? "Removing..." : "Remove Entry"}
+                </Button>
               </div>
 
-              {/* CLI Command Box */}
-              <div className="p-3 bg-app border border-line rounded-md space-y-1.5">
-                <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
-                    <BsTerminalFill className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>CLI Fix Command (Remove Stale Host Key)</span>
-                  </div>
+              <Group title="Remove from the command line">
+                <div className="px-4 py-3 flex items-center justify-between gap-3">
+                  <code className="font-mono text-label select-all">{getCliRemoveCmd(selectedEntry.host)}</code>
                   <button
                     onClick={() => handleCopyCmd(selectedEntry.host)}
-                    className="text-blue-400 hover:text-blue-300 flex items-center gap-1 font-sans cursor-pointer text-xs"
+                    className="text-accent hover:underline cursor-pointer shrink-0"
                   >
-                    {copiedCmd ? <BsCheckLg className="w-3 h-3 text-emerald-400" /> : <BsCopy className="w-3 h-3" />}
-                    <span>{copiedCmd ? "Copied" : "Copy Command"}</span>
+                    {copiedCmd ? "Copied" : "Copy"}
                   </button>
                 </div>
-                <pre className="p-2 bg-well border border-line rounded font-mono text-emerald-400 text-xs select-all leading-snug">
-                  {getCliRemoveCmd(selectedEntry.host)}
-                </pre>
-              </div>
+              </Group>
 
-              {/* Secure Masked Key Preview */}
-              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 leading-none">
-                    <BsLockFill className="w-3 h-3 text-yellow-400" />
-                    <span>Host Key Fingerprint & Record (Protected)</span>
-                  </div>
-                  <div className="font-mono text-gray-400 text-xs tracking-widest select-none">
-                    {selectedEntry.key_type} ••••••••••••••••••••••••••••••••
-                  </div>
-                </div>
-              </div>
-
-              {/* Educational Helper Box */}
-              <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-md space-y-1 text-gray-300">
-                <div className="flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
-                  <BsInfoCircleFill className="w-3.5 h-3.5" />
-                  <span>When should you remove a known host?</span>
-                </div>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  If you rebuild a VPS or reinstall an OS on a server, SSH will warn: <code className="text-amber-300 font-mono">WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!</code> Removing the stale entry allows SSH to securely accept the new host key fingerprint on your next connection.
-                </p>
-              </div>
+              <p className="text-label-3 leading-relaxed">
+                If you rebuild a server, SSH warns{" "}
+                <code className="font-mono text-label-2">REMOTE HOST IDENTIFICATION HAS CHANGED</code>. Removing the
+                stale entry lets SSH accept the new host key on your next connection.
+              </p>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center text-gray-500">
-              Select an entry from the list to inspect.
-            </div>
+            <div className="h-full flex items-center justify-center text-label-3">Select an entry to inspect</div>
           )}
         </div>
       </div>

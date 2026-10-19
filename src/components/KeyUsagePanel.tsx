@@ -46,11 +46,9 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccou
   };
 
   return (
-    <div className="p-3 bg-app border border-line rounded-md space-y-2 text-xs">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none">
-          Used by
-        </div>
+    <section className="space-y-1.5 text-[13px]">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <h3 className="text-[11px] font-medium uppercase tracking-wide text-label-3">Used by</h3>
         {!editing && (
           <button
             type="button"
@@ -58,7 +56,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccou
               setName(keyInfo.file_name);
               setEditing(true);
             }}
-            className="flex items-center gap-1 text-gray-300 hover:text-white cursor-pointer"
+            className="flex items-center gap-1 text-accent hover:underline cursor-pointer"
           >
             <BsPencilSquare className="w-3 h-3" />
             <span>Rename</span>
@@ -66,21 +64,22 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccou
         )}
       </div>
 
+      <div className="rounded-card bg-card px-4 py-3 space-y-2">
       {users.length === 0 ? (
-        <div className="text-gray-500">No host uses this key.</div>
+        <div className="text-label-3">No host uses this key.</div>
       ) : (
-        <ul className="font-mono text-gray-200 space-y-0.5">
+        <ul className="font-mono text-label space-y-1">
           {users.map((h) => {
             const acct = getAccountLabel(h);
             return (
               <li key={h.id}>
                 {h.host_pattern}
                 {acct && <span className="text-amber-300"> @{acct}</span>}
-                {h.host_name && <span className="text-gray-500"> · {h.host_name}</span>}
+                {h.host_name && <span className="text-label-3"> · {h.host_name}</span>}
                 {hostAccounts?.[h.id] ? (
                   <span className="text-emerald-400"> · authenticates as @{hostAccounts[h.id]}</span>
                 ) : (
-                  isGitHost(h) && <span className="text-gray-500"> · not tested</span>
+                  isGitHost(h) && <span className="text-label-3"> · not tested</span>
                 )}
               </li>
             );
@@ -106,7 +105,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccou
               {taken ? "A key with that name already exists." : "Use letters, digits, '.', '_' and '-' only."}
             </div>
           )}
-          <div className="text-gray-500">
+          <div className="text-label-3">
             Renames the key files and updates {users.length} host{users.length === 1 ? "" : "s"} in ~/.ssh/config
             (a backup is taken first).
           </div>
@@ -129,6 +128,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccou
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </section>
   );
 };

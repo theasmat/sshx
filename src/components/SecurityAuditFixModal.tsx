@@ -1,17 +1,7 @@
 import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  BsExclamationTriangleFill,
-  BsCheckCircleFill,
-  BsCheckSquareFill,
-  BsSquare,
-  BsWrench,
-  BsXLg,
-  BsArrowRepeat,
-  BsFolder2Open,
-  BsStars,
-  BsArrowRight,
-} from "react-icons/bs";
+import { BsCheckCircleFill, BsWrench } from "react-icons/bs";
+import { Button, Dialog, Group, Segmented } from "./ui";
 import { AuditIssue, SelectiveFixRequest, SelectiveFixResponse, NavTab } from "../types";
 import { api } from "../api";
 
@@ -111,313 +101,138 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
   const selectedCount = fixableIssues.filter((i, idx) => selectedIds.has(i.id || `issue_${idx}`)).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-2xl bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
-        {/* Header */}
-        <div className="px-5 py-3.5 border-b border-line bg-raised flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
-              <BsWrench className="w-4 h-4" />
+    <Dialog
+      size="lg"
+      title="Review fixes"
+      subtitle={`${fixableIssues.length} fixable`}
+      onClose={onClose}
+      footer={
+        <>
+          <span className="mr-auto text-xs text-label-3">
+            {fixResult ? "All actions executed." : `${selectedCount} of ${fixableIssues.length} selected`}
+          </span>
+          <Button onClick={onClose}>{fixResult ? "Close" : "Cancel"}</Button>
+          {!fixResult && (
+            <Button variant="primary" icon={<BsWrench />} onClick={handleApplySelected} disabled={selectedCount === 0 || isApplying}>
+              {isApplying ? `Applying ${selectedCount}...` : `Apply ${selectedCount} ${selectedCount === 1 ? "Fix" : "Fixes"}`}
+            </Button>
+          )}
+        </>
+      }
+    >
+      {fixResult ? (
+        <div className="space-y-4 text-[13px]">
+          <div role="status" className="rounded-card bg-emerald-500/10 px-4 py-4 text-center space-y-1">
+            <BsCheckCircleFill className="w-6 h-6 mx-auto text-emerald-400" />
+            <div className="font-medium text-label">
+              {fixResult.fixed_count} {fixResult.fixed_count === 1 ? "fix" : "fixes"} applied
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-white text-sm">Security & Permissions Auto-Fix</h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
-                  {fixableIssues.length} Fixable
-                </span>
-              </div>
-              <p className="text-gray-400 text-[11px]">
-                Review what will be changed and check or uncheck individual fixes.
-              </p>
+            <div className="text-label-2">
+              New security score <span className="font-medium text-emerald-300 tabular-nums">{fixResult.report.score}%</span>
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-          >
-            <BsXLg className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
-          {fixResult ? (
-            /* Results Screen */
-            <div className="space-y-4 py-2">
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-2 text-center">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-lg">
-                  <BsCheckCircleFill className="w-6 h-6" />
+          {fixResult.messages.length > 0 && (
+            <Group title="Applied changes">
+              {fixResult.messages.map((msg, idx) => (
+                <div key={idx} className="px-4 py-2.5 text-label-2">
+                  {msg}
                 </div>
-                <h4 className="font-bold text-white text-sm">
-                  {fixResult.fixed_count} Security {fixResult.fixed_count === 1 ? "Fix" : "Fixes"} Applied Successfully!
-                </h4>
-                <p className="text-gray-300 text-xs">
-                  Your SSH configuration and permissions have been updated. New security score:{" "}
-                  <span className="font-bold text-emerald-400 font-mono">{fixResult.report.score}%</span>
-                </p>
-              </div>
-
-              {fixResult.messages.length > 0 && (
-                <div className="space-y-1.5">
-                  <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
-                    Applied Changes
-                  </div>
-                  <div className="bg-app border border-line rounded-xl p-2.5 space-y-1.5 font-mono text-[11px]">
-                    {fixResult.messages.map((msg, idx) => (
-                      <div key={idx} className="flex items-start gap-2 text-emerald-300">
-                        <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
-                        <span>{msg}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Selection Screen */
-            <>
-              {/* Filter & Selection Bar */}
-              <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-line/60">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("all")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                      categoryFilter === "all"
-                        ? "bg-emerald-600 text-white font-bold"
-                        : "bg-control text-gray-300 hover:bg-line"
-                    }`}
-                  >
-                    All ({fixableIssues.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("permissions")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                      categoryFilter === "permissions"
-                        ? "bg-emerald-600 text-white font-bold"
-                        : "bg-control text-gray-300 hover:bg-line"
-                    }`}
-                  >
-                    Permissions
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("syntax")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
-                      categoryFilter === "syntax"
-                        ? "bg-emerald-600 text-white font-bold"
-                        : "bg-control text-gray-300 hover:bg-line"
-                    }`}
-                  >
-                    Config Syntax
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleSelectAll}
-                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
-                  >
-                    Select All
-                  </button>
-                  <span className="text-gray-600">|</span>
-                  <button
-                    type="button"
-                    onClick={handleDeselectAll}
-                    className="text-[11px] text-gray-400 hover:text-gray-300 font-medium cursor-pointer"
-                  >
-                    Deselect All
-                  </button>
-                </div>
-              </div>
-
-              {/* Fixable Items Checklist */}
-              <div className="space-y-2">
-                {filteredFixable.length === 0 ? (
-                  <div className="p-6 text-center text-gray-400 bg-app border border-line rounded-xl">
-                    No fixable issues found in this category.
-                  </div>
-                ) : (
-                  filteredFixable.map((issue, idx) => {
-                    const issueId = issue.id || `issue_${idx}`;
-                    const isChecked = selectedIds.has(issueId);
-
-                    return (
-                      <div
-                        key={issueId}
-                        onClick={() => toggleSelect(issueId)}
-                        className={`p-3 rounded-xl border transition-all cursor-pointer select-none ${
-                          isChecked
-                            ? "bg-[#0e1627] border-emerald-500/40 shadow-sm"
-                            : "bg-app border-line opacity-75 hover:opacity-100 hover:border-gray-700"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          {/* Checkbox */}
-                          <div className="mt-0.5 shrink-0">
-                            {isChecked ? (
-                              <BsCheckSquareFill className="w-4 h-4 text-emerald-400" />
-                            ) : (
-                              <BsSquare className="w-4 h-4 text-gray-500" />
-                            )}
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`font-bold text-xs ${isChecked ? "text-white" : "text-gray-300"}`}>
-                                {issue.title}
-                              </span>
-
-                              {issue.category && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase bg-blue-500/15 text-blue-300 border border-blue-500/30">
-                                  {issue.category}
-                                </span>
-                              )}
-
-                              <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold uppercase ${
-                                  issue.severity === "critical"
-                                    ? "bg-rose-500/15 text-rose-300 border border-rose-500/30"
-                                    : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                                }`}
-                              >
-                                {issue.severity}
-                              </span>
-                            </div>
-
-                            <p className="text-gray-400 text-[11px] leading-relaxed">
-                              {issue.description}
-                            </p>
-
-                            {/* Action Preview / Command Pill */}
-                            <div className="flex items-center gap-2 pt-1 flex-wrap">
-                              {issue.fix_preview && (
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-[#04060a] border border-emerald-500/20 text-emerald-300 rounded font-mono text-[10px]">
-                                  <BsWrench className="w-2.5 h-2.5 text-emerald-400" />
-                                  <span>Action: {issue.fix_preview}</span>
-                                </div>
-                              )}
-
-                              {issue.path && (
-                                <div className="flex items-center gap-1 text-[10px] text-gray-500 font-mono">
-                                  <BsFolder2Open className="w-2.5 h-2.5" />
-                                  <span className="truncate max-w-xs">{issue.path}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Non-Fixable / Manual Guidance Section */}
-              {nonFixableIssues.length > 0 && (
-                <div className="pt-2 border-t border-line/60 space-y-2">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400">
-                    <span>Manual Recommendations ({nonFixableIssues.length})</span>
-                    <span className="text-[10px] text-gray-500 font-normal">Require user decision</span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    {nonFixableIssues.map((issue, idx) => (
-                      <div
-                        key={idx}
-                        className="p-2.5 rounded-lg bg-app border border-line flex items-center justify-between gap-2"
-                      >
-                        <div className="flex items-start gap-2 flex-1">
-                          <BsExclamationTriangleFill className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
-                          <div className="space-y-0.5">
-                            <div className="font-semibold text-gray-200 text-[11px]">{issue.title}</div>
-                            <div className="text-gray-400 text-[10px]">{issue.description}</div>
-                          </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="shrink-0">
-                          {(issue.title.includes("Legacy") || issue.title.includes("Weak")) && onGenerateKey && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onClose();
-                                onGenerateKey(issue.title);
-                              }}
-                              className="flex items-center gap-1 px-2 py-1 bg-purple-600/30 hover:bg-purple-600/50 text-purple-300 border border-purple-500/40 rounded text-[10px] font-medium transition-colors cursor-pointer"
-                            >
-                              <BsStars className="w-2.5 h-2.5" />
-                              <span>Generate Ed25519</span>
-                            </button>
-                          )}
-
-                          {issue.title.includes("Duplicate") && onSelectTab && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onClose();
-                                onSelectTab("hosts");
-                              }}
-                              className="flex items-center gap-1 px-2 py-1 bg-control hover:bg-line text-blue-300 border border-line-strong rounded text-[10px] font-medium transition-colors cursor-pointer"
-                            >
-                              <span>Hosts</span>
-                              <BsArrowRight className="w-2.5 h-2.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+              ))}
+            </Group>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="px-5 py-3 border-t border-line bg-raised flex items-center justify-between shrink-0">
-          <div className="text-[11px] text-gray-400 font-mono">
-            {fixResult
-              ? "All actions executed safely."
-              : `${selectedCount} of ${fixableIssues.length} fixes selected`}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-            >
-              {fixResult ? "Close" : "Cancel"}
-            </button>
-
-            {!fixResult && (
-              <button
-                type="button"
-                onClick={handleApplySelected}
-                disabled={selectedCount === 0 || isApplying}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs transition-all shadow-md shadow-emerald-600/20 disabled:opacity-50 cursor-pointer active:scale-95"
-              >
-                {isApplying ? (
-                  <>
-                    <BsArrowRepeat className="w-3.5 h-3.5 animate-spin" />
-                    <span>Applying {selectedCount} Fixes...</span>
-                  </>
-                ) : (
-                  <>
-                    <BsWrench className="w-3.5 h-3.5" />
-                    <span>Apply {selectedCount} Selected {selectedCount === 1 ? "Fix" : "Fixes"}</span>
-                  </>
-                )}
+      ) : (
+        <div className="space-y-4 text-[13px]">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <Segmented
+              label="Category"
+              value={categoryFilter}
+              options={[
+                { value: "all" as const, label: `All (${fixableIssues.length})` },
+                { value: "permissions" as const, label: "Permissions" },
+                { value: "syntax" as const, label: "Syntax" },
+              ]}
+              onChange={setCategoryFilter}
+            />
+            <div className="flex items-center gap-3">
+              <button type="button" onClick={handleSelectAll} className="text-accent hover:underline cursor-pointer">
+                Select all
               </button>
-            )}
+              <button type="button" onClick={handleDeselectAll} className="text-accent hover:underline cursor-pointer">
+                Deselect all
+              </button>
+            </div>
           </div>
+
+          {filteredFixable.length === 0 ? (
+            <div className="rounded-card bg-card px-4 py-6 text-center text-label-3">No fixable issues in this category.</div>
+          ) : (
+            <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden">
+              {filteredFixable.map((issue, idx) => {
+                const issueId = issue.id || `issue_${idx}`;
+                const isChecked = selectedIds.has(issueId);
+                return (
+                  <label key={issueId} className="px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-white/[0.03]">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleSelect(issueId)}
+                      className="mt-1 w-4 h-4 accent-[#0a84ff] cursor-pointer"
+                    />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="text-label font-medium">{issue.title}</div>
+                      <p className="text-label-2 leading-relaxed">{issue.description}</p>
+                      {issue.fix_preview && (
+                        <div className="font-mono text-xs text-label-3">Will run: {issue.fix_preview}</div>
+                      )}
+                      {issue.path && <div className="font-mono text-xs text-label-3 truncate">{issue.path}</div>}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+
+          {nonFixableIssues.length > 0 && (
+            <Group title={`Needs your decision (${nonFixableIssues.length})`}>
+              {nonFixableIssues.map((issue, idx) => (
+                <div key={idx} className="px-4 py-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-label font-medium">{issue.title}</div>
+                    <div className="text-xs text-label-2">{issue.description}</div>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-3">
+                    {(issue.title.includes("Legacy") || issue.title.includes("Weak")) && onGenerateKey && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onGenerateKey(issue.title);
+                        }}
+                        className="text-accent hover:underline cursor-pointer"
+                      >
+                        Generate Ed25519
+                      </button>
+                    )}
+                    {issue.title.includes("Duplicate") && onSelectTab && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onSelectTab("hosts");
+                        }}
+                        className="text-accent hover:underline cursor-pointer"
+                      >
+                        Go to Hosts
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </Group>
+          )}
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   );
 };

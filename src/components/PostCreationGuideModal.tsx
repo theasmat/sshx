@@ -1,3 +1,4 @@
+import { Button, Dialog } from "./ui";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   BsCheckCircleFill,
@@ -6,18 +7,13 @@ import {
   BsBoxArrowUpRight,
   BsKeyFill,
   BsTerminalFill,
-  BsXLg,
   BsExclamationTriangleFill,
   BsPlayFill,
   BsShieldLockFill,
   BsCloudUploadFill,
   BsArrowRepeat,
   BsGearFill,
-  BsCheck2Square,
-  BsSquare,
-  BsGit,
 } from "react-icons/bs";
-import { BrandLogo } from "./BrandLogo";
 import { SshHost, SshKeyInfo, PresetTemplate, PostCreationGuide, SshTestResult } from "../types";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { api } from "../api";
@@ -387,590 +383,335 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
   const manualSshInstallCmd = `cat ~/.ssh/${keyFileName}.pub | ssh ${hostPortPrefix}${hostUserPrefix}${safeHostName} "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"`;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-2xl bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
-        {/* Modal Header */}
-        <div className="px-5 py-3.5 border-b border-line bg-raised flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
-              <BsCheckCircleFill className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-bold text-white text-sm">
-                  Setup & Authorization Guide
-                </h3>
-                <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  {safeHostPattern}
-                </span>
-                {preset?.badge && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-control text-gray-300 border border-line-strong">
-                    {preset.badge}
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-gray-400 mt-0.5">
-                Complete these platform-specific steps to authorize your connection.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-hover transition-colors cursor-pointer"
-            title="Close (Esc)"
-          >
-            <BsXLg className="w-4 h-4" />
-          </button>
-        </div>
+  const progress = [
+    { done: completedSteps[0], label: "Key" },
+    { done: completedSteps[1], label: "Copy" },
+    { done: completedSteps[2], label: "Authorize" },
+    { done: completedSteps[3], label: "Test" },
+  ];
 
-        {/* Stepper Progress Bar */}
-        <div className="px-5 py-2.5 bg-[#080c16] border-b border-line flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-1.5 text-[11px]">
-            <span
-              className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
-                completedSteps[0]
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-control text-gray-400"
-              }`}
-            >
-              <BsCheckLg className="w-3 h-3" />
-              <span>1. Key Configured</span>
-            </span>
-            <span className="text-gray-600">→</span>
-            <span
-              className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
-                completedSteps[1]
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-control text-gray-400"
-              }`}
-            >
-              <BsCopy className="w-3 h-3" />
-              <span>2. Copy Key</span>
-            </span>
-            <span className="text-gray-600">→</span>
-            <span
-              className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
-                completedSteps[2]
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-control text-gray-400"
-              }`}
-            >
-              <BsBoxArrowUpRight className="w-3 h-3" />
-              <span>3. Authorize</span>
-            </span>
-            <span className="text-gray-600">→</span>
-            <span
-              className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
-                completedSteps[3]
-                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-control text-gray-400"
-              }`}
-            >
-              <BsPlayFill className="w-3.5 h-3.5" />
-              <span>4. Test</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Modal Scrollable Body */}
-        <div className="p-5 overflow-y-auto space-y-4 flex-1">
-          {/* Edge Case: No Key Generated / Using SSH Agent Defaults */}
-          {!hasKey && (
-            <div className="p-3.5 bg-raised border border-blue-500/30 rounded-xl flex items-start gap-3 text-xs">
-              <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                <BsShieldLockFill className="w-4 h-4" />
-              </div>
-              <div className="space-y-1">
-                <div className="font-bold text-white">Using Default SSH Agent Keys</div>
-                <p className="text-gray-300 text-[11px] leading-relaxed">
-                  This host connection is configured without an explicit <code className="font-mono text-blue-300">IdentityFile</code>. OpenSSH will automatically use keys currently loaded in your SSH agent or default identities (<code className="font-mono text-blue-300">~/.ssh/id_rsa</code>, <code className="font-mono text-blue-300">id_ed25519</code>).
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Public Key Box (When key is present) */}
-          {hasKey && (
-            <div className="p-3.5 bg-app border border-blue-500/30 rounded-xl space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-blue-300 font-semibold text-xs">
-                  <BsKeyFill className="w-4 h-4 text-blue-400" />
-                  <span>
-                    Your Public Key (<code className="font-mono text-white bg-control px-1.5 py-0.5 rounded border border-line-strong">{keyFileName}.pub</code>)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyPubKey}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors shadow-sm cursor-pointer active:scale-95"
-                >
-                  {copiedKey ? <BsCheckLg className="w-3.5 h-3.5" /> : <BsCopy className="w-3.5 h-3.5" />}
-                  <span>{copiedKey ? "Copied to Clipboard!" : "Copy Public Key"}</span>
-                </button>
-              </div>
-
-              <pre className="p-2.5 bg-[#04060a] border border-line rounded-lg font-mono text-[11px] text-emerald-400 overflow-x-auto leading-relaxed select-all">
-                {pubKey}
-              </pre>
-
-              {/* Key Not in Agent Notice & 1-Click Fix */}
-              {!agentLoaded && keyInfo?.private_path && (
-                <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-amber-300">
-                    <BsExclamationTriangleFill className="w-3.5 h-3.5 shrink-0" />
-                    <span>Key not currently loaded in ssh-agent</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddToAgent}
-                    disabled={isAddingToAgent}
-                    className="flex items-center gap-1 px-2.5 py-0.5 bg-amber-600 hover:bg-amber-500 text-white rounded text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isAddingToAgent ? <BsArrowRepeat className="w-3 h-3 animate-spin" /> : null}
-                    <span>Load into Agent</span>
-                  </button>
-                </div>
-              )}
-
-              {agentMsg && (
-                <div className="text-[11px] text-emerald-400 font-medium px-1">
-                  ✓ {agentMsg}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Platform Step-by-Step Instructions */}
-          <div className="p-4 bg-raised border border-line rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong">
-                  <BrandLogo
-                    name={safeHostPattern}
-                    hostName={safeHostName}
-                    tags={host?.tags || []}
-                    group={host?.group || ""}
-                    className="w-4 h-4"
-                  />
-                </div>
-                <h4 className="font-bold text-white text-xs">
-                  {guideData.platform === "github"
-                    ? "Add Public Key to GitHub"
-                    : guideData.platform === "gitlab"
-                    ? "Add Public Key to GitLab"
-                    : guideData.platform === "bastion"
-                    ? "Bastion & Dual-Hop Setup"
-                    : guideData.platform === "tunnel"
-                    ? "Port Forwarding Instructions"
-                    : "Authorize Key on Remote Server"}
-                </h4>
-              </div>
-
-              {guideData.settingsUrl && (
-                <button
-                  type="button"
-                  onClick={() => handleOpenExternal(guideData.settingsUrl!)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
-                >
-                  <span>{guideData.settingsLabel || "Open Settings Page"}</span>
-                  <BsBoxArrowUpRight className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-
-            {/* Step Checkpoints */}
-            <div className="space-y-2">
-              {Array.isArray(guideData.steps) &&
-                guideData.steps.map((step, idx) => {
-                  const isChecked = Boolean(completedSteps[idx]);
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => toggleStep(idx)}
-                      className={`p-2 rounded-lg border flex items-start gap-2.5 transition-colors cursor-pointer ${
-                        isChecked
-                          ? "bg-emerald-500/5 border-emerald-500/20 text-gray-300"
-                          : "bg-app border-line text-gray-200 hover:border-[#2a375a]"
-                      }`}
-                    >
-                      <div className="mt-0.5 text-emerald-400 shrink-0">
-                        {isChecked ? <BsCheck2Square className="w-3.5 h-3.5" /> : <BsSquare className="w-3.5 h-3.5 text-gray-500" />}
-                      </div>
-                      <div className="flex-1 text-xs leading-relaxed">
-                        <span className="font-medium">{replaceVars(step)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-
-          {/* 1-Click Remote Key Installation (ssh-copy-id) for Cloud / Homelab / Bastion */}
-          {!guideData.skipKeyInstall && hasKey && (
-            <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BsCloudUploadFill className="w-4 h-4 text-blue-400" />
-                  <span className="font-bold text-white text-xs">
-                    Automated Remote Authorization (ssh-copy-id)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleInstallKey}
-                  disabled={isInstallingKey}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isInstallingKey ? <BsArrowRepeat className="w-3 h-3 animate-spin" /> : <BsCloudUploadFill className="w-3 h-3" />}
-                  <span>{isInstallingKey ? "Installing..." : "Install Key to Remote"}</span>
-                </button>
-              </div>
-
-              {installResult && (
-                <div
-                  className={`p-2.5 rounded-lg border text-xs leading-relaxed space-y-1 ${
-                    installResult.success
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                      : "bg-rose-500/10 border-rose-500/30 text-rose-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-semibold">
-                    {installResult.success ? (
-                      <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <BsExclamationTriangleFill className="w-3.5 h-3.5 text-rose-400" />
-                    )}
-                    <span>
-                      {installResult.success
-                        ? `SSH Key installed successfully in ${installResult.duration_ms}ms!`
-                        : "ssh-copy-id failed"}
-                    </span>
-                  </div>
-                  {installResult.output && (
-                    <pre className="font-mono text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-x-auto whitespace-pre-wrap">
-                      {installResult.output}
-                    </pre>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Troubleshooting Panel for ssh-copy-id / Config Error */}
-          {configErrorParsed.isConfigError && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-xl space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-rose-300 font-bold">
-                  <BsExclamationTriangleFill className="w-4 h-4 text-rose-400" />
-                  <span>SSH Config Error Detected</span>
-                </div>
-                {onOpenRawConfig && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenRawConfig();
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-[11px] font-semibold transition-colors cursor-pointer"
-                  >
-                    <BsGearFill className="w-3 h-3" />
-                    <span>Fix in Config Editor</span>
-                  </button>
-                )}
-              </div>
-
-              <p className="text-gray-300 text-[11px] leading-relaxed">
-                Your <code className="font-mono text-rose-300">~/.ssh/config</code> contains a syntax error
-                {configErrorParsed.lineNumber ? ` on line ${configErrorParsed.lineNumber}` : ""}
-                {configErrorParsed.keyword ? ` (keyword "${configErrorParsed.keyword}")` : ""} which prevents OpenSSH tools like <code className="font-mono text-gray-200">ssh-copy-id</code> from reading your configuration.
-              </p>
-
-              <div className="space-y-1">
-                <div className="text-gray-400 font-semibold text-[10px]">Manual Fallback Command (Bypasses Config Parser):</div>
-                <div className="flex items-center gap-2">
-                  <pre className="p-2 bg-app border border-line text-emerald-400 font-mono text-[10px] rounded-lg overflow-x-auto flex-1 leading-snug">
-                    {manualSshInstallCmd}
-                  </pre>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyManualCmd(manualSshInstallCmd)}
-                    className="px-2.5 py-2 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
-                  >
-                    {copiedManualCmd ? "Copied" : "Copy"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* In-App "Test Connection" Button */}
-          <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BsTerminalFill className="w-3.5 h-3.5 text-amber-400" />
-                <h4 className="font-bold text-white text-xs">Verify Connection</h4>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleCopyTestCmd}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong text-[11px] font-medium transition-colors cursor-pointer"
-                >
-                  {copiedTestCmd ? <BsCheckLg className="w-3 h-3 text-emerald-400" /> : <BsCopy className="w-3 h-3" />}
-                  <span>{copiedTestCmd ? "Copied" : "Copy Command"}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleRunTest}
-                  disabled={isTesting}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white rounded-lg font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50 active:scale-95"
-                >
-                  {isTesting ? <BsArrowRepeat className="w-3 h-3 animate-spin" /> : <BsPlayFill className="w-3.5 h-3.5" />}
-                  <span>{isTesting ? "Testing..." : "Test Connection"}</span>
-                </button>
-              </div>
-            </div>
-
-            <pre className="p-2 bg-app border border-line rounded-lg font-mono text-[11px] text-emerald-400">
-              $ {testCmdString}
-            </pre>
-
-            {testResult && (
-              <div className="space-y-2">
-                <div
-                  className={`p-2.5 rounded-lg border text-xs leading-relaxed space-y-1 ${
-                    testResult.success
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                      : "bg-rose-500/10 border-rose-500/30 text-rose-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between font-semibold">
-                    <div className="flex items-center gap-1.5">
-                      {testResult.success ? (
-                        <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
-                      ) : (
-                        <BsExclamationTriangleFill className="w-3.5 h-3.5 text-rose-400" />
-                      )}
-                      <span>{testResult.success ? "Authentication Successful" : "Test Failed"}</span>
-                    </div>
-                    {testResult.duration_ms > 0 && (
-                      <span className="font-mono text-[10px] text-gray-400">
-                        {testResult.duration_ms}ms
-                      </span>
-                    )}
-                  </div>
-                  {testResult.output && (
-                    <pre className="font-mono text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-x-auto whitespace-pre-wrap">
-                      {testResult.output}
-                    </pre>
-                  )}
-                </div>
-
-                {/* Intelligent Error Diagnostic: Hostname Resolution Failure */}
-                {!testResult.success && (testResult.output.includes("Could not resolve hostname") || testResult.output.includes("nodename nor servname")) && (
-                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-2 text-xs">
-                    <div className="flex items-center gap-1.5 text-amber-300 font-bold">
-                      <BsExclamationTriangleFill className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Host Alias Not Resolved by OpenSSH</span>
-                    </div>
-                    <p className="text-gray-300 text-[11px] leading-relaxed">
-                      OpenSSH could not find the host alias <code className="text-amber-300 font-mono">{safeHostPattern}</code>. This happens if <code className="text-gray-300 font-mono">~/.ssh/config</code> contains a syntax error (which causes OpenSSH to reject reading config aliases) or if the host was just added.
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleRunDirectTest}
-                        disabled={isTesting}
-                        className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium rounded-lg text-[11px] flex items-center gap-1.5 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-                      >
-                        <BsPlayFill className="w-3.5 h-3.5" />
-                        <span>Test Directly (Bypass Config)</span>
-                      </button>
-                      {onOpenRawConfig && (
-                        <button
-                          type="button"
-                          onClick={onOpenRawConfig}
-                          className="px-2.5 py-1.5 bg-control hover:bg-line text-amber-300 border border-amber-500/30 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
-                        >
-                          Fix in Config Editor
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Intelligent Error Diagnostic: Permission Denied (Key not authorized) */}
-                {!testResult.success && testResult.output.toLowerCase().includes("permission denied (publickey)") && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl space-y-1.5 text-xs">
-                    <div className="flex items-center gap-1.5 text-rose-300 font-bold">
-                      <BsKeyFill className="w-3.5 h-3.5 text-rose-400" />
-                      <span>Public Key Not Yet Authorized on Remote Server</span>
-                    </div>
-                    <p className="text-gray-300 text-[11px] leading-relaxed">
-                      The server reached <code className="text-emerald-300 font-mono">{safeHostName}</code>, but authentication was rejected because your public key is not registered on your account yet.
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleCopyPubKey}
-                        className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <BsCopy className="w-3 h-3 text-emerald-400" />
-                        <span>Copy Public Key</span>
-                      </button>
-                      {guideData.settingsUrl && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenExternal(guideData.settingsUrl!)}
-                          className="px-2.5 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <BsBoxArrowUpRight className="w-3 h-3" />
-                          <span>Open {guideData.settingsLabel || "Settings"}</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Success Diagnostic */}
-                {testResult.success && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1 text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-300 font-bold">
-                      <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>SSH Key Authentication Confirmed!</span>
-                    </div>
-                    <p className="text-gray-300 text-[11px] leading-relaxed">
-                      {guideData.platform === "github" || guideData.platform === "gitlab"
-                        ? "Your Git provider successfully recognized and authorized this SSH key."
-                        : "Your SSH authentication is verified and ready for use."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Git Remote Rewrite Guidance (Multi-Account) */}
-          {guideData.gitRemoteRewrite && (
-            <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
-              <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <BsGit className="w-4 h-4 text-orange-400" />
-                <span>Using This Profile with Git (Multi-Account Setup)</span>
-              </div>
-              <p className="text-gray-300 text-[11px] leading-relaxed">
-                To route git operations through this dedicated SSH key profile, use <code className="text-emerald-300 font-mono">{guideData.gitRemoteRewrite.pattern}</code> instead of <code className="text-gray-400 font-mono">git@github.com:</code>
-              </p>
-
-              <div className="space-y-2">
-                <div>
-                  <div className="text-[10px] font-semibold text-gray-400 mb-1">Clone a new repository:</div>
-                  <div className="flex items-center gap-2">
-                    <code className="p-2 bg-app border border-line rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
-                      {replaceVars(guideData.gitRemoteRewrite.example)}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyClone(replaceVars(guideData.gitRemoteRewrite!.example))}
-                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
-                    >
-                      {copiedCloneCmd ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-[10px] font-semibold text-gray-400 mb-1">Switch an existing repository to this profile:</div>
-                  <div className="flex items-center gap-2">
-                    <code className="p-2 bg-app border border-line rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
-                      git remote set-url origin {replaceVars(guideData.gitRemoteRewrite.pattern)}username/repo.git
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleCopyRemote(
-                          `git remote set-url origin ${replaceVars(
-                            guideData.gitRemoteRewrite!.pattern
-                          )}username/repo.git`
-                        )
-                      }
-                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
-                    >
-                      {copiedRemoteCmd ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ForwardAgent Security Notice */}
-          {host?.forward_agent && (
-            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2.5 text-xs">
-              <BsExclamationTriangleFill className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <div className="font-bold text-amber-300">ForwardAgent Security Notice</div>
-                <p className="text-gray-300 text-[11px] leading-relaxed">
-                  <code className="font-mono text-amber-300">ForwardAgent yes</code> is enabled for this host. This forwards your local SSH authentication agent socket to the remote machine. Only enable this for trusted jump servers.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Warnings Section */}
-          {Array.isArray(guideData.warnings) && guideData.warnings.length > 0 && (
-            <div className="p-3 bg-[#080c16] border border-line rounded-xl space-y-1.5 text-xs">
-              <div className="text-gray-400 font-semibold text-[10px] uppercase tracking-wider">
-                Important Tips & Edge Cases
-              </div>
-              <ul className="space-y-1 text-gray-300 text-[11px] list-disc list-inside leading-relaxed">
-                {guideData.warnings.map((warn, i) => (
-                  <li key={i}>{replaceVars(warn)}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Modal Footer Actions */}
-        <div className="px-5 py-3 border-t border-line bg-bar flex items-center justify-between shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-xl font-medium transition-colors cursor-pointer text-xs"
-          >
-            Done
-          </button>
-
-          <div className="flex items-center gap-2">
-            {hasKey && (
-              <button
-                type="button"
-                onClick={handleCopyPubKey}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#1a233a] hover:bg-[#222e4d] text-blue-300 border border-blue-500/30 rounded-xl font-semibold transition-colors cursor-pointer text-xs"
-              >
-                {copiedKey ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" /> : <BsCopy className="w-3.5 h-3.5" />}
-                <span>{copiedKey ? "Key Copied!" : "Copy Key"}</span>
-              </button>
-            )}
-
-            {onConnect && host && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onConnect(host);
-                }}
-                className="flex items-center gap-1.5 px-5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-bold transition-all shadow-md shadow-blue-500/20 cursor-pointer active:scale-95 text-xs"
-              >
-                <BsTerminalFill className="w-3.5 h-3.5" />
-                <span>Connect in Terminal</span>
-              </button>
-            )}
-          </div>
-        </div>
+  const resultBox = (ok: boolean, title: string, output?: string, ms?: number) => (
+    <div role="status" className={`rounded-card px-4 py-3 space-y-1.5 ${ok ? "bg-emerald-500/10 text-emerald-300" : "bg-rose-500/10 text-rose-300"}`}>
+      <div className="flex items-center justify-between font-medium">
+        <span className="flex items-center gap-2">
+          {ok ? <BsCheckCircleFill className="shrink-0" /> : <BsExclamationTriangleFill className="shrink-0" />}
+          {title}
+        </span>
+        {ms ? <span className="text-xs opacity-80 tabular-nums">{ms} ms</span> : null}
       </div>
+      {output && (
+        <pre className="font-mono text-xs p-2.5 bg-black/30 rounded-ctl overflow-x-auto whitespace-pre-wrap text-label-2">{output}</pre>
+      )}
     </div>
+  );
+
+  const codeLine = (text: React.ReactNode, onCopy: () => void, copied: boolean) => (
+    <div className="flex items-center gap-3 rounded-ctl bg-well px-3 py-2">
+      <code className="font-mono text-xs text-label flex-1 overflow-x-auto whitespace-nowrap">{text}</code>
+      <button type="button" onClick={onCopy} className="text-accent hover:underline cursor-pointer shrink-0 text-xs">
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  );
+
+  const heading = "px-1 text-[11px] font-medium uppercase tracking-wide text-label-3";
+
+  return (
+    <Dialog
+      size="lg"
+      title="Setup guide"
+      subtitle={`${safeHostPattern}${preset?.badge ? ` · ${preset.badge}` : ""}`}
+      onClose={onClose}
+      footer={
+        <>
+          {hasKey && (
+            <Button type="button" icon={copiedKey ? <BsCheckLg /> : <BsCopy />} onClick={handleCopyPubKey}>
+              {copiedKey ? "Copied" : "Copy Key"}
+            </Button>
+          )}
+          {onConnect && host && (
+            <Button
+              type="button"
+              icon={<BsTerminalFill />}
+              onClick={() => {
+                onClose();
+                onConnect(host);
+              }}
+            >
+              Connect in Terminal
+            </Button>
+          )}
+          <Button type="button" variant="primary" onClick={onClose}>
+            Done
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5 text-[13px]">
+        <ol className="flex items-center gap-2 text-xs" aria-label="Progress">
+          {progress.map((p, i) => (
+            <li key={p.label} className="flex items-center gap-2">
+              <span className={`flex items-center gap-1 ${p.done ? "text-emerald-300" : "text-label-3"}`}>
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${p.done ? "bg-emerald-500/25" : "bg-white/[0.08]"}`}>
+                  {p.done ? <BsCheckLg /> : i + 1}
+                </span>
+                {p.label}
+              </span>
+              {i < progress.length - 1 && <span className="text-label-3">·</span>}
+            </li>
+          ))}
+        </ol>
+
+        {!hasKey && (
+          <div className="rounded-card bg-accent/10 px-4 py-3 space-y-1">
+            <div className="flex items-center gap-2 font-medium text-label">
+              <BsShieldLockFill className="text-accent" /> Using default agent keys
+            </div>
+            <p className="text-label-2 leading-relaxed">
+              This host has no explicit <code className="font-mono text-label">IdentityFile</code>. OpenSSH will use keys loaded in your
+              agent or default identities (<code className="font-mono text-label">~/.ssh/id_rsa</code>,{" "}
+              <code className="font-mono text-label">id_ed25519</code>).
+            </p>
+          </div>
+        )}
+
+        {hasKey && (
+          <section className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <h4 className={heading}>Public key · {keyFileName}.pub</h4>
+              <button type="button" onClick={handleCopyPubKey} className="text-accent hover:underline cursor-pointer text-xs">
+                {copiedKey ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <pre className="p-3 bg-well rounded-card font-mono text-xs text-label-2 overflow-x-auto leading-relaxed select-all">{pubKey}</pre>
+            {!agentLoaded && keyInfo?.private_path && (
+              <div className="rounded-ctl bg-amber-500/10 text-amber-200 px-3 py-2 flex items-center justify-between gap-2 text-xs">
+                <span>Key is not loaded in ssh-agent.</span>
+                <button type="button" onClick={handleAddToAgent} disabled={isAddingToAgent} className="underline cursor-pointer disabled:opacity-50">
+                  {isAddingToAgent ? "Loading..." : "Load into agent"}
+                </button>
+              </div>
+            )}
+            {agentMsg && <div className="text-xs text-emerald-300 px-1">{agentMsg}</div>}
+          </section>
+        )}
+
+        <section className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className={heading}>
+              {guideData.platform === "github"
+                ? "Add the key to GitHub"
+                : guideData.platform === "gitlab"
+                ? "Add the key to GitLab"
+                : guideData.platform === "bastion"
+                ? "Bastion and dual-hop setup"
+                : guideData.platform === "tunnel"
+                ? "Port forwarding"
+                : "Authorize the key on the server"}
+            </h4>
+            {guideData.settingsUrl && (
+              <button
+                type="button"
+                onClick={() => handleOpenExternal(guideData.settingsUrl!)}
+                className="text-accent hover:underline cursor-pointer text-xs flex items-center gap-1"
+              >
+                {guideData.settingsLabel || "Open settings page"} <BsBoxArrowUpRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+          <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden">
+            {Array.isArray(guideData.steps) &&
+              guideData.steps.map((step, idx) => {
+                const isChecked = Boolean(completedSteps[idx]);
+                return (
+                  <label key={idx} className="px-4 py-2.5 flex items-start gap-3 cursor-pointer hover:bg-white/[0.03]">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleStep(idx)}
+                      className="mt-0.5 w-4 h-4 accent-[#0a84ff] cursor-pointer"
+                    />
+                    <span className={isChecked ? "text-label-3 line-through decoration-white/20" : "text-label"}>{replaceVars(step)}</span>
+                  </label>
+                );
+              })}
+          </div>
+        </section>
+
+        {!guideData.skipKeyInstall && hasKey && (
+          <section className="space-y-1.5">
+            <h4 className={heading}>Automatic install (ssh-copy-id)</h4>
+            <div className="rounded-card bg-card px-4 py-3 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-label-2">Adds your public key to the server's authorized_keys.</span>
+                <Button type="button" icon={<BsCloudUploadFill />} onClick={handleInstallKey} disabled={isInstallingKey}>
+                  {isInstallingKey ? "Installing..." : "Install Key"}
+                </Button>
+              </div>
+              {installResult &&
+                resultBox(
+                  installResult.success,
+                  installResult.success ? `Key installed in ${installResult.duration_ms} ms` : "ssh-copy-id failed",
+                  installResult.output
+                )}
+            </div>
+          </section>
+        )}
+
+        {configErrorParsed.isConfigError && (
+          <section className="rounded-card bg-rose-500/10 px-4 py-3 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 font-medium text-rose-200">
+                <BsExclamationTriangleFill /> SSH config error
+              </span>
+              {onOpenRawConfig && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenRawConfig();
+                  }}
+                  className="text-accent hover:underline cursor-pointer text-xs flex items-center gap-1"
+                >
+                  <BsGearFill className="w-3 h-3" /> Fix in Raw Config
+                </button>
+              )}
+            </div>
+            <p className="text-label-2 leading-relaxed">
+              Your <code className="font-mono text-label">~/.ssh/config</code> contains a syntax error
+              {configErrorParsed.lineNumber ? ` on line ${configErrorParsed.lineNumber}` : ""}
+              {configErrorParsed.keyword ? ` (keyword "${configErrorParsed.keyword}")` : ""} which prevents OpenSSH tools like{" "}
+              <code className="font-mono text-label">ssh-copy-id</code> from reading your configuration.
+            </p>
+            <div className="space-y-1">
+              <div className="text-xs text-label-3">Manual fallback (bypasses the config parser):</div>
+              {codeLine(manualSshInstallCmd, () => handleCopyManualCmd(manualSshInstallCmd), copiedManualCmd)}
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className={heading}>Verify connection</h4>
+            <Button type="button" icon={isTesting ? <BsArrowRepeat className="animate-spin" /> : <BsPlayFill className="w-4 h-4" />} onClick={handleRunTest} disabled={isTesting}>
+              {isTesting ? "Testing..." : "Test Connection"}
+            </Button>
+          </div>
+          {codeLine(`$ ${testCmdString}`, handleCopyTestCmd, copiedTestCmd)}
+
+          {testResult && (
+            <div className="space-y-2 pt-1">
+              {resultBox(
+                testResult.success,
+                testResult.success ? "Authentication successful" : "Test failed",
+                testResult.output,
+                testResult.duration_ms
+              )}
+
+              {!testResult.success &&
+                (testResult.output.includes("Could not resolve hostname") || testResult.output.includes("nodename nor servname")) && (
+                  <div className="rounded-card bg-amber-500/10 px-4 py-3 space-y-2">
+                    <div className="font-medium text-amber-200">Host alias not resolved by OpenSSH</div>
+                    <p className="text-label-2 leading-relaxed">
+                      OpenSSH could not find the host alias <code className="font-mono text-label">{safeHostPattern}</code>. This happens if{" "}
+                      <code className="font-mono text-label">~/.ssh/config</code> contains a syntax error (which causes OpenSSH to reject
+                      reading config aliases) or if the host was just added.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="button" icon={<BsPlayFill className="w-4 h-4" />} onClick={handleRunDirectTest} disabled={isTesting}>
+                        Test directly (bypass config)
+                      </Button>
+                      {onOpenRawConfig && (
+                        <Button type="button" variant="plain" onClick={onOpenRawConfig}>
+                          Fix in Raw Config
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {!testResult.success && testResult.output.toLowerCase().includes("permission denied (publickey)") && (
+                <div className="rounded-card bg-rose-500/10 px-4 py-3 space-y-2">
+                  <div className="flex items-center gap-2 font-medium text-rose-200">
+                    <BsKeyFill /> Public key not authorized yet
+                  </div>
+                  <p className="text-label-2 leading-relaxed">
+                    The server <code className="font-mono text-label">{safeHostName}</code> was reached, but it rejected the key because it is
+                    not registered on your account yet.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" icon={<BsCopy />} onClick={handleCopyPubKey}>
+                      Copy Public Key
+                    </Button>
+                    {guideData.settingsUrl && (
+                      <Button type="button" variant="plain" icon={<BsBoxArrowUpRight />} onClick={() => handleOpenExternal(guideData.settingsUrl!)}>
+                        Open {guideData.settingsLabel || "Settings"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {testResult.success && (
+                <p className="text-label-2 px-1">
+                  {guideData.platform === "github" || guideData.platform === "gitlab"
+                    ? "Your Git provider recognized and authorized this SSH key."
+                    : "Your SSH authentication is verified and ready to use."}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+
+        {guideData.gitRemoteRewrite && (
+          <section className="space-y-1.5">
+            <h4 className={heading}>Use this profile with Git</h4>
+            <div className="rounded-card bg-card px-4 py-3 space-y-3">
+              <p className="text-label-2 leading-relaxed">
+                To route git through this key, use <code className="font-mono text-label">{guideData.gitRemoteRewrite.pattern}</code> instead of{" "}
+                <code className="font-mono text-label-3">git@github.com:</code>
+              </p>
+              <div className="space-y-1">
+                <div className="text-xs text-label-3">Clone a new repository</div>
+                {codeLine(
+                  replaceVars(guideData.gitRemoteRewrite.example),
+                  () => handleCopyClone(replaceVars(guideData.gitRemoteRewrite!.example)),
+                  copiedCloneCmd
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs text-label-3">Switch an existing repository</div>
+                {codeLine(
+                  `git remote set-url origin ${replaceVars(guideData.gitRemoteRewrite.pattern)}username/repo.git`,
+                  () => handleCopyRemote(`git remote set-url origin ${replaceVars(guideData.gitRemoteRewrite!.pattern)}username/repo.git`),
+                  copiedRemoteCmd
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {host?.forward_agent && (
+          <div className="rounded-card bg-amber-500/10 px-4 py-3 space-y-1">
+            <div className="font-medium text-amber-200">ForwardAgent is on</div>
+            <p className="text-label-2 leading-relaxed">
+              <code className="font-mono text-label">ForwardAgent yes</code> forwards your local SSH agent socket to the remote machine. Only
+              enable this for trusted jump servers.
+            </p>
+          </div>
+        )}
+
+        {Array.isArray(guideData.warnings) && guideData.warnings.length > 0 && (
+          <section className="space-y-1.5">
+            <h4 className={heading}>Good to know</h4>
+            <ul className="space-y-1 text-label-2 list-disc list-inside leading-relaxed px-1">
+              {guideData.warnings.map((warn, i) => (
+                <li key={i}>{replaceVars(warn)}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+    </Dialog>
   );
 };

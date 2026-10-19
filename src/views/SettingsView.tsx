@@ -1,31 +1,19 @@
 import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
+import { Badge, Button, Dialog, Group, Row, Segmented, Switch } from "../components/ui";
 import React, { useState, useEffect, useRef } from "react";
 import {
-  BsGear,
   BsTerminalFill,
-  BsKeyFill,
-  BsShieldCheck,
-  BsClockHistory,
-  BsClock,
-  BsFolder2Open,
-  BsCopy,
   BsCheckLg,
   BsCheckCircleFill,
-  BsZoomIn,
-  BsZoomOut,
   BsShieldLock,
   BsDownload,
   BsUpload,
-  BsFileEarmarkLock2,
-  BsXLg,
   BsEye,
   BsEyeSlash,
   BsExclamationCircleFill,
   BsArrowRepeat,
   BsArrowClockwise,
-  BsCloudArrowDownFill,
-  BsGithub,
   BsArchive,
 } from "react-icons/bs";
 import { check, Update } from "@tauri-apps/plugin-updater";
@@ -40,6 +28,19 @@ import {
 } from "../utils/backupCrypto";
 import { loadCustomPresets } from "../presets";
 import { api } from "../api";
+
+const dialogField =
+  "w-full h-8 px-2.5 rounded-ctl bg-white/[0.06] text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.09] focus:ring-2 focus:ring-accent/70";
+
+const Setting: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
+  <div className="flex items-center justify-between gap-4 px-4 py-3">
+    <div className="min-w-0">
+      <div className="text-label">{label}</div>
+      {hint && <div className="text-xs text-label-3">{hint}</div>}
+    </div>
+    <div className="shrink-0 flex items-center gap-2">{children}</div>
+  </div>
+);
 
 interface SettingsViewProps {
   terminals: TerminalAppInfo[];
@@ -452,154 +453,147 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const zoomPresets = [80, 90, 100, 110, 120, 130];
 
   return (
-    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
-      {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
-            <BsGear className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white text-sm">Application Settings</h2>
-          </div>
-        </div>
-
+    <div className="h-full flex flex-col bg-app text-[13px] select-none overflow-hidden">
+      <div className="px-5 h-12 flex items-center justify-between shrink-0">
+        <h2 className="text-[15px] font-semibold text-label">Settings</h2>
         {savedSuccess && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-md text-xs animate-in fade-in">
-            <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Saved</span>
-          </div>
+          <span role="status" className="flex items-center gap-1.5 text-emerald-300">
+            <BsCheckCircleFill /> Saved
+          </span>
         )}
       </div>
 
-      {/* Main Settings Form Scrollable Area */}
-      <div className="flex-1 overflow-y-auto p-3.5">
-        <div className="max-w-3xl mx-auto space-y-3">
-          {/* Section 1: UI Scaling & Zoom Controls */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
-                <BsZoomIn className="w-3.5 h-3.5 text-blue-400" />
-                <span>UI Scaling & Zoom</span>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-gray-400 font-mono">
-                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd +</kbd>
-                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd -</kbd>
-                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd 0</kbd>
-              </div>
-            </div>
+      <div className="flex-1 overflow-y-auto px-5 pb-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <Group title="Appearance">
+            <Setting label="Interface zoom" hint="⌘+ / ⌘- / ⌘0">
+              <Segmented
+                label="Zoom level"
+                value={zoomLevel}
+                options={zoomPresets.map((l: number) => ({ value: l, label: `${l}%` }))}
+                onChange={(l) => onSetZoom(l)}
+              />
+            </Setting>
+          </Group>
 
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <p className="text-gray-400 text-xs">
-                  Adjust interface scale for optimal clarity across high-DPI and laptop displays.
-                </p>
-                <div className="flex items-center gap-1.5 mt-2">
-                  {zoomPresets.map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => onSetZoom(lvl)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold font-mono transition-colors border cursor-pointer ${
-                        zoomLevel === lvl
-                          ? "bg-blue-600 text-white border-blue-500 shadow-sm"
-                          : "bg-app text-gray-400 border-line hover:text-gray-200 hover:bg-control"
-                      }`}
-                    >
-                      {lvl}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onSetZoom((prev: number) => Math.max(prev - 10, 70))}
-                  className="p-2 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong cursor-pointer"
-                  title="Zoom Out (Cmd -)"
-                >
-                  <BsZoomOut className="w-3.5 h-3.5" />
-                </button>
-
-                <span className="font-mono font-bold text-white text-xs w-12 text-center">
-                  {zoomLevel}%
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => onSetZoom((prev: number) => Math.min(prev + 10, 150))}
-                  className="p-2 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong cursor-pointer"
-                  title="Zoom In (Cmd +)"
-                >
-                  <BsZoomIn className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onSetZoom(100)}
-                  className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-400 hover:text-gray-200 rounded-md border border-line-strong text-xs font-medium cursor-pointer"
-                  title="Reset to default (Cmd 0)"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Encrypted Backup & Restore (.sshx) */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
-                <BsFileEarmarkLock2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Password-Encrypted Backup & Restore (.sshx)</span>
-              </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono">
-                AES-256-GCM
-              </span>
-            </div>
-
-            <p className="text-gray-400 text-xs leading-relaxed">
-              Export an encrypted bundle (<code className="text-emerald-400 font-mono">.sshx</code>) containing your SSH config, known hosts, and custom presets with mandatory password protection. Only openable with your password in SSHX.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-              {/* Export Button */}
+          <Group title="Terminal">
+            {terminals.map((t) => (
               <button
+                key={t.id}
                 type="button"
-                onClick={handleStartExport}
-                className="p-3 bg-app hover:bg-card border border-line hover:border-blue-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
+                onClick={() => {
+                  onSelectTerminal(t.id);
+                  triggerSaveToast();
+                }}
+                aria-pressed={selectedTerminal === t.id}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.04] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/70"
               >
-                <div className="space-y-0.5">
-                  <div className="font-semibold text-white text-xs flex items-center gap-1.5 group-hover:text-blue-400 transition-colors">
-                    <BsDownload className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Export Encrypted .sshx</span>
-                  </div>
-                  <div className="text-[11px] text-gray-500">
-                    Secure with password & save bundle
-                  </div>
+                <div className="w-7 h-7 rounded-ctl bg-control flex items-center justify-center shrink-0 text-label">
+                  <BrandLogo
+                    name={t.name}
+                    className="w-4 h-4"
+                    fallbackIcon={<BsTerminalFill className="w-3.5 h-3.5 text-label-2" />}
+                  />
                 </div>
-                <span className="text-blue-400 font-mono text-xs font-semibold">➔</span>
-              </button>
-
-              {/* Restore Button */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="p-3 bg-app hover:bg-card border border-line hover:border-emerald-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
-              >
-                <div className="space-y-0.5">
-                  <div className="font-semibold text-white text-xs flex items-center gap-1.5 group-hover:text-emerald-400 transition-colors">
-                    <BsUpload className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Restore from .sshx</span>
-                  </div>
-                  <div className="text-[11px] text-gray-500">
-                    Decrypt password-protected archive
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-label">{t.name}</div>
+                  <div className="text-xs text-label-3">{t.is_installed ? "Installed" : "System default"}</div>
                 </div>
-                <span className="text-emerald-400 font-mono text-xs font-semibold">➔</span>
+                {selectedTerminal === t.id && <BsCheckLg className="text-accent shrink-0" />}
               </button>
+            ))}
+          </Group>
 
+          <Group title="New keys and hosts">
+            <Setting label="Default key algorithm" hint="Ed25519 is recommended">
+              <Segmented
+                label="Default algorithm"
+                value={defaultAlgo}
+                options={[
+                  { value: "ed25519", label: "Ed25519" },
+                  { value: "rsa", label: "RSA 4096" },
+                  { value: "ecdsa", label: "ECDSA" },
+                ]}
+                onChange={(v) => handleSaveAlgo(v)}
+              />
+            </Setting>
+            <Setting label="Default SSH port">
+              <input
+                type="number"
+                aria-label="Default SSH port"
+                value={defaultPort}
+                onChange={(e) => handlePortChange(parseInt(e.target.value, 10) || 22)}
+                className="w-24 h-8 px-2.5 rounded-ctl bg-white/[0.06] text-label font-mono text-right focus:outline-none focus:ring-2 focus:ring-accent/70"
+              />
+            </Setting>
+          </Group>
+
+          <Group title="Safety">
+            <Setting label="Back up before changes" hint="Keeps a snapshot at ~/.ssh/config.sshx.bak">
+              <Switch label="Back up before changes" checked={autoBackup} onChange={handleToggleAutoBackup} />
+            </Setting>
+            <Setting label="Hide fingerprints on screen" hint="Masks keys and fingerprints to prevent shoulder surfing">
+              <Switch label="Hide fingerprints on screen" checked={privacyMask} onChange={handleTogglePrivacyMask} />
+            </Setting>
+            <Setting
+              label="Device snapshot"
+              hint={
+                deviceSnapshot
+                  ? `${formatSnapshotTime(deviceSnapshot.modified_timestamp)} · ${formatSnapshotSize(deviceSnapshot.size_bytes)}`
+                  : "None yet; created on your first edit"
+              }
+            >
+              {deviceSnapshot ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handlePreviewSnapshot("config.sshx.bak")}
+                    disabled={isLoadingSnapshotPreview}
+                    className="text-accent hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    Preview
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRestoreDeviceSnapshot("config.sshx.bak")}
+                    disabled={restoringSnapshotName === "config.sshx.bak"}
+                    className="text-accent hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    {restoringSnapshotName === "config.sshx.bak" ? "Restoring..." : "Restore"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={loadDeviceSnapshot}
+                  disabled={isLoadingSnapshot}
+                  className="text-accent hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  Refresh
+                </button>
+              )}
+              <button type="button" onClick={handleOpenSnapshotsModal} className="text-accent hover:underline cursor-pointer">
+                All snapshots
+              </button>
+            </Setting>
+            {snapshotSuccessMsg && (
+              <div role="status" className="px-4 py-2.5 text-emerald-300 flex items-center gap-2">
+                <BsCheckCircleFill className="shrink-0" />
+                {snapshotSuccessMsg}
+              </div>
+            )}
+          </Group>
+
+          <Group title="Encrypted backup (.sshx)">
+            <Setting label="Export" hint="Config, known hosts and templates, protected by a password (AES-256-GCM)">
+              <Button icon={<BsDownload />} onClick={handleStartExport}>
+                Export...
+              </Button>
+            </Setting>
+            <Setting label="Restore" hint="Decrypt a .sshx bundle and apply it">
+              <Button icon={<BsUpload />} onClick={() => fileInputRef.current?.click()}>
+                Restore...
+              </Button>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -607,864 +601,349 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 accept=".sshx,application/x-sshx-backup,application/json"
                 className="hidden"
               />
-            </div>
-          </div>
+            </Setting>
+          </Group>
 
-          {/* Section 3: Terminal Launcher Target */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
-              <BsTerminalFill className="w-3.5 h-3.5 text-blue-400" />
-              <span>Default Terminal Launcher</span>
-            </div>
+          <Group title="Files">
+            {["~/.ssh/config", "~/.ssh/known_hosts"].map((path) => (
+              <Setting key={path} label={path === "~/.ssh/config" ? "Config file" : "Known hosts file"}>
+                <span className="font-mono text-label-2">{path}</span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyPath(path)}
+                  className="text-accent hover:underline cursor-pointer"
+                >
+                  {copiedPath === path ? "Copied" : "Copy"}
+                </button>
+              </Setting>
+            ))}
+          </Group>
 
-            <div className="space-y-2">
-              <p className="text-gray-400 text-xs leading-relaxed">
-                Choose the native desktop terminal emulator used when launching interactive SSH connections.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                {terminals.map((t) => {
-                  const isSelected = selectedTerminal === t.id;
-
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        onSelectTerminal(t.id);
-                        triggerSaveToast();
-                      }}
-                      className={`p-2.5 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-blue-600/20 border-blue-500 text-blue-300 font-semibold shadow-sm"
-                          : "bg-app border-line text-gray-300 hover:bg-control"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
-                          <BrandLogo
-                            name={t.name}
-                            className="w-3.5 h-3.5"
-                            fallbackIcon={<BsTerminalFill className="w-3.5 h-3.5 text-blue-400" />}
-                          />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-white">{t.name}</div>
-                          <div className="text-[11px] text-gray-400 font-mono leading-none mt-0.5">
-                            {t.is_installed ? "Detected & Installed" : "System standard"}
-                          </div>
-                        </div>
-                      </div>
-
-                      {isSelected && (
-                        <BsCheckLg className="w-4 h-4 text-blue-400 shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Section 4: SSH Key Generation Defaults */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
-              <BsKeyFill className="w-3.5 h-3.5 text-purple-400" />
-              <span>SSH Key Generation Defaults</span>
-            </div>
-
-            <div className="space-y-2.5">
-              <div>
-                <label className="block text-gray-300 font-medium mb-1.5 text-xs">
-                  Default Cryptographic Algorithm
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveAlgo("ed25519")}
-                    className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
-                      defaultAlgo === "ed25519"
-                        ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-app border-line text-gray-400 hover:text-gray-200"
-                    }`}
-                  >
-                    <div className="text-xs">Ed25519</div>
-                    <div className="text-[10px] text-emerald-400 font-medium leading-none mt-0.5">Recommended</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSaveAlgo("rsa")}
-                    className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
-                      defaultAlgo === "rsa"
-                        ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-app border-line text-gray-400 hover:text-gray-200"
-                    }`}
-                  >
-                    <div className="text-xs">RSA</div>
-                    <div className="text-[10px] text-gray-500 font-medium leading-none mt-0.5">4096-bit</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSaveAlgo("ecdsa")}
-                    className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
-                      defaultAlgo === "ecdsa"
-                        ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-app border-line text-gray-400 hover:text-gray-200"
-                    }`}
-                  >
-                    <div className="text-xs">ECDSA</div>
-                    <div className="text-[10px] text-gray-500 font-medium leading-none mt-0.5">NIST P-256</div>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-300 font-medium mb-1 text-xs">
-                  Default SSH Port for New Hosts
-                </label>
-                <input
-                  type="number"
-                  value={defaultPort}
-                  onChange={(e) => handlePortChange(parseInt(e.target.value, 10) || 22)}
-                  className="w-28 bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 5: Safety, Automated Snapshots & Backups */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
-                <BsShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Safety & Automated Snapshots</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenSnapshotsModal}
-                className="flex items-center gap-1.5 px-3 py-1 bg-control hover:bg-line text-amber-300 rounded-md border border-amber-500/30 text-xs font-semibold transition-colors cursor-pointer"
+          <Group title="Updates">
+            <Setting label="SSHX Desktop" hint="Updates come from GitHub Releases (theasmat/sshx)">
+              <Button
+                icon={<BsArrowRepeat className={updateStatus === "checking" ? "animate-spin" : ""} />}
+                onClick={handleCheckForUpdates}
+                disabled={updateStatus === "checking" || updateStatus === "downloading"}
               >
-                <BsClockHistory className="w-3.5 h-3.5 text-amber-400" />
-                <span>Manage Local Snapshots</span>
-              </button>
-            </div>
+                {updateStatus === "checking" ? "Checking..." : "Check for Updates"}
+              </Button>
+            </Setting>
 
-            {snapshotSuccessMsg && (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs flex items-center gap-2 animate-in fade-in duration-150">
-                <BsCheckCircleFill className="w-4 h-4 shrink-0 text-emerald-400" />
-                <span>{snapshotSuccessMsg}</span>
+            {updateStatus === "up-to-date" && (
+              <div role="status" className="px-4 py-2.5 text-emerald-300 flex items-center gap-2">
+                <BsCheckCircleFill className="shrink-0" /> You have the latest version.
               </div>
             )}
 
-            {/* Active Device Snapshot Card */}
-            <div className="p-3 bg-app border border-emerald-500/30 rounded-lg space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="text-white font-semibold text-xs">Active Device Snapshot</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                    config.sshx.bak
-                  </span>
+            {updateStatus === "available" && availableUpdate && (
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-label font-medium">Update available: v{availableUpdate.version}</span>
+                  <Button variant="primary" onClick={handleInstallUpdate}>
+                    Download &amp; Install
+                  </Button>
                 </div>
-                {deviceSnapshot && (
-                  <span className="text-[10px] text-gray-400 font-mono">
-                    {formatSnapshotSize(deviceSnapshot.size_bytes)}
-                  </span>
+                {availableUpdate.body && (
+                  <p className="text-label-2 text-xs font-mono whitespace-pre-wrap bg-well rounded-ctl p-3">
+                    {availableUpdate.body}
+                  </p>
                 )}
               </div>
+            )}
 
-              {deviceSnapshot ? (
-                <div className="flex items-center justify-between gap-3 pt-1">
-                  <div className="space-y-0.5 text-xs">
-                    <div className="font-mono text-gray-300 text-[11px] truncate max-w-[280px]">
-                      ~/.ssh/config.sshx.bak
-                    </div>
-                    <div className="text-[10px] text-amber-400 flex items-center gap-1 font-mono">
-                      <BsClock className="w-3 h-3" />
-                      <span>{formatSnapshotTime(deviceSnapshot.modified_timestamp)}</span>
+            {updateStatus === "downloading" && (
+              <div className="px-4 py-3 space-y-1.5">
+                <div className="flex justify-between text-label-2">
+                  <span>Downloading update...</span>
+                  <span className="tabular-nums">{downloadProgress}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/[0.1] rounded-full overflow-hidden">
+                  <div className="h-full bg-accent transition-all duration-200" style={{ width: `${downloadProgress}%` }} />
+                </div>
+              </div>
+            )}
+
+            {updateStatus === "ready" && (
+              <div role="status" className="px-4 py-2.5 text-emerald-300 flex items-center gap-2">
+                <BsCheckCircleFill className="shrink-0" /> Downloaded. Restart SSHX to apply.
+              </div>
+            )}
+
+            {updateStatus === "error" && updateError && (
+              <div role="alert" className="px-4 py-2.5 text-rose-300 flex items-start gap-2">
+                <BsExclamationCircleFill className="shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-medium">Update check failed</div>
+                  <p className="text-label-2 text-xs mt-0.5">{updateError}</p>
+                </div>
+              </div>
+            )}
+          </Group>
+
+          <div className="flex items-center gap-3 px-1 text-label-3">
+            <SshxLogo variant="icon" size={28} macStyle={true} />
+            <div className="text-xs">
+              <div className="text-label-2">SSHX {"—"} Modern SSH Desktop Manager</div>
+              <div>Version 1.0.0 · Tauri 2, Rust, React 19 · Open source</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isExportModalOpen && (
+        <Dialog
+          title="Export encrypted backup"
+          subtitle="All backups require a password"
+          onClose={() => setIsExportModalOpen(false)}
+          footer={
+            <>
+              <Button type="button" onClick={() => setIsExportModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" form="export-form" variant="primary" icon={<BsDownload />} disabled={isExporting}>
+                {isExporting ? "Encrypting..." : "Export"}
+              </Button>
+            </>
+          }
+        >
+          <form id="export-form" onSubmit={handlePerformExport} className="space-y-4 text-[13px]">
+            <p className="text-label-2 leading-relaxed">
+              Includes {configData?.hosts.length || 0} SSH hosts from <code className="font-mono text-label">~/.ssh/config</code>,{" "}
+              {knownHostsCount} known hosts and your templates, encrypted with AES-256-GCM.
+            </p>
+            {exportError && (
+              <div role="alert" className="rounded-ctl bg-rose-500/10 text-rose-300 px-3 py-2 flex items-center gap-2">
+                <BsExclamationCircleFill className="shrink-0" />
+                <span>{exportError}</span>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label htmlFor="export-pass" className="text-label-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="export-pass"
+                  type={showExportPass ? "text" : "password"}
+                  required
+                  placeholder="Choose a strong password"
+                  value={exportPassword}
+                  onChange={(e) => setExportPassword(e.target.value)}
+                  className={`${dialogField} font-mono pr-9`}
+                />
+                <button
+                  type="button"
+                  aria-label={showExportPass ? "Hide password" : "Show password"}
+                  onClick={() => setShowExportPass(!showExportPass)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-label-3 hover:text-label cursor-pointer"
+                >
+                  {showExportPass ? <BsEyeSlash /> : <BsEye />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="export-confirm" className="text-label-2">
+                Confirm password
+              </label>
+              <input
+                id="export-confirm"
+                type={showExportPass ? "text" : "password"}
+                required
+                placeholder="Re-enter password"
+                value={exportConfirmPass}
+                onChange={(e) => setExportConfirmPass(e.target.value)}
+                className={`${dialogField} font-mono`}
+              />
+            </div>
+          </form>
+        </Dialog>
+      )}
+
+      {isRestoreModalOpen && (
+        <Dialog
+          title="Restore from backup"
+          subtitle={restoreFileName}
+          onClose={() => setIsRestoreModalOpen(false)}
+          footer={
+            !decryptedPreview ? (
+              <>
+                <Button type="button" onClick={() => setIsRestoreModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" form="restore-form" variant="primary" icon={<BsShieldLock />} disabled={isRestoring}>
+                  {isRestoring ? "Decrypting..." : "Decrypt & Inspect"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button type="button" onClick={() => setIsRestoreModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="button" variant="primary" icon={<BsUpload />} disabled={isRestoring} onClick={handleExecuteRestore}>
+                  {isRestoring ? "Restoring..." : "Confirm & Restore"}
+                </Button>
+              </>
+            )
+          }
+        >
+          <div className="space-y-4 text-[13px]">
+            {restoreError && (
+              <div role="alert" className="rounded-ctl bg-rose-500/10 text-rose-300 px-3 py-2 flex items-center gap-2">
+                <BsExclamationCircleFill className="shrink-0" />
+                <span>{restoreError}</span>
+              </div>
+            )}
+            {restoreSuccessMsg && (
+              <div role="status" className="rounded-ctl bg-emerald-500/10 text-emerald-300 px-3 py-2 flex items-center gap-2">
+                <BsCheckCircleFill className="shrink-0" />
+                <span>{restoreSuccessMsg}</span>
+              </div>
+            )}
+
+            {!decryptedPreview ? (
+              <form id="restore-form" onSubmit={handleVerifyPassword} className="space-y-1.5">
+                <label htmlFor="restore-pass" className="text-label-2">
+                  Decryption password
+                </label>
+                <div className="relative">
+                  <input
+                    id="restore-pass"
+                    type={showRestorePass ? "text" : "password"}
+                    required
+                    placeholder="Enter password"
+                    value={restorePassword}
+                    onChange={(e) => setRestorePassword(e.target.value)}
+                    className={`${dialogField} font-mono pr-9`}
+                  />
+                  <button
+                    type="button"
+                    aria-label={showRestorePass ? "Hide password" : "Show password"}
+                    onClick={() => setShowRestorePass(!showRestorePass)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-label-3 hover:text-label cursor-pointer"
+                  >
+                    {showRestorePass ? <BsEyeSlash /> : <BsEye />}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                <Group>
+                  <Row label="Password">Verified</Row>
+                  <Row label="Created">{new Date(decryptedPreview.createdAt).toLocaleDateString()}</Row>
+                  <Row label="SSH hosts">{decryptedPreview.metadata.hostsCount}</Row>
+                  <Row label="Known hosts">{decryptedPreview.metadata.knownHostsCount}</Row>
+                </Group>
+                <p className="text-label-2 leading-relaxed">
+                  Restoring updates <code className="font-mono text-label">~/.ssh/config</code> and{" "}
+                  <code className="font-mono text-label">~/.ssh/known_hosts</code>. A safety backup of your current
+                  configuration is saved first.
+                </p>
+              </div>
+            )}
+          </div>
+        </Dialog>
+      )}
+
+      {isLocalSnapshotsModalOpen && (
+        <Dialog
+          title="Config snapshots"
+          subtitle="Saved in ~/.ssh/ before edits"
+          onClose={() => setIsLocalSnapshotsModalOpen(false)}
+          footer={
+            <>
+              <Button
+                variant="plain"
+                onClick={() => {
+                  setIsLocalSnapshotsModalOpen(false);
+                  onOpenRawBackups();
+                }}
+              >
+                Open in Raw Config
+              </Button>
+              <Button
+                icon={<BsArrowClockwise className={isLoadingAllSnapshots ? "animate-spin" : ""} />}
+                onClick={loadAllSnapshots}
+                disabled={isLoadingAllSnapshots}
+              >
+                Refresh
+              </Button>
+              <Button variant="primary" onClick={() => setIsLocalSnapshotsModalOpen(false)}>
+                Done
+              </Button>
+            </>
+          }
+        >
+          {isLoadingAllSnapshots ? (
+            <div className="py-8 text-center text-label-3">Loading snapshots...</div>
+          ) : allSnapshots.length === 0 ? (
+            <div className="py-8 text-center space-y-1">
+              <div className="text-label-2">No snapshots yet</div>
+              <div className="text-xs text-label-3">A snapshot is created when you save changes in sshX.</div>
+            </div>
+          ) : (
+            <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden text-[13px]">
+              {allSnapshots.map((snap) => (
+                <div key={snap.filename} className="px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-mono text-label truncate">{snap.filename}</div>
+                    <div className="text-xs text-label-2 flex items-center gap-2 flex-wrap">
+                      <span>{formatSnapshotTime(snap.modified_timestamp)}</span>
+                      <span>·</span>
+                      <span>{formatSnapshotSize(snap.size_bytes)}</span>
+                      {snap.is_primary && <Badge tone="ok">Latest</Badge>}
+                      {snap.filename === "config.sshx.bak.previous" && <Badge>Previous</Badge>}
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handlePreviewSnapshot("config.sshx.bak")}
+                      onClick={() => handlePreviewSnapshot(snap.filename)}
                       disabled={isLoadingSnapshotPreview}
-                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-md border border-line-strong text-xs font-medium transition-colors cursor-pointer"
+                      className="text-accent hover:underline cursor-pointer disabled:opacity-50"
                     >
                       Preview
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRestoreDeviceSnapshot("config.sshx.bak")}
-                      disabled={restoringSnapshotName === "config.sshx.bak"}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-xs font-semibold shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                      onClick={() => handleRestoreDeviceSnapshot(snap.filename)}
+                      disabled={restoringSnapshotName === snap.filename}
+                      className="text-accent hover:underline cursor-pointer disabled:opacity-50"
                     >
-                      <BsArchive className="w-3.5 h-3.5" />
-                      <span>
-                        {restoringSnapshotName === "config.sshx.bak"
-                          ? "Restoring..."
-                          : "Restore Device Snapshot"}
-                      </span>
+                      {restoringSnapshotName === snap.filename ? "Restoring..." : "Restore"}
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="text-xs text-gray-400 flex items-center justify-between">
-                  <span>No device snapshot found yet. A single clean snapshot (`config.sshx.bak`) will be automatically created on your first edit.</span>
-                  <button
-                    type="button"
-                    onClick={loadDeviceSnapshot}
-                    disabled={isLoadingSnapshot}
-                    className="p-1 text-gray-400 hover:text-white cursor-pointer"
-                    title="Refresh snapshot status"
-                  >
-                    <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoadingSnapshot ? "animate-spin" : ""}`} />
-                  </button>
-                </div>
-              )}
+              ))}
             </div>
-
-            <div className="space-y-2 text-xs">
-              <label className="flex items-center justify-between p-3 bg-app border border-line rounded-md cursor-pointer">
-                <div className="space-y-0.5">
-                  <div className="font-semibold text-white text-xs">Auto-Backup Before Modifications</div>
-                  <div className="text-xs text-gray-400">
-                    Maintains a single clean device snapshot (`~/.ssh/config.sshx.bak`) before saving changes.
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={autoBackup}
-                  onChange={(e) => handleToggleAutoBackup(e.target.checked)}
-                  className="w-4 h-4 rounded border-line bg-panel text-blue-600 focus:ring-0 cursor-pointer"
-                />
-              </label>
-
-              <label className="flex items-center justify-between p-3 bg-app border border-line rounded-md cursor-pointer">
-                <div className="space-y-0.5">
-                  <div className="font-semibold text-white text-xs">Screen Privacy Masking</div>
-                  <div className="text-xs text-gray-400">
-                    Mask cryptographic fingerprints and public keys on screen to prevent shoulder surfing.
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={privacyMask}
-                  onChange={(e) => handleTogglePrivacyMask(e.target.checked)}
-                  className="w-4 h-4 rounded border-line bg-panel text-blue-600 focus:ring-0 cursor-pointer"
-                />
-              </label>
-            </div>
-          </div>
-
-          {/* Section 6: System Paths */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
-              <BsFolder2Open className="w-3.5 h-3.5 text-amber-400" />
-              <span>System SSH Directories & Configs</span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2.5 bg-app border border-line rounded-md">
-                <div className="space-y-0.5">
-                  <div className="text-gray-400 text-[10px] font-semibold uppercase leading-none">Config File</div>
-                  <div className="font-mono text-white text-xs">~/.ssh/config</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopyPath("~/.ssh/config")}
-                  className="p-1.5 bg-control hover:bg-line text-gray-300 rounded border border-line-strong cursor-pointer"
-                  title="Copy path"
-                >
-                  {copiedPath === "~/.ssh/config" ? (
-                    <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <BsCopy className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 bg-app border border-line rounded-md">
-                <div className="space-y-0.5">
-                  <div className="text-gray-400 text-[10px] font-semibold uppercase leading-none">Known Hosts File</div>
-                  <div className="font-mono text-white text-xs">~/.ssh/known_hosts</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleCopyPath("~/.ssh/known_hosts")}
-                  className="p-1.5 bg-control hover:bg-line text-gray-300 rounded border border-line-strong cursor-pointer"
-                  title="Copy path"
-                >
-                  {copiedPath === "~/.ssh/known_hosts" ? (
-                    <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <BsCopy className="w-3.5 h-3.5" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 7: Software Updates & GitHub Auto-Updater */}
-          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-line">
-              <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
-                <BsCloudArrowDownFill className="w-3.5 h-3.5 text-blue-400" />
-                <span>Software Updates & Auto-Updater</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
-                <BsGithub className="w-3.5 h-3.5 text-gray-300" />
-                <span className="font-mono text-gray-300 text-[10px]">theasmat/sshx</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-xs">SSHX Desktop App</span>
-                    <span className="px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 font-mono text-[10px] font-semibold border border-blue-500/30">
-                      v0.1.0 (Current)
-                    </span>
-                  </div>
-                  <p className="text-gray-400 text-[11px]">
-                    Automatic multi-platform background updates configured via GitHub Releases.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCheckForUpdates}
-                  disabled={updateStatus === "checking" || updateStatus === "downloading"}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-all shadow-sm shadow-blue-600/20 disabled:opacity-50 cursor-pointer shrink-0"
-                >
-                  <BsArrowRepeat className={`w-3.5 h-3.5 ${updateStatus === "checking" ? "animate-spin" : ""}`} />
-                  <span>{updateStatus === "checking" ? "Checking..." : "Check for Updates"}</span>
-                </button>
-              </div>
-
-              {/* Status & Update Feedback */}
-              {updateStatus === "up-to-date" && (
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md flex items-center gap-2 text-emerald-300 text-xs animate-in fade-in">
-                  <BsCheckCircleFill className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>You are running the latest version of SSHX (v0.1.0).</span>
-                </div>
-              )}
-
-              {updateStatus === "available" && availableUpdate && (
-                <div className="p-3 bg-purple-500/10 border border-purple-500/30 rounded-md space-y-2 animate-in fade-in">
-                  <div className="flex items-center justify-between">
-                    <div className="font-bold text-purple-300 text-xs">
-                      Update Available: v{availableUpdate.version}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleInstallUpdate}
-                      className="px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-md font-bold text-xs shadow-sm transition-colors cursor-pointer"
-                    >
-                      Download & Install
-                    </button>
-                  </div>
-                  {availableUpdate.body && (
-                    <p className="text-gray-300 text-[11px] font-mono whitespace-pre-wrap bg-app p-2 rounded border border-line">
-                      {availableUpdate.body}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {updateStatus === "downloading" && (
-                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-md space-y-1.5 animate-in fade-in">
-                  <div className="flex justify-between text-xs text-blue-300 font-semibold">
-                    <span>Downloading update...</span>
-                    <span>{downloadProgress}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-app rounded-full overflow-hidden border border-line">
-                    <div
-                      className="h-full bg-blue-500 transition-all duration-200"
-                      style={{ width: `${downloadProgress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {updateStatus === "ready" && (
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-md flex items-center justify-between text-xs text-emerald-300 animate-in fade-in">
-                  <div className="flex items-center gap-2">
-                    <BsCheckCircleFill className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Update downloaded successfully. Restart SSHX to apply.</span>
-                  </div>
-                </div>
-              )}
-
-              {updateStatus === "error" && updateError && (
-                <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-md text-rose-300 text-xs flex items-start gap-2 animate-in fade-in">
-                  <BsExclamationCircleFill className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-semibold">Update check status:</span>
-                    <p className="text-gray-400 text-[11px] mt-0.5">{updateError}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Section 8: About SSHX */}
-          <div className="p-3 bg-bar border border-line rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <SshxLogo variant="icon" size={36} macStyle={true} />
-              <div>
-                <h4 className="font-bold text-white text-xs">SSHX — Modern SSH Desktop Manager</h4>
-                <p className="text-[11px] text-gray-400 leading-tight">
-                  Version 1.0.0 • Built with Tauri v2 + Rust + React 19 • Open Source
-                </p>
-              </div>
-            </div>
-
-            <span className="text-[10px] px-2 py-0.5 rounded bg-control text-blue-400 border border-blue-500/30 font-medium font-mono">
-              v1.0.0
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* MODAL 1: EXPORT ENCRYPTED .SSHX BACKUP */}
-      {isExportModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
-                  <BsShieldLock className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Export Encrypted .sshx Backup</h3>
-                  <p className="text-[11px] text-gray-400">All backups require a password</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsExportModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-white cursor-pointer"
-              >
-                <BsXLg className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handlePerformExport} className="p-5 space-y-4 text-xs">
-              <div className="p-3 bg-app border border-line rounded-xl space-y-1">
-                <div className="text-gray-300 font-semibold text-xs flex items-center gap-1.5">
-                  <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Backup Contents</span>
-                </div>
-                <p className="text-gray-400 text-[11px] leading-relaxed">
-                  Includes {configData?.hosts.length || 0} SSH hosts from <code className="text-blue-400 font-mono">~/.ssh/config</code>, {knownHostsCount} known hosts, and custom presets. Encrypted with AES-256-GCM.
-                </p>
-              </div>
-
-              {exportError && (
-                <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-lg text-xs flex items-center gap-2">
-                  <BsExclamationCircleFill className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span>{exportError}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1 text-xs">
-                  Create Backup Encryption Password <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showExportPass ? "text" : "password"}
-                    required
-                    placeholder="Enter strong password..."
-                    value={exportPassword}
-                    onChange={(e) => setExportPassword(e.target.value)}
-                    className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowExportPass(!showExportPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer"
-                  >
-                    {showExportPass ? <BsEyeSlash className="w-3.5 h-3.5" /> : <BsEye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-gray-300 font-semibold mb-1 text-xs">
-                  Confirm Password <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type={showExportPass ? "text" : "password"}
-                  required
-                  placeholder="Re-enter password..."
-                  value={exportConfirmPass}
-                  onChange={(e) => setExportConfirmPass(e.target.value)}
-                  className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-between border-t border-line">
-                <button
-                  type="button"
-                  onClick={() => setIsExportModalOpen(false)}
-                  className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isExporting}
-                  className="flex items-center gap-1.5 px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
-                >
-                  <BsDownload className="w-3.5 h-3.5" />
-                  <span>{isExporting ? "Encrypting & Exporting..." : "Export .sshx Bundle"}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          )}
+        </Dialog>
       )}
 
-      {/* MODAL 2: RESTORE FROM .SSHX BACKUP */}
-      {isRestoreModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
-                  <BsFileEarmarkLock2 className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Restore from .sshx Backup</h3>
-                  <p className="text-[11px] text-gray-400 font-mono truncate max-w-[220px]">
-                    {restoreFileName}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsRestoreModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-white cursor-pointer"
-              >
-                <BsXLg className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4 text-xs">
-              {restoreError && (
-                <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-lg text-xs flex items-center gap-2">
-                  <BsExclamationCircleFill className="w-4 h-4 shrink-0 text-rose-400" />
-                  <span>{restoreError}</span>
-                </div>
-              )}
-
-              {restoreSuccessMsg && (
-                <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-lg text-xs flex items-center gap-2">
-                  <BsCheckCircleFill className="w-4 h-4 shrink-0 text-emerald-400" />
-                  <span>{restoreSuccessMsg}</span>
-                </div>
-              )}
-
-              {!decryptedPreview ? (
-                /* Password prompt form */
-                <form onSubmit={handleVerifyPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-gray-300 font-semibold mb-1 text-xs">
-                      Enter Decryption Password <span className="text-rose-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showRestorePass ? "text" : "password"}
-                        required
-                        placeholder="Enter password..."
-                        value={restorePassword}
-                        onChange={(e) => setRestorePassword(e.target.value)}
-                        className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRestorePass(!showRestorePass)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 cursor-pointer"
-                      >
-                        {showRestorePass ? <BsEyeSlash className="w-3.5 h-3.5" /> : <BsEye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 flex items-center justify-between border-t border-line">
-                    <button
-                      type="button"
-                      onClick={() => setIsRestoreModalOpen(false)}
-                      className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={isRestoring}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
-                    >
-                      <BsShieldLock className="w-3.5 h-3.5" />
-                      <span>{isRestoring ? "Decrypting..." : "Decrypt & Inspect"}</span>
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                /* Decrypted contents summary & execution */
-                <div className="space-y-3.5">
-                  <div className="p-3 bg-app border border-emerald-500/30 rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-emerald-400 font-semibold text-xs flex items-center gap-1">
-                        <BsCheckCircleFill className="w-3.5 h-3.5" />
-                        <span>Password Verified Successfully</span>
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-mono">
-                        {new Date(decryptedPreview.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-xs">
-                      <div className="p-2 bg-panel border border-line rounded-lg text-center">
-                        <div className="text-lg font-bold text-white">
-                          {decryptedPreview.metadata.hostsCount}
-                        </div>
-                        <div className="text-[10px] text-gray-400 font-sans">SSH Hosts</div>
-                      </div>
-
-                      <div className="p-2 bg-panel border border-line rounded-lg text-center">
-                        <div className="text-lg font-bold text-white">
-                          {decryptedPreview.metadata.knownHostsCount}
-                        </div>
-                        <div className="text-[10px] text-gray-400 font-sans">Known Hosts</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-gray-400 text-xs">
-                    Restoring this backup will update your <code className="text-emerald-400 font-mono">~/.ssh/config</code> and <code className="text-emerald-400 font-mono">~/.ssh/known_hosts</code>. An automated safety backup of your current configuration will be saved first.
-                  </p>
-
-                  <div className="pt-2 flex items-center justify-between border-t border-line">
-                    <button
-                      type="button"
-                      onClick={() => setIsRestoreModalOpen(false)}
-                      className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isRestoring}
-                      onClick={handleExecuteRestore}
-                      className="flex items-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-semibold shadow-md shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
-                    >
-                      <BsUpload className="w-3.5 h-3.5" />
-                      <span>{isRestoring ? "Restoring..." : "Confirm & Restore"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: LOCAL DEVICE SNAPSHOTS LIST */}
-      {isLocalSnapshotsModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-                  <BsClockHistory className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Device Config Snapshots</h3>
-                  <p className="text-[10px] text-gray-400">
-                    Auto-backup snapshots saved in ~/.ssh/ before edits
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={loadAllSnapshots}
-                  disabled={isLoadingAllSnapshots}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-                  title="Refresh snapshots"
-                >
-                  <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoadingAllSnapshots ? "animate-spin" : ""}`} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsLocalSnapshotsModalOpen(false)}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-                >
-                  <BsXLg className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
-              {isLoadingAllSnapshots ? (
-                <div className="p-8 text-center text-gray-500">Loading snapshots...</div>
-              ) : allSnapshots.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 space-y-1">
-                  <div className="font-medium text-white">No device snapshots found.</div>
-                  <div className="text-[11px] text-gray-500">
-                    A single snapshot (`config.sshx.bak`) is created automatically when you save changes in sshX.
-                  </div>
-                </div>
-              ) : (
-                allSnapshots.map((snap) => (
-                  <div
-                    key={snap.filename}
-                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
-                      snap.is_primary
-                        ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500/60 shadow-sm"
-                        : "bg-app hover:bg-raised-2 border-line"
-                    }`}
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-white font-mono text-xs">
-                          {snap.filename}
-                        </span>
-                        {snap.is_primary ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                            <BsShieldCheck className="w-3 h-3 text-emerald-400" />
-                            sshX Device Snapshot (Latest)
-                          </span>
-                        ) : snap.filename === "config.sshx.bak.previous" ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                            Previous Snapshot
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="flex items-center gap-3 text-[10px] text-gray-400 font-mono">
-                        <span className="flex items-center gap-1 text-gray-300">
-                          <BsClock className="w-3 h-3 text-amber-400/80" />
-                          {formatSnapshotTime(snap.modified_timestamp)}
-                        </span>
-                        <span>•</span>
-                        <span>{formatSnapshotSize(snap.size_bytes)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handlePreviewSnapshot(snap.filename)}
-                        disabled={isLoadingSnapshotPreview}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white border border-line-strong rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
-                      >
-                        <BsEye className="w-3 h-3 text-cyan-400" />
-                        <span>Preview</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleRestoreDeviceSnapshot(snap.filename)}
-                        disabled={restoringSnapshotName === snap.filename}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        <BsArchive className="w-3.5 h-3.5" />
-                        <span>
-                          {restoringSnapshotName === snap.filename ? "Restoring..." : "Restore"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLocalSnapshotsModalOpen(false);
-                  onOpenRawBackups();
-                }}
-                className="text-[11px] text-amber-400 hover:text-amber-300 font-medium cursor-pointer flex items-center gap-1"
-              >
-                <span>Open in Raw Config Editor →</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsLocalSnapshotsModalOpen(false)}
-                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 4: SNAPSHOT PREVIEW MODAL */}
       {snapshotPreview && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-                  <BsEye className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-sm">Snapshot Preview</h3>
-                  <p className="text-[10px] text-gray-400 font-mono">
-                    ~/.ssh/{snapshotPreview.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSnapshotPreview(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
-              >
-                <BsXLg className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 p-3 overflow-hidden">
-              <pre className="h-full max-h-[50vh] p-3 bg-well border border-line rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
-                {snapshotPreview.content || "# (Empty file)"}
-              </pre>
-            </div>
-
-            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setSnapshotPreview(null)}
-                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
-              >
-                Close Preview
-              </button>
-
-              <button
-                type="button"
+        <Dialog
+          size="lg"
+          title="Snapshot preview"
+          subtitle={`~/.ssh/${snapshotPreview.name}`}
+          onClose={() => setSnapshotPreview(null)}
+          footer={
+            <>
+              <Button onClick={() => setSnapshotPreview(null)}>Close</Button>
+              <Button
+                variant="primary"
+                icon={<BsArchive />}
                 onClick={() => handleRestoreDeviceSnapshot(snapshotPreview.name)}
                 disabled={restoringSnapshotName === snapshotPreview.name}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
               >
-                <BsArchive className="w-3.5 h-3.5" />
-                <span>Restore This Snapshot</span>
-              </button>
-            </div>
-          </div>
-        </div>
+                Restore This Snapshot
+              </Button>
+            </>
+          }
+        >
+          <pre className="max-h-[50vh] p-4 bg-well rounded-card overflow-y-auto text-label font-mono text-xs leading-relaxed select-text">
+            {snapshotPreview.content || "# (Empty file)"}
+          </pre>
+        </Dialog>
       )}
     </div>
   );

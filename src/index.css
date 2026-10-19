@@ -2,6 +2,19 @@
 
 /* Surface/border palette; use bg-app, border-line, etc. instead of raw hex. */
 @theme {
+  /* Type, shape and accent tokens. One accent (blue); other hues only mean state. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --color-accent: #0a84ff;
+  --color-accent-hover: #3b9bff;
+  --color-label: #f5f5f7;
+  --color-label-2: #a1a1aa;
+  --color-label-3: #71717a;
+  --radius-ctl: 8px;
+  --radius-card: 12px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.18);
+  --shadow-pop: 0 10px 38px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(255 255 255 / 0.06);
+
   --color-app: #070a10;
   --color-panel: #0b0f19;
   --color-bar: #090d16;

@@ -2,19 +2,14 @@ import { toast } from "../utils/toast";
 import React, { useState } from "react";
 import {
   BsShieldCheck,
-  BsShieldExclamation,
-  BsExclamationTriangleFill,
-  BsInfoCircleFill,
   BsCheckCircleFill,
   BsWrench,
   BsArrowClockwise,
-  BsStars,
   BsPlusLg,
-  BsCheckLg,
-  BsCopy,
 } from "react-icons/bs";
 import { SecurityAuditReport, NavTab } from "../types";
 import { api } from "../api";
+import { Button, Group } from "../components/ui";
 import { SecurityAuditFixModal } from "../components/SecurityAuditFixModal";
 
 interface SecurityAuditViewProps {
@@ -75,223 +70,105 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
   const issues = report?.issues ?? [];
   const fixableCount = issues.filter((i) => i.fixable).length;
 
+  const scoreColor = score === 100 ? "text-emerald-400" : score >= 80 ? "text-amber-400" : "text-rose-400";
+  const dot = (sev: string) => (sev === "critical" ? "bg-rose-400" : sev === "warning" ? "bg-amber-400" : "bg-accent");
+
   return (
-    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
-      {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0 flex-wrap gap-2">
+    <div className="h-full flex flex-col bg-app text-[13px] select-none overflow-hidden">
+      <div className="px-5 h-12 flex items-center justify-between shrink-0">
+        <h2 className="text-[15px] font-semibold text-label">Security Audit</h2>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-            <BsShieldCheck className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h2 className="font-bold text-white text-sm">Security & Permissions Audit</h2>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
           {onOpenAddHost && (
-            <button
-              onClick={onOpenAddHost}
-              className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold text-xs transition-colors cursor-pointer"
-            >
-              <BsPlusLg className="w-3 h-3" />
-              <span>New Host Connection</span>
-            </button>
+            <Button variant="plain" icon={<BsPlusLg />} onClick={onOpenAddHost}>
+              New Host
+            </Button>
           )}
-
-          <button
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
-            <span>Re-Run Audit</span>
-          </button>
+          <Button icon={<BsArrowClockwise className={isLoading ? "animate-spin" : ""} />} onClick={onRefresh} disabled={isLoading}>
+            Re-run
+          </Button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
-        <div className="max-w-4xl mx-auto space-y-3">
-          {/* Security Score Banner */}
-          <div className="p-3.5 bg-panel border border-line rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-2xl font-mono border ${
-                  score === 100
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : score >= 80
-                    ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
-                    : "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                }`}
-              >
-                {score}%
-              </div>
-
-              <div>
-                <h3 className="font-bold text-white text-sm">
-                  {score === 100
-                    ? "SSH Configuration is Hardened & Secure"
-                    : "Security Issues Detected"}
+      <div className="flex-1 overflow-y-auto px-5 pb-8">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="rounded-card bg-card px-6 py-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-5 min-w-0">
+              <div className={`text-5xl font-semibold tabular-nums tracking-tight ${scoreColor}`}>{score}%</div>
+              <div className="min-w-0">
+                <h3 className="text-[15px] font-semibold text-label">
+                  {score === 100 ? "Everything looks secure" : `${issues.length} ${issues.length === 1 ? "issue" : "issues"} found`}
                 </h3>
-                <p className="text-gray-400 text-xs mt-0.5">
-                  Scanned {report?.total_hosts ?? 0} hosts and {report?.total_keys ?? 0} private keys in ~/.ssh/.
+                <p className="text-label-2">
+                  Scanned {report?.total_hosts ?? 0} hosts and {report?.total_keys ?? 0} keys.
                 </p>
               </div>
             </div>
-
             {fixableCount > 0 && (
-              <button
-                onClick={() => setIsFixModalOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-bold text-xs transition-all shadow-md shadow-emerald-600/20 cursor-pointer active:scale-95"
-              >
-                <BsWrench className="w-3.5 h-3.5" />
-                <span>Review & Fix All Issues ({fixableCount})</span>
-              </button>
+              <Button variant="primary" icon={<BsWrench />} onClick={() => setIsFixModalOpen(true)} className="shrink-0">
+                Review &amp; Fix ({fixableCount})
+              </Button>
             )}
           </div>
 
-          {/* Success messages */}
           {fixSuccessMsg && (
-            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BsCheckCircleFill className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{fixSuccessMsg}</span>
-              </div>
-              <button
-                onClick={() => setFixSuccessMsg(null)}
-                className="text-gray-400 hover:text-white cursor-pointer ml-2"
-              >
+            <div role="status" className="rounded-ctl bg-emerald-500/10 text-emerald-300 px-3 py-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <BsCheckCircleFill className="shrink-0" />
+                {fixSuccessMsg}
+              </span>
+              <button onClick={() => setFixSuccessMsg(null)} aria-label="Dismiss" className="text-label-3 hover:text-label cursor-pointer">
                 ✕
               </button>
             </div>
           )}
 
           {generatedKeyMsg && (
-            <div className="p-3 bg-[#0c1322] border border-emerald-500/40 rounded-xl text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-emerald-300 font-semibold">
-                  <BsCheckCircleFill className="w-4 h-4 text-emerald-400" />
-                  <span>Replacement Key ~/.ssh/{generatedKeyMsg.fileName} Generated!</span>
-                </div>
-                <button
-                  onClick={() => setGeneratedKeyMsg(null)}
-                  className="text-gray-400 hover:text-white cursor-pointer"
-                >
-                  ✕
+            <Group title={`Replacement key ~/.ssh/${generatedKeyMsg.fileName} generated`}>
+              <div className="px-4 py-3 flex items-center justify-between gap-3">
+                <span className="font-mono text-label-2 truncate">{generatedKeyMsg.pubKey}</span>
+                <button onClick={handleCopyGeneratedPub} className="text-accent hover:underline cursor-pointer shrink-0">
+                  {copiedKey ? "Copied" : "Copy .pub"}
                 </button>
               </div>
-
-              <div className="flex items-center justify-between bg-app p-2 rounded-lg border border-line">
-                <span className="font-mono text-gray-300 truncate max-w-md">
-                  {generatedKeyMsg.pubKey}
-                </span>
-                <button
-                  onClick={handleCopyGeneratedPub}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-xs cursor-pointer ml-2 shrink-0"
-                >
-                  {copiedKey ? <BsCheckLg className="w-3 h-3" /> : <BsCopy className="w-3 h-3 text-white" />}
-                  <span>{copiedKey ? "Copied!" : "Copy .pub"}</span>
-                </button>
-              </div>
-            </div>
+            </Group>
           )}
 
-          {/* Audit Issues List */}
-          <div className="space-y-1.5">
-            <h3 className="font-semibold text-white text-xs">Security Findings</h3>
-
+          <section className="space-y-1.5">
+            <h3 className="px-1 text-[11px] font-medium uppercase tracking-wide text-label-3">Findings</h3>
             {issues.length === 0 ? (
-              <div className="p-6 text-center bg-panel border border-line rounded-xl text-emerald-400 flex flex-col items-center gap-2">
-                <BsCheckCircleFill className="w-7 h-7" />
-                <span className="font-semibold text-sm">No Security Warnings</span>
-                <span className="text-gray-400 text-xs">
-                  All ~/.ssh directory and key permissions match standard Unix security policies (700 / 600).
-                </span>
+              <div className="rounded-card bg-card px-6 py-8 text-center space-y-1">
+                <BsShieldCheck className="w-7 h-7 mx-auto text-emerald-400" />
+                <div className="font-medium text-label">No findings</div>
+                <div className="text-label-2">Permissions and keys follow standard SSH policy.</div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden">
                 {issues.map((issue, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start justify-between gap-3 bg-panel ${
-                      issue.severity === "critical"
-                        ? "border-rose-500/30"
-                        : issue.severity === "warning"
-                        ? "border-amber-500/30"
-                        : "border-blue-500/30"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="mt-0.5 shrink-0">
-                        {issue.severity === "critical" ? (
-                          <BsShieldExclamation className="w-4 h-4 text-rose-400" />
-                        ) : issue.severity === "warning" ? (
-                          <BsExclamationTriangleFill className="w-4 h-4 text-amber-400" />
-                        ) : (
-                          <BsInfoCircleFill className="w-4 h-4 text-blue-400" />
-                        )}
-                      </div>
-
-                      <div className="space-y-0.5 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-white text-xs">
-                            {issue.title}
-                          </span>
-                          <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-mono font-semibold leading-none ${
-                              issue.severity === "critical"
-                                ? "bg-rose-500/20 text-rose-300"
-                                : issue.severity === "warning"
-                                ? "bg-amber-500/20 text-amber-300"
-                                : "bg-blue-500/20 text-blue-300"
-                            }`}
-                          >
-                            {issue.severity}
-                          </span>
-                        </div>
-
-                        <p className="text-gray-400 text-xs leading-relaxed">
-                          {issue.description}
-                        </p>
-
-                        {issue.path && (
-                          <div className="text-[11px] font-mono text-gray-500 mt-1">
-                            Target path: {issue.path}
-                          </div>
-                        )}
-                      </div>
+                  <div key={idx} className="px-4 py-3 flex items-start gap-3">
+                    <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${dot(issue.severity)}`} aria-label={issue.severity} />
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <div className="font-medium text-label">{issue.title}</div>
+                      <p className="text-label-2 leading-relaxed">{issue.description}</p>
+                      {issue.path && <div className="font-mono text-xs text-label-3 truncate">{issue.path}</div>}
                     </div>
-
-                    {/* Interactive Action Button for this finding */}
-                    <div className="shrink-0 flex items-center gap-2 self-end sm:self-center">
+                    <div className="shrink-0 flex items-center gap-3">
                       {issue.fixable && (
-                        <button
-                          onClick={() => setIsFixModalOpen(true)}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium text-xs transition-colors cursor-pointer"
-                        >
-                          <BsWrench className="w-3 h-3" />
-                          <span>Fix Issue</span>
+                        <button onClick={() => setIsFixModalOpen(true)} className="text-accent hover:underline cursor-pointer">
+                          Fix
                         </button>
                       )}
-
                       {(issue.title.includes("Legacy") || issue.title.includes("Weak")) && (
                         <button
                           onClick={() => handleGenerateReplacementKey(issue.title)}
                           disabled={isGeneratingKey}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded font-medium text-xs transition-colors cursor-pointer"
+                          className="text-accent hover:underline disabled:opacity-50 cursor-pointer"
                         >
-                          <BsStars className="w-3 h-3 text-purple-200" />
-                          <span>Generate Ed25519</span>
+                          Generate Ed25519
                         </button>
                       )}
-
                       {issue.title.includes("Duplicate") && onSelectTab && (
-                        <button
-                          onClick={() => onSelectTab("hosts")}
-                          className="px-3 py-1 bg-control hover:bg-line text-blue-400 rounded font-medium text-xs border border-line-strong cursor-pointer"
-                        >
-                          Go to Hosts ➔
+                        <button onClick={() => onSelectTab("hosts")} className="text-accent hover:underline cursor-pointer">
+                          Go to Hosts
                         </button>
                       )}
                     </div>
@@ -299,7 +176,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
       </div>
 

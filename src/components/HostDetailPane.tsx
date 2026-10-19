@@ -2,21 +2,17 @@ import React, { useState, useMemo } from "react";
 import {
   BsTerminalFill,
   BsCopy,
-  BsCheckLg,
   BsPlayFill,
   BsPencilSquare,
   BsTrash3,
   BsKeyFill,
-  BsShieldLock,
   BsArrowLeftRight,
-  BsClock,
-  BsFolder2Open,
-  BsTag,
   BsCloudUpload,
   BsCheckCircleFill,
   BsExclamationCircleFill,
   BsServer,
   BsCopy as BsDuplicate,
+  BsThreeDots,
   BsBook,
 } from "react-icons/bs";
 import { BrandLogo } from "./BrandLogo";
@@ -26,6 +22,7 @@ import { toast } from "../utils/toast";
 import { getAllPresets } from "../presets";
 import { getGitProviderInfo, findSiblingHosts, getAccountLabel, firstAlias, gitRemoteUrl } from "../utils/hostUtils";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { Button, Badge, Group, Menu, MenuItem, Row } from "./ui";
 import { PostCreationGuideModal } from "./PostCreationGuideModal";
 
 interface HostDetailPaneProps {
@@ -170,365 +167,161 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
     }
   };
 
-  const getColorDot = (color?: string | null) => {
-    switch (color) {
-      case "emerald":
-        return "bg-emerald-400 ring-emerald-400/20";
-      case "blue":
-        return "bg-blue-400 ring-blue-400/20";
-      case "amber":
-        return "bg-amber-400 ring-amber-400/20";
-      case "rose":
-        return "bg-rose-400 ring-rose-400/20";
-      case "purple":
-        return "bg-purple-400 ring-purple-400/20";
-      case "cyan":
-        return "bg-cyan-400 ring-cyan-400/20";
-      case "orange":
-        return "bg-orange-400 ring-orange-400/20";
-      default:
-        return "bg-blue-400 ring-blue-400/20";
-    }
-  };
+  const alias = firstAlias(host);
+  const addr = `${host.user ? `${host.user}@` : ""}${host.host_name || "(alias)"}${
+    host.port && host.port !== 22 ? `:${host.port}` : ""
+  }`;
+  const account = hostAccounts?.[host.id] || getAccountLabel(host);
+
+  const menuItems: MenuItem[] = [
+    { label: copied ? "Copied" : "Copy ssh command", icon: <BsCopy />, onSelect: handleCopy },
+    ...(isGit
+      ? [
+          {
+            label: copiedPubKey ? "Public key copied" : "Copy public key",
+            icon: <BsKeyFill />,
+            onSelect: handleCopyPublicKey,
+            disabled: !matchedKey?.public_key_content,
+          },
+          ...(gitProvider?.settingsUrl
+            ? [{ label: `Add key to ${gitProvider.name}`, icon: <BsCloudUpload />, onSelect: handleOpenProviderSettings }]
+            : []),
+        ]
+      : [
+          {
+            label: isInstallingKey ? "Authorizing key..." : "Install key (ssh-copy-id)",
+            icon: <BsCloudUpload />,
+            onSelect: handleInstallKey,
+            disabled: isInstallingKey,
+          },
+        ]),
+    { label: "Setup & auth guide", icon: <BsBook />, onSelect: () => setGuideOpen(true) },
+    { label: "Duplicate", icon: <BsDuplicate />, onSelect: () => onDuplicate(host), separated: true },
+    { label: "Delete", icon: <BsTrash3 />, onSelect: () => onDelete(host), danger: true },
+  ];
 
   return (
-    <div className="h-full flex flex-col justify-between bg-panel border-l border-line select-none text-xs overflow-y-auto">
-      <div className="p-3 space-y-2.5">
-        {/* Top Title & Header */}
-        <div className="space-y-1 pb-2 border-b border-line">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[#131a29] border border-[#202c46] shrink-0 text-gray-200">
-              <BrandLogo
-                name={host.host_pattern}
-                hostName={host.host_name}
-                tags={host.tags}
-                group={host.group}
-                className="w-4 h-4"
-                fallbackIcon={
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ring-2 ${getColorDot(
-                      host.color
-                    )}`}
-                  />
-                }
-              />
-            </div>
-            <h2 className="font-bold text-white text-sm tracking-tight truncate">
-              {host.host_pattern}
-            </h2>
-            {host.group && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-control text-gray-400 border border-line-strong flex items-center gap-1 leading-none">
-                <BsFolder2Open className="w-3 h-3 text-amber-400" />
-                <span>{host.group}</span>
-              </span>
-            )}
+    <div className="h-full overflow-y-auto bg-panel select-none text-[13px]">
+      <div className="max-w-2xl px-8 py-7 space-y-6">
+        {/* Header */}
+        <header className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-card flex items-center justify-center bg-card shrink-0 text-label">
+            <BrandLogo
+              name={host.host_pattern}
+              hostName={host.host_name}
+              tags={host.tags}
+              group={host.group}
+              className="w-7 h-7"
+              fallbackIcon={<BsServer className="w-5 h-5 text-label-2" />}
+            />
           </div>
-          {host.notes && (
-            <p className="text-xs text-gray-400 italic leading-snug pl-8">{host.notes}</p>
-          )}
-        </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-semibold text-label tracking-tight truncate">{alias}</h2>
+            <p className="font-mono text-label-2 truncate">{addr}</p>
+            {host.notes && <p className="mt-1 text-label-3">{host.notes}</p>}
+          </div>
+        </header>
 
-        {/* Primary Action Buttons */}
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            onClick={() => onConnect(host)}
-            className="col-span-2 flex items-center justify-center gap-2 py-1.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-md font-semibold shadow-sm shadow-blue-500/20 transition-all text-xs cursor-pointer active:scale-95"
-          >
-            <BsTerminalFill className="w-3.5 h-3.5" />
-            <span>Connect in {terminalName}</span>
-          </button>
-
-          <button
-            onClick={handleCopy}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium transition-colors cursor-pointer text-xs"
-          >
-            {copied ? (
-              <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
-            ) : (
-              <BsCopy className="w-3.5 h-3.5 text-blue-400" />
-            )}
-            <span>{copied ? "Copied" : "Copy Command"}</span>
-          </button>
-
-          <button
-            onClick={() => onTest(host)}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium transition-colors cursor-pointer text-xs"
-          >
-            <BsPlayFill className="w-3.5 h-3.5 text-amber-400" />
-            <span>Test Connection</span>
-          </button>
-
-          {/* Setup & Auth Guide Trigger */}
-          <button
-            onClick={() => setGuideOpen(true)}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-emerald-300 rounded-md border border-emerald-500/30 font-medium transition-colors cursor-pointer text-xs"
-            title="Open platform authorization steps and public key instructions"
-          >
-            <BsBook className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Setup & Auth Guide</span>
-          </button>
-
-          {/* 1-Click Install Key to Remote Server (ssh-copy-id) */}
-          {/* Git hosting providers don't accept ssh-copy-id — show key copy + settings link instead */}
-          {isGit ? (
-            <div className="col-span-2 space-y-1.5">
-              <div className="flex gap-1.5">
-                <button
-                  onClick={handleCopyPublicKey}
-                  disabled={!matchedKey?.public_key_content}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
-                  title="Copy the public key to register it in your provider's SSH settings"
-                >
-                  {copiedPubKey ? (
-                    <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <BsCopy className="w-3.5 h-3.5 text-blue-400" />
-                  )}
-                  <span>{copiedPubKey ? "Public Key Copied" : "Copy Public Key"}</span>
-                </button>
-                {gitProvider?.settingsUrl && (
-                  <button
-                    onClick={handleOpenProviderSettings}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer text-xs"
-                    title={`Open ${gitProvider.name} SSH key settings`}
-                  >
-                    <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Add Key to {gitProvider.name}</span>
-                  </button>
-                )}
-              </div>
-              <p className="text-[10px] text-gray-500 leading-snug px-0.5">
-                {gitProvider?.name || "Git providers"} don't support ssh-copy-id — paste the
-                public key into your account's SSH settings, or follow the Setup &amp; Auth Guide.
-              </p>
-            </div>
-          ) : (
-            <button
-              onClick={handleInstallKey}
-              disabled={isInstallingKey}
-              className="col-span-2 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
-              title="Install public key onto remote server's ~/.ssh/authorized_keys"
-            >
-              <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
-              <span>
-                {isInstallingKey
-                  ? "Authorizing Key..."
-                  : "Install Key (ssh-copy-id)"}
-              </span>
-            </button>
-          )}
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Button variant="primary" icon={<BsTerminalFill />} onClick={() => onConnect(host)}>
+            Connect in {terminalName}
+          </Button>
+          <Button icon={<BsPlayFill className="w-4 h-4" />} onClick={() => onTest(host)}>
+            Test
+          </Button>
+          <Button icon={<BsPencilSquare />} onClick={() => onEdit(host)}>
+            Edit
+          </Button>
+          <Menu label="More actions" trigger={<BsThreeDots className="w-4 h-4" />} items={menuItems} />
         </div>
 
         {installMsg && (
           <div
-            className={`p-2 rounded-md border flex items-center gap-2 text-xs ${
-              installMsg.success
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+            role="status"
+            className={`px-3 py-2 rounded-ctl flex items-center gap-2 ${
+              installMsg.success ? "bg-emerald-500/10 text-emerald-300" : "bg-rose-500/10 text-rose-300"
             }`}
           >
-            {installMsg.success ? (
-              <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            ) : (
-              <BsExclamationCircleFill className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            )}
+            {installMsg.success ? <BsCheckCircleFill className="shrink-0" /> : <BsExclamationCircleFill className="shrink-0" />}
             <span>{installMsg.text}</span>
           </div>
         )}
 
-        {/* Command Line Preview Box */}
-        <div className="bg-app border border-line rounded-md p-2 font-mono text-xs text-gray-300 relative group">
-          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 leading-none">
-            CLI Command
-          </div>
-          <div className="text-emerald-400 break-all select-all leading-snug">
-            {getSshCommand()}
-          </div>
-        </div>
-
-        {host && (isGit || siblings.length > 0) && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-2 text-xs text-amber-200 space-y-1">
-            {siblings.length > 0 && (
-              <>
-                <div className="font-semibold">
-                  {siblings.length + 1} identities share {host.host_name}
-                </div>
-                <div className="text-amber-200/80">
-                  Always connect through the alias so the right key is used.
-                </div>
-                <ul className="font-mono text-[11px] space-y-0.5">
-                  {[host, ...siblings].map((h) => {
-                    const acct = hostAccounts?.[h.id] || getAccountLabel(h);
-                    return (
-                      <li key={h.id} className={h.id === host.id ? "text-white" : ""}>
-                        {h.host_pattern} → {acct ? `@${acct} · ` : ""}
-                        {h.identity_file ? h.identity_file.split("/").pop() : "default key"}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            )}
+        {/* Identity: who this alias logs in as, and what else shares the address */}
+        {(isGit || siblings.length > 0) && (
+          <Group title="Identity">
+            <Row label="Account">
+              {account ? (
+                <span>@{account}</span>
+              ) : (
+                <span className="text-label-3 font-sans">Run Test to detect</span>
+              )}
+            </Row>
+            <Row label="Key">{host.identity_file ? host.identity_file.split("/").pop() : "default key"}</Row>
             {isGit && (
-              <div className="space-y-1">
-                {hostAccounts?.[host.id] ? (
-                  <div>
-                    Authenticates as <span className="font-semibold text-white">@{hostAccounts[host.id]}</span>
-                  </div>
-                ) : (
-                  <div className="text-amber-200/80">Run Test to detect which account this key logs in as.</div>
-                )}
-                <div className="font-mono text-[11px] break-all">
-                  git remote set-url origin {gitRemoteUrl(host)}
-                </div>
+              <Row label="Git remote">
                 <button
-                  className="underline cursor-pointer"
+                  className="text-accent hover:underline cursor-pointer text-right"
+                  title="Copy the git remote set-url command"
                   onClick={() => {
                     navigator.clipboard.writeText(`git remote set-url origin ${gitRemoteUrl(host)}`);
-                    toast.success(`Copied remote command for ${firstAlias(host)}`);
+                    toast.success(`Copied remote command for ${alias}`);
                   }}
                 >
-                  Copy remote command
+                  {gitRemoteUrl(host)}
                 </button>
+              </Row>
+            )}
+            {siblings.length > 0 && (
+              <div className="px-4 py-2.5 space-y-1">
+                <div className="text-label-2">
+                  {siblings.length + 1} identities share {host.host_name}. Always connect through the alias.
+                </div>
+                {[host, ...siblings].map((h) => {
+                  const acct = hostAccounts?.[h.id] || getAccountLabel(h);
+                  return (
+                    <div key={h.id} className={`font-mono text-xs truncate ${h.id === host.id ? "text-label" : "text-label-3"}`}>
+                      {firstAlias(h)} → {acct ? `@${acct} · ` : ""}
+                      {h.identity_file ? h.identity_file.split("/").pop() : "default key"}
+                    </div>
+                  );
+                })}
               </div>
             )}
-          </div>
+          </Group>
         )}
 
-        {/* Directives Table */}
-        <div className="space-y-1">
-          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none">
-            Connection Parameters
-          </div>
+        <Group title="Connection">
+          <Row label="Host">{host.host_name || "(alias)"}</Row>
+          <Row label="User">{host.user || "default"}</Row>
+          <Row label="Port">{host.port || 22}</Row>
+          {host.identity_file && <Row label="Identity file">{host.identity_file}</Row>}
+          {host.identities_only && <Row label="Identities only">yes</Row>}
+          {host.proxy_jump && <Row label="Proxy jump">{host.proxy_jump}</Row>}
+          {host.server_alive_interval ? <Row label="Keep alive">{host.server_alive_interval}s</Row> : null}
+          {host.group && <Row label="Group">{host.group}</Row>}
+        </Group>
 
-          <div className="bg-raised-2 border border-line rounded-md divide-y divide-line text-xs">
-            <div className="flex items-center justify-between px-2.5 py-1.5">
-              <span className="text-gray-400">HostName / IP</span>
-              <span className="font-mono text-gray-200 font-medium">
-                {host.host_name || "(alias)"}
-              </span>
-            </div>
+        {host.local_forward.length > 0 && (
+          <Group title="Local forwards">
+            {host.local_forward.map((lf, i) => (
+              <Row key={i} label={<BsArrowLeftRight />}>
+                {lf}
+              </Row>
+            ))}
+          </Group>
+        )}
 
-            <div className="flex items-center justify-between px-2.5 py-1.5">
-              <span className="text-gray-400">User</span>
-              <span className="font-mono text-gray-200 font-medium">
-                {host.user || "(default)"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between px-2.5 py-1.5">
-              <span className="text-gray-400">Port</span>
-              <span className="font-mono text-gray-200 font-medium">
-                {host.port || 22}
-              </span>
-            </div>
-
-            {host.identity_file && (
-              <div className="flex items-center justify-between px-2.5 py-1.5">
-                <span className="text-gray-400 flex items-center gap-1.5">
-                  <BsKeyFill className="w-3 h-3 text-blue-400" />
-                  <span>IdentityFile</span>
-                </span>
-                <span className="font-mono text-amber-300 font-medium truncate max-w-[180px]">
-                  {host.identity_file}
-                </span>
-              </div>
-            )}
-
-            {host.proxy_jump && (
-              <div className="flex items-center justify-between px-2.5 py-1.5">
-                <span className="text-gray-400 flex items-center gap-1.5">
-                  <BsShieldLock className="w-3 h-3 text-purple-400" />
-                  <span>ProxyJump</span>
-                </span>
-                <span className="font-mono text-purple-300 font-medium">
-                  {host.proxy_jump}
-                </span>
-              </div>
-            )}
-
-            {host.local_forward.length > 0 && (
-              <div className="p-2 space-y-1">
-                <span className="text-gray-400 flex items-center gap-1.5">
-                  <BsArrowLeftRight className="w-3 h-3 text-emerald-400" />
-                  <span>LocalForward Tunnels</span>
-                </span>
-                {host.local_forward.map((lf, i) => (
-                  <div
-                    key={i}
-                    className="font-mono text-xs text-emerald-300 bg-app px-2 py-0.5 rounded border border-line"
-                  >
-                    {lf}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {host.server_alive_interval && (
-              <div className="flex items-center justify-between px-2.5 py-1.5">
-                <span className="text-gray-400 flex items-center gap-1.5">
-                  <BsClock className="w-3 h-3 text-gray-400" />
-                  <span>KeepAlive</span>
-                </span>
-                <span className="font-mono text-gray-200">
-                  {host.server_alive_interval}s
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tags */}
         {host.tags.length > 0 && (
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-              <BsTag className="w-3 h-3" />
-              <span>Tags</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {host.tags.map((t) => (
-                <span
-                  key={t}
-                  className="px-2 py-0.5 rounded bg-control text-gray-300 border border-line-strong text-xs leading-none"
-                >
-                  #{t}
-                </span>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1.5">
+            {host.tags.map((t) => (
+              <Badge key={t}>{t}</Badge>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Bottom Bar: Edit / Duplicate / Delete */}
-      <div className="p-2.5 border-t border-line bg-app flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => onEdit(host)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-          >
-            <BsPencilSquare className="w-3 h-3 text-blue-400" />
-            <span>Edit</span>
-          </button>
-
-          <button
-            onClick={() => onDuplicate(host)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
-          >
-            <BsDuplicate className="w-3 h-3 text-yellow-400" />
-            <span>Duplicate</span>
-          </button>
-        </div>
-
-        <button
-          onClick={() => onDelete(host)}
-          className="p-1.5 text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer"
-          title="Delete host"
-        >
-          <BsTrash3 className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Persistent Setup & Auth Guide Modal */}
       {guideOpen && (
         <PostCreationGuideModal
           isOpen={guideOpen}

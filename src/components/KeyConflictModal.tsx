@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  BsExclamationTriangleFill,
-  BsLightningChargeFill,
-  BsSliders,
-  BsXLg,
-  BsStars,
-} from "react-icons/bs";
+import { Button, Dialog } from "./ui";
 import { SshKeyInfo } from "../types";
 
 interface KeyConflictModalProps {
@@ -31,128 +25,62 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const Option: React.FC<{ title: string; body: React.ReactNode; onClick: () => void; recommended?: boolean }> = ({
+    title,
+    body,
+    onClick,
+    recommended,
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full text-left px-4 py-3 hover:bg-white/[0.05] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/70"
+    >
+      <div className="flex items-center gap-2 text-label font-medium">
+        {title}
+        {recommended && <span className="text-[11px] font-normal text-accent">Recommended</span>}
+      </div>
+      <div className="text-label-2 text-xs mt-0.5 leading-relaxed">{body}</div>
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-lg bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col text-xs">
-        {/* Header */}
-        <div className="px-4 py-3 border-b border-line bg-raised flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
-              <BsExclamationTriangleFill className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-bold text-white text-sm">
-                Key Name Conflict Detected
-              </h3>
-              <p className="text-[11px] text-gray-400 font-mono">
-                ~/.ssh/{conflictKeyName} already exists
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-hover transition-colors cursor-pointer"
-          >
-            <BsXLg className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Body Content */}
-        <div className="p-4 space-y-3">
-          <div className="p-3 bg-app border border-amber-500/20 rounded-xl space-y-1 text-gray-300">
-            <p className="leading-relaxed">
-              A private key named <code className="text-amber-300 font-mono font-semibold bg-control px-1.5 py-0.5 rounded border border-line-strong">{conflictKeyName}</code> is already stored in your local <code className="text-blue-400 font-mono">~/.ssh/</code> directory.
-            </p>
-            <p className="text-[11px] text-gray-400">
-              Please choose how you would like SSHX to resolve this key connection:
-            </p>
-          </div>
-
-          {/* 3 Prominent Options */}
-          <div className="space-y-2.5">
-            {/* Option 1: Auto Resolve (Recommended) */}
-            <div
-              onClick={() => onAutoResolve(uniqueSuggestionName)}
-              className="group p-3 bg-[#0d1527] hover:bg-[#121e38] border border-blue-500/40 hover:border-blue-500/80 rounded-xl cursor-pointer transition-all flex items-start gap-3 shadow-md shadow-blue-500/5 hover:-translate-y-0.5"
-            >
-              <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                <BsStars className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold text-white group-hover:text-blue-300 transition-colors">
-                    1. Auto-Resolve (Recommended)
-                  </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                    Safe & Isolated
-                  </span>
-                </div>
-                <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
-                  Automatically generate a dedicated, non-colliding key pair:
-                </p>
-                <code className="block mt-1 text-emerald-400 font-mono text-[11px] bg-app px-2 py-1 rounded border border-line">
-                  ~/.ssh/{uniqueSuggestionName}
-                </code>
-              </div>
-            </div>
-
-            {/* Option 2: Force Use Existing Key */}
-            {existingKey && (
-              <div
-                onClick={() => onForceUseExisting(existingKey)}
-                className="group p-3 bg-[#071318] hover:bg-[#0c1f28] border border-emerald-500/40 hover:border-emerald-500/80 rounded-xl cursor-pointer transition-all flex items-start gap-3 shadow-md shadow-emerald-500/5 hover:-translate-y-0.5"
-              >
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                  <BsLightningChargeFill className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="font-bold text-white group-hover:text-emerald-300 transition-colors">
-                      2. Use Existing Key (Link Directly)
-                    </div>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      Reuse
-                    </span>
-                  </div>
-                  <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
-                    Connect the existing <code className="text-emerald-300 font-mono">{conflictKeyName}</code> key to this host without generating a new file.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Option 3: Manual Selection / Rename */}
-            <div
-              onClick={onManualSelect}
-              className="group p-3 bg-[#0e121d] hover:bg-[#151a2a] border border-line hover:border-purple-500/50 rounded-xl cursor-pointer transition-all flex items-start gap-3 hover:-translate-y-0.5"
-            >
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
-                <BsSliders className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-white group-hover:text-purple-300 transition-colors">
-                  3. Manual Configuration
-                </div>
-                <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
-                  Choose a different key from your ~/.ssh/ directory or type a custom filename manually.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-line bg-bar flex items-center justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-lg font-medium transition-colors cursor-pointer text-xs"
-          >
-            Cancel
-          </button>
+    <Dialog
+      title="Key name already exists"
+      subtitle={`~/.ssh/${conflictKeyName}`}
+      onClose={onClose}
+      footer={<Button onClick={onClose}>Cancel</Button>}
+    >
+      <div className="space-y-3 text-[13px]">
+        <p className="text-label-2 leading-relaxed">
+          A key named <code className="font-mono text-label">{conflictKeyName}</code> is already in your{" "}
+          <code className="font-mono text-label">~/.ssh/</code> folder. How should SSHX continue?
+        </p>
+        <div className="rounded-card bg-card divide-y divide-white/[0.06] overflow-hidden">
+          <Option
+            recommended
+            title="Create a new key"
+            onClick={() => onAutoResolve(uniqueSuggestionName)}
+            body={
+              <>
+                Generates <code className="font-mono text-label-2">~/.ssh/{uniqueSuggestionName}</code>
+              </>
+            }
+          />
+          {existingKey && (
+            <Option
+              title="Use the existing key"
+              onClick={() => onForceUseExisting(existingKey)}
+              body={<>Links <code className="font-mono text-label-2">{conflictKeyName}</code> to this host without creating a file.</>}
+            />
+          )}
+          <Option
+            title="Choose something else"
+            onClick={onManualSelect}
+            body="Pick a different key from ~/.ssh/ or type your own filename."
+          />
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 };

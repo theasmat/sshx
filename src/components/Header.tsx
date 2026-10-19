@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-10 border-b border-line bg-bar px-3.5 flex items-center justify-between gap-3 shrink-0 select-none relative z-40">
+    <header className="h-11 bg-bar px-3.5 flex items-center justify-between gap-3 shrink-0 select-none relative z-40">
       {/* Brand Logo - macOS Style */}
       <div
         onClick={() => onSelectTab("hosts")}
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
           type="text"
           autoComplete="off"
           spellCheck={false}
-          placeholder="Search actions, hosts, presets, keys, notes... (Cmd+K)"
+          placeholder="Search"
           value={searchQuery}
           onFocus={() => setIsFocused(true)}
           onChange={(e) => {
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             setIsFocused(true);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full h-7 pl-8 pr-14 text-xs bg-raised-2 border border-line rounded-md text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-sans"
+          className="w-full h-8 pl-8 pr-14 text-[13px] bg-white/[0.07] rounded-ctl text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.1] focus:ring-2 focus:ring-accent/70 transition-colors font-sans"
         />
 
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
               <BsXLg className="w-3 h-3" />
             </button>
           ) : (
-            <kbd className="text-[10px] bg-control text-gray-400 px-1.5 py-0.5 rounded border border-line-strong font-mono leading-none pointer-events-none">
+            <kbd className="text-[11px] text-label-3 px-1 font-sans pointer-events-none">
               ⌘K
             </kbd>
           )}
@@ -149,22 +149,20 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Security Audit Badge (Jumps to audit tab) */}
         <button
           onClick={() => onSelectTab("audit")}
-          className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded-md border transition-colors cursor-pointer ${
-            auditScore === 100
-              ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:bg-emerald-500/20"
-              : "text-amber-400 bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20"
+          className={`flex items-center gap-1.5 h-8 px-2.5 text-[13px] rounded-ctl hover:bg-white/[0.06] transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 ${
+            auditScore === 100 ? "text-emerald-400" : "text-amber-400"
           }`}
           title="Security & Permissions Auditor"
         >
           <BsShieldCheck className="w-3.5 h-3.5" />
-          <span className="text-xs font-mono font-medium">{auditScore}%</span>
+          <span className="text-[13px] font-medium tabular-nums">{auditScore}%</span>
         </button>
 
         {/* Refresh ~/.ssh/config */}
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-raised-2 rounded-md transition-colors disabled:opacity-50 cursor-pointer"
+          className="h-8 w-8 flex items-center justify-center text-label-2 hover:text-label hover:bg-white/[0.06] rounded-ctl transition-colors disabled:opacity-50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
           title="Reload ~/.ssh/config (⌘R)"
         >
           <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-400" : ""}`} />

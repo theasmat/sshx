@@ -3,15 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   BsKeyFill,
   BsCheckCircleFill,
-  BsCopy,
-  BsCheckLg,
-  BsStars,
-  BsLightningChargeFill,
-  BsExclamationTriangleFill,
-  BsArrowRepeat,
-  BsXLg,
-  BsInfoCircleFill,
 } from "react-icons/bs";
+import { Button, Badge, Segmented, Switch } from "./ui";
 import { SshKeyInfo, PresetTemplate } from "../types";
 import { api } from "../api";
 import {
@@ -193,378 +186,217 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
     }
   };
 
+  const field =
+    "w-full h-8 px-2.5 rounded-ctl bg-white/[0.06] text-label placeholder-label-3 focus:outline-none focus:bg-white/[0.09] focus:ring-2 focus:ring-accent/70";
+
   return (
-    <div className="bg-panel border border-line rounded-xl overflow-hidden shadow-lg transition-all text-xs">
-      {/* Universal Top Card Header */}
-      <div className="px-3.5 py-2.5 bg-raised border-b border-line flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
-              identityFile
-                ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
-                : "bg-blue-500/20 text-blue-400 border-blue-500/30"
-            }`}
-          >
-            <BsKeyFill className="w-3.5 h-3.5" />
+    <div className="rounded-card bg-card divide-y divide-white/[0.06] text-[13px]">
+      {/* Current key */}
+      <div className="px-4 py-3 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-label">{identityFile ? "Key" : "No key selected"}</span>
+            {identityFile && (
+              <>
+                <span className="font-mono text-label-2 truncate">~/.ssh/{connectedKeyObj?.file_name}</span>
+                <Badge>{(connectedKeyObj?.key_type || "ed25519").toUpperCase()}</Badge>
+              </>
+            )}
           </div>
-          <div>
-            <div className="flex items-center gap-2 font-bold text-white leading-tight">
-              <span>SSH Key Authentication</span>
-              {identityFile ? (
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <BsCheckCircleFill className="w-2.5 h-2.5" />
-                  <span>Connected</span>
-                </span>
-              ) : (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
-                  Agent Defaults
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
-              {identityFile
-                ? `Active key: ~/.ssh/${connectedKeyObj?.file_name}`
-                : "Select an existing key from ~/.ssh/ or generate a dedicated key below."}
-            </p>
+          <div className="text-xs text-label-3">
+            {identityFile ? "ssh offers this key for this host." : "ssh will try the keys loaded in your agent."}
           </div>
         </div>
-
-        {/* IdentitiesOnly Toggle */}
-        <label
-          className="flex items-center gap-1.5 text-gray-300 hover:text-white cursor-pointer select-none bg-app px-2.5 py-1 rounded-lg border border-line"
-          title="IdentitiesOnly forces SSH to only use the specified key and ignore unlisted agent keys"
-        >
-          <input
-            type="checkbox"
-            checked={identitiesOnly}
-            onChange={(e) => onChangeIdentity(identityFile, e.target.checked)}
-            className="rounded border-line bg-panel text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
-          />
-          <span className="text-[11px] font-medium">IdentitiesOnly (Isolate)</span>
-        </label>
-      </div>
-
-      {/* Main Card Body */}
-      <div className="p-3.5 space-y-3">
-        {/* ========================================================================= */}
-        {/* STATE A: KEY IS CONNECTED */}
-        {/* ========================================================================= */}
-        {identityFile ? (
-          <div className="space-y-3">
-            {/* Connected Banner with Badges & Action Buttons */}
-            <div className="p-3 bg-[#0c1626] border border-emerald-500/30 rounded-xl space-y-2.5 shadow-sm">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-white font-mono text-xs">
-                    ~/.ssh/{connectedKeyObj?.file_name}
-                  </span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase font-mono">
-                    {connectedKeyObj?.key_type || "ED25519"}
-                  </span>
-                  {identitiesOnly && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 font-mono">
-                      IdentitiesOnly yes
-                    </span>
-                  )}
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
-                    <BsLightningChargeFill className="w-2.5 h-2.5" />
-                    <span>ssh-agent</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onOpenGuideModal(connectedKeyObj, currentPubKey)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-blue-300 border border-blue-500/30 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                  >
-                    <BsInfoCircleFill className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Setup Guide</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleCopyPubKey}
-                    className="flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs transition-colors shadow-sm cursor-pointer active:scale-95"
-                  >
-                    {copiedKey ? (
-                      <BsCheckLg className="w-3.5 h-3.5" />
-                    ) : (
-                      <BsCopy className="w-3.5 h-3.5" />
-                    )}
-                    <span>{copiedKey ? "Copied!" : "Copy Public Key (.pub)"}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Sub-toolbar: Key switcher & Replacement Form Trigger */}
-            <div className="flex items-center justify-between flex-wrap gap-2 pt-0.5 text-xs">
-              <div className="flex items-center gap-2 flex-wrap">
-                <select
-                  value={identityFile}
-                  onChange={(e) => onChangeIdentity(e.target.value, true)}
-                  className="bg-app border border-line hover:border-blue-500/50 rounded-lg px-2.5 py-1 text-amber-300 font-mono text-xs focus:outline-none cursor-pointer"
-                  title="Switch to a different existing key in ~/.ssh/"
-                >
-                  <option value={identityFile}>
-                    Switch Key: {connectedKeyObj?.file_name}
-                  </option>
-                  {availableKeys
-                    .filter((k) => k.private_path !== identityFile)
-                    .map((k) => (
-                      <option key={k.private_path} value={k.private_path}>
-                        {k.file_name} ({k.key_type.toUpperCase()})
-                      </option>
-                    ))}
-                </select>
-
-                <button
-                  type="button"
-                  onClick={() => setShowReplaceForm(!showReplaceForm)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold transition-colors cursor-pointer ${
-                    showReplaceForm
-                      ? "bg-blue-600 text-white border-blue-500"
-                      : "bg-control hover:bg-line text-gray-300 border-line-strong"
-                  }`}
-                >
-                  <BsArrowRepeat className="w-3.5 h-3.5 text-blue-400" />
-                  <span>{showReplaceForm ? "Hide Generator" : "Generate Replacement"}</span>
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeIdentity("", false);
-                  setShowReplaceForm(false);
-                }}
-                className="text-gray-400 hover:text-rose-400 transition-colors cursor-pointer flex items-center gap-1 text-[11px]"
-                title="Disconnect key and revert to default OpenSSH authentication"
-              >
-                <BsXLg className="w-3 h-3" />
-                <span>Disconnect Key</span>
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* ========================================================================= */
-          /* STATE B: NO KEY CONNECTED - SINGLE UNIFIED LIGHTWEIGHT PANEL */
-          /* ========================================================================= */
-          <div className="space-y-3">
-            {/* Quick Dropdown Selector for Existing Keys */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-gray-300 font-medium text-xs">
-                  Choose Existing Key from <code className="font-mono text-gray-400">~/.ssh/</code>
-                </label>
-                <span className="text-[10px] text-gray-500">
-                  {availableKeys.length} key{availableKeys.length === 1 ? "" : "s"} found
-                </span>
-              </div>
-              <select
-                value={identityFile}
-                onChange={(e) => onChangeIdentity(e.target.value, !!e.target.value)}
-                className="w-full bg-app border border-line rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="">-- No specific key (Use OpenSSH agent defaults) --</option>
-                {availableKeys.map((k) => (
-                  <option key={k.private_path} value={k.private_path}>
-                    {k.file_name} ({k.key_type.toUpperCase()}) {k.is_agent_loaded ? "⚡" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Clean Divider */}
-            <div className="relative py-1">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-line"></div>
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
-                <span className="bg-panel px-2 text-gray-500">or generate dedicated key</span>
-              </div>
-            </div>
+        {identityFile && (
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => onOpenGuideModal(connectedKeyObj, currentPubKey)}
+              className="text-accent hover:underline cursor-pointer"
+            >
+              Setup guide
+            </button>
+            <button type="button" onClick={handleCopyPubKey} className="text-accent hover:underline cursor-pointer">
+              {copiedKey ? "Copied" : "Copy public key"}
+            </button>
           </div>
         )}
+      </div>
 
-        {/* ========================================================================= */}
-        {/* INLINE DEDICATED KEY GENERATION FORM (Only when no key or replacing) */}
-        {/* ========================================================================= */}
-        {(!identityFile || showReplaceForm) && (
-          <div
-            className={`p-3 bg-app border ${
-              isDuplicate ? "border-amber-500/50" : "border-line"
-            } rounded-xl space-y-2.5 transition-colors`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-blue-300 font-semibold text-xs">
-                <BsStars className="w-3.5 h-3.5 text-blue-400" />
-                <span>
-                  {identityFile ? "Generate Replacement Key" : "Generate Dedicated SSH Key"}
-                </span>
-                {preset?.keyRecommendation && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    {preset.title} Preset
-                  </span>
-                )}
-              </div>
+      {/* Identities only */}
+      <div className="px-4 py-3 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-label">Use only this key</div>
+          <div className="text-xs text-label-3">
+            IdentitiesOnly: ignore other agent keys. Needed when several accounts share one server.
+          </div>
+        </div>
+        <Switch
+          label="Use only this key"
+          checked={identitiesOnly}
+          onChange={(v) => onChangeIdentity(identityFile, v)}
+        />
+      </div>
 
-              <div className="flex items-center gap-1.5">
-                <div className="flex bg-panel p-0.5 rounded-lg border border-line">
-                  <button
-                    type="button"
-                    onClick={() => setGenKeyType("ed25519")}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                      genKeyType === "ed25519"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        : "text-gray-400 hover:text-gray-200"
-                    }`}
-                  >
-                    Ed25519
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGenKeyType("rsa")}
-                    className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-colors cursor-pointer ${
-                      genKeyType === "rsa"
-                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
-                        : "text-gray-400 hover:text-gray-200"
-                    }`}
-                  >
-                    RSA 4096
-                  </button>
-                </div>
+      {/* Choose / switch key */}
+      <div className="px-4 py-3 flex items-center gap-3 flex-wrap">
+        <select
+          aria-label={identityFile ? "Switch key" : "Choose existing key"}
+          value={identityFile}
+          onChange={(e) => onChangeIdentity(e.target.value, identityFile ? true : !!e.target.value)}
+          className={`${field} font-mono flex-1 min-w-[220px] cursor-pointer`}
+        >
+          {!identityFile && <option value="">Choose an existing key ({availableKeys.length})</option>}
+          {identityFile && <option value={identityFile}>{connectedKeyObj?.file_name}</option>}
+          {availableKeys
+            .filter((k) => k.private_path !== identityFile)
+            .map((k) => (
+              <option key={k.private_path} value={k.private_path}>
+                {k.file_name} ({k.key_type.toUpperCase()})
+              </option>
+            ))}
+        </select>
+        {identityFile && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowReplaceForm(!showReplaceForm)}
+              className="text-accent hover:underline cursor-pointer"
+            >
+              {showReplaceForm ? "Hide generator" : "Generate replacement"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onChangeIdentity("", false);
+                setShowReplaceForm(false);
+              }}
+              className="text-rose-300 hover:underline cursor-pointer"
+              title="Disconnect key and use default OpenSSH authentication"
+            >
+              Disconnect
+            </button>
+          </>
+        )}
+      </div>
 
-                {identityFile && showReplaceForm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowReplaceForm(false)}
-                    className="text-gray-400 hover:text-white p-1 rounded hover:bg-control cursor-pointer"
-                    title="Close generator"
-                  >
-                    <BsXLg className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
+      {/* Generator */}
+      {(!identityFile || showReplaceForm) && (
+        <div className="px-4 py-3 space-y-2.5">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 text-label">
+              <span>{identityFile ? "Generate replacement key" : "Or generate a dedicated key"}</span>
+              {preset?.keyRecommendation && <Badge tone="warn">{preset.title}</Badge>}
             </div>
+            <Segmented
+              label="Key type"
+              value={genKeyType}
+              options={[
+                { value: "ed25519" as const, label: "Ed25519" },
+                { value: "rsa" as const, label: "RSA 4096" },
+              ]}
+              onChange={setGenKeyType}
+            />
+          </div>
 
-            {/* Inputs & Action Button Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500 font-mono text-[11px]">
-                  ~/.ssh/
-                </span>
-                <input
-                  type="text"
-                  placeholder="Key filename"
-                  value={genKeyName}
-                  onChange={(e) => {
-                    nameTouched.current = true;
-                    setGenKeyName(e.target.value);
-                  }}
-                  className={`w-full bg-panel border ${
-                    isDuplicate ? "border-amber-500/60 text-amber-200" : "border-line text-white"
-                  } rounded-lg pl-14 pr-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-blue-500`}
-                />
-              </div>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-label-3 font-mono text-xs pointer-events-none">
+                ~/.ssh/
+              </span>
               <input
                 type="text"
-                placeholder="Comment / Email (optional)"
-                value={genKeyComment}
+                aria-label="Key filename"
+                placeholder="Key filename"
+                value={genKeyName}
                 onChange={(e) => {
-                  commentTouched.current = true;
-                  setGenKeyComment(e.target.value);
+                  nameTouched.current = true;
+                  setGenKeyName(e.target.value);
                 }}
-                className="bg-panel border border-line rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                className={`${field} font-mono pl-14 ${isDuplicate ? "ring-2 ring-amber-400/60" : ""}`}
               />
-
-              <button
-                type="button"
-                disabled={isGenerating}
-                onClick={handleGenerateKey}
-                className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs transition-colors disabled:opacity-50 cursor-pointer shadow-md shadow-blue-500/20 active:scale-95"
-              >
-                <BsKeyFill className="w-3.5 h-3.5" />
-                <span>
-                  {isGenerating
-                    ? "Generating..."
-                    : isDuplicate
-                    ? "Resolve & Generate"
-                    : "Generate & Connect Key"}
-                </span>
-              </button>
             </div>
+            <input
+              type="text"
+              aria-label="Key comment"
+              placeholder="Comment (optional)"
+              value={genKeyComment}
+              onChange={(e) => {
+                commentTouched.current = true;
+                setGenKeyComment(e.target.value);
+              }}
+              className={field}
+            />
+          </div>
 
-            {alternatives.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-gray-400">
-                <span>Other names:</span>
-                {alternatives.map((n) => (
+          {alternatives.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-label-3">
+              <span>Other names</span>
+              {alternatives.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    nameTouched.current = true;
+                    setGenKeyName(n);
+                  }}
+                  className="h-6 px-2 rounded-full bg-white/[0.07] font-mono text-label-2 hover:text-label cursor-pointer"
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {isDuplicate && (
+            <div role="status" className="rounded-ctl bg-amber-500/10 text-amber-200 px-3 py-2 text-xs flex items-center justify-between gap-2 flex-wrap">
+              <span>
+                <code className="font-mono">{genKeyName.trim()}</code> already exists in ~/.ssh/.
+              </span>
+              <span className="flex items-center gap-3">
+                {matchingExistingKey && (
                   <button
-                    key={n}
                     type="button"
                     onClick={() => {
-                      nameTouched.current = true;
-                      setGenKeyName(n);
+                      onChangeIdentity(matchingExistingKey.private_path, true);
+                      setShowReplaceForm(false);
                     }}
-                    className="px-1.5 py-0.5 rounded bg-[#101726] border border-[#1e293b] font-mono text-gray-300 hover:text-white hover:border-blue-500/50 cursor-pointer"
+                    className="underline cursor-pointer"
                   >
-                    {n}
+                    Use existing
                   </button>
-                ))}
-              </div>
-            )}
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    onOpenConflictModal({
+                      conflictKeyName: genKeyName.trim(),
+                      uniqueSuggestionName: uniqueSuggestion,
+                      existingKey: matchingExistingKey,
+                    })
+                  }
+                  className="underline cursor-pointer"
+                >
+                  More options
+                </button>
+              </span>
+            </div>
+          )}
 
-            {/* Conflict Notice if key name exists on disk */}
-            {isDuplicate && (
-              <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between gap-2 text-xs text-amber-300 animate-in fade-in">
-                <div className="flex items-center gap-2 min-w-0">
-                  <BsExclamationTriangleFill className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="truncate">
-                    Key <code className="font-mono text-amber-200 font-semibold">{genKeyName.trim()}</code> exists in ~/.ssh/.
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {matchingExistingKey && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onChangeIdentity(matchingExistingKey.private_path, true);
-                        setShowReplaceForm(false);
-                      }}
-                      className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-semibold text-[11px] cursor-pointer shadow-sm"
-                    >
-                      ⚡ Use Existing
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onOpenConflictModal({
-                        conflictKeyName: genKeyName.trim(),
-                        uniqueSuggestionName: uniqueSuggestion,
-                        existingKey: matchingExistingKey,
-                      })
-                    }
-                    className="px-2 py-0.5 bg-control hover:bg-line text-amber-200 border border-amber-500/40 rounded font-semibold text-[11px] cursor-pointer shadow-sm"
-                  >
-                    3 Resolution Options
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {successMsg && (
-              <div className="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs flex items-center gap-1.5">
-                <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span className="truncate">{successMsg}</span>
-              </div>
-            )}
+          <div className="flex items-center justify-end">
+            <Button type="button" variant="primary" icon={<BsKeyFill />} disabled={isGenerating} onClick={handleGenerateKey}>
+              {isGenerating ? "Generating..." : isDuplicate ? "Resolve & Generate" : "Generate & Connect"}
+            </Button>
           </div>
-        )}
-      </div>
+
+          {successMsg && (
+            <div role="status" className="text-emerald-300 flex items-center gap-1.5 text-xs">
+              <BsCheckCircleFill className="shrink-0" />
+              <span className="truncate">{successMsg}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
