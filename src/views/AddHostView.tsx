@@ -1,3 +1,4 @@
+import { ConfigPreview } from "../components/ConfigPreview";
 import { askConfirm } from "../utils/confirm";
 import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
@@ -215,6 +216,16 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
     </div>
   ) : null;
 
+  // Hosts sharing one server need IdentitiesOnly, or ssh offers agent keys
+  // first and may log in as the wrong account.
+  const hostToSave: SshHost = useMemo(
+    () =>
+      sameTargetHosts.length > 0 && formData.identity_file && formData.identities_only == null
+        ? { ...formData, identities_only: true }
+        : formData,
+    [formData, sameTargetHosts]
+  );
+
   const isAliasDuplicate = useMemo(
     () => isHostAliasDuplicate(formData.host_pattern, existingHosts, initialHost?.id),
     [formData.host_pattern, existingHosts, initialHost]
@@ -360,12 +371,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
       return;
     }
 
-    // Hosts sharing one server need IdentitiesOnly, or ssh offers agent keys
-    // first and may log in as the wrong account.
-    const toSave =
-      sameTargetHosts.length > 0 && formData.identity_file && formData.identities_only == null
-        ? { ...formData, identities_only: true }
-        : formData;
+    const toSave = hostToSave;
 
     if (saveAsPreset && customPresetTitle.trim()) {
       const customPreset: PresetTemplate = {
@@ -448,19 +454,6 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
       badgeText?: string;
     }[] = [];
 
-    // Step 1: Host Alias
-    steps.push({
-      id: "alias",
-      title: "What alias/nickname do you want for this host?",
-      subtitle: "The quick shortcut you type in terminal to connect (e.g. ssh my-server).",
-      helpTitle: "Host Alias in ~/.ssh/config",
-      helpContent:
-        "The Host alias lets you type 'ssh alias' in your terminal instead of typing long IP addresses and ports every time.",
-      isRequired: true,
-      isPreFilled: !!formData.host_pattern,
-      badgeText: "Required",
-    });
-
     // Step 2: HostName (Skip or prompt based on preset)
     const isGenericPlaceholderHost =
       !formData.host_name ||
@@ -487,6 +480,19 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
         badgeText: isGenericPlaceholderHost ? "Action Required" : "Pre-filled",
       });
     }
+
+    // Host Alias comes after the address so it can be suggested from address + account
+    steps.push({
+      id: "alias",
+      title: "What alias/nickname do you want for this host?",
+      subtitle: "The quick shortcut you type in terminal to connect (e.g. ssh my-server).",
+      helpTitle: "Host Alias in ~/.ssh/config",
+      helpContent:
+        "The Host alias lets you type 'ssh alias' in your terminal instead of typing long IP addresses and ports every time.",
+      isRequired: true,
+      isPreFilled: !!formData.host_pattern,
+      badgeText: "Required",
+    });
 
     // Step 3: User & Port (Only ask if custom or not pre-set)
     const isUserPortPreFixed =
@@ -552,9 +558,9 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
   const totalSteps = wizardSteps.length;
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Universal Sub-Header */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0 flex-wrap gap-2">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -572,13 +578,13 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
         </div>
 
         {/* Mode Navigation Pills */}
-        <div className="flex items-center gap-1 bg-[#0f1422] p-0.5 rounded-md border border-[#1f2942]">
+        <div className="flex items-center gap-1 bg-raised-2 p-0.5 rounded-md border border-line">
           <button
             type="button"
             onClick={() => setActiveScreen("hub")}
             className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium transition-colors cursor-pointer ${
               activeScreen === "hub"
-                ? "bg-[#161d30] text-white border border-[#232f4d]"
+                ? "bg-control text-white border border-line-strong"
                 : "text-gray-400 hover:text-gray-200"
             }`}
           >
@@ -654,7 +660,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   setActiveScreen("interactive");
                   setWizardStep(1);
                 }}
-                className="group p-4 bg-[#0b0f19] hover:bg-[#121829] border border-purple-500/30 hover:border-purple-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-purple-500/5 hover:-translate-y-0.5"
+                className="group p-4 bg-panel hover:bg-card border border-purple-500/30 hover:border-purple-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-purple-500/5 hover:-translate-y-0.5"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -676,7 +682,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#1f2942] flex items-center justify-between text-xs text-purple-400 font-semibold">
+                <div className="pt-2 border-t border-line flex items-center justify-between text-xs text-purple-400 font-semibold">
                   <span>Launch Wizard</span>
                   <BsArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -685,7 +691,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
               {/* Card 2: Fast Form Mode */}
               <div
                 onClick={() => setActiveScreen("fast")}
-                className="group p-4 bg-[#0b0f19] hover:bg-[#121829] border border-blue-500/30 hover:border-blue-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-blue-500/5 hover:-translate-y-0.5"
+                className="group p-4 bg-panel hover:bg-card border border-blue-500/30 hover:border-blue-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-blue-500/5 hover:-translate-y-0.5"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -707,7 +713,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#1f2942] flex items-center justify-between text-xs text-blue-400 font-semibold">
+                <div className="pt-2 border-t border-line flex items-center justify-between text-xs text-blue-400 font-semibold">
                   <span>Open Fast Form</span>
                   <BsArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -716,7 +722,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
               {/* Card 3: Presets Catalog */}
               <div
                 onClick={() => setActiveScreen("presets")}
-                className="group p-4 bg-[#0b0f19] hover:bg-[#121829] border border-amber-500/30 hover:border-amber-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-amber-500/5 hover:-translate-y-0.5"
+                className="group p-4 bg-panel hover:bg-card border border-amber-500/30 hover:border-amber-500/70 rounded-xl cursor-pointer transition-all flex flex-col justify-between gap-3 relative shadow-lg shadow-amber-500/5 hover:-translate-y-0.5"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -738,7 +744,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-[#1f2942] flex items-center justify-between text-xs text-amber-400 font-semibold">
+                <div className="pt-2 border-t border-line flex items-center justify-between text-xs text-amber-400 font-semibold">
                   <span>Browse Templates</span>
                   <BsArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
@@ -750,7 +756,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-400 hover:text-gray-200 rounded-lg text-xs transition-colors cursor-pointer"
+                className="px-4 py-1.5 bg-control hover:bg-line text-gray-400 hover:text-gray-200 rounded-lg text-xs transition-colors cursor-pointer"
               >
                 Cancel & Return to Hosts
               </button>
@@ -764,10 +770,10 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
         {activeScreen === "interactive" && (
           <div className="max-w-2xl mx-auto space-y-3.5 py-1 animate-in fade-in duration-150">
             {/* Top Source Toggler: [⚡ From Preset] vs [✏️ Custom (From Scratch)] */}
-            <div className="p-2.5 bg-[#090d16] border border-[#1f2942] rounded-xl flex items-center justify-between flex-wrap gap-2">
+            <div className="p-2.5 bg-bar border border-line rounded-xl flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-1.5">
                 <span className="text-gray-400 font-semibold text-xs">Source:</span>
-                <div className="flex items-center bg-[#070a10] p-0.5 rounded-lg border border-[#1f2942]">
+                <div className="flex items-center bg-app p-0.5 rounded-lg border border-line">
                   <button
                     type="button"
                     onClick={() => {
@@ -821,7 +827,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
 
             {/* If "From Preset" is chosen and no preset selected yet: show search & preset selector list */}
             {creationSource === "preset" && !selectedPreset ? (
-              <div className="p-4 bg-[#0b0f19] border border-[#1f2942] rounded-2xl space-y-3">
+              <div className="p-4 bg-panel border border-line rounded-2xl space-y-3">
                 <div className="space-y-1">
                   <h4 className="font-bold text-white text-sm">Select a Preset to Begin</h4>
                   <p className="text-xs text-gray-400">
@@ -838,7 +844,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                       placeholder="Search presets (GitHub, AWS, Hetzner, Postgres...)"
                       value={presetSearch}
                       onChange={(e) => setPresetSearch(e.target.value)}
-                      className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl pl-8 pr-3 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-purple-500"
+                      className="w-full bg-app border border-line rounded-xl pl-8 pr-3 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-purple-500"
                     />
                   </div>
 
@@ -851,7 +857,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                         className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors cursor-pointer ${
                           selectedCategory === cat.id
                             ? "bg-purple-600/20 text-purple-300 border-purple-500/40 font-semibold"
-                            : "bg-[#070a10] text-gray-400 border-[#1f2942] hover:text-gray-200"
+                            : "bg-app text-gray-400 border-line hover:text-gray-200"
                         }`}
                       >
                         {cat.label}
@@ -867,10 +873,10 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                       key={preset.id}
                       type="button"
                       onClick={() => handleApplyPreset(preset, "interactive")}
-                      className="p-2.5 bg-[#070a10] hover:bg-[#121829] border border-[#1f2942] hover:border-purple-500/50 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group"
+                      className="p-2.5 bg-app hover:bg-card border border-line hover:border-purple-500/50 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group"
                     >
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <div className="w-7 h-7 rounded-lg bg-[#161d30] border border-[#232f4d] flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-lg bg-control border border-line-strong flex items-center justify-center shrink-0">
                           <BrandLogo name={preset.id} className="w-4 h-4" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -907,11 +913,11 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                     </button>
                   </div>
 
-                  <div className="w-full h-1.5 bg-[#161d30] rounded-full overflow-hidden flex">
+                  <div className="w-full h-1.5 bg-control rounded-full overflow-hidden flex">
                     {wizardSteps.map((step, idx) => (
                       <div
                         key={step.id}
-                        className={`flex-1 border-r border-[#070a10] transition-all duration-300 ${
+                        className={`flex-1 border-r border-app transition-all duration-300 ${
                           idx + 1 < wizardStep
                             ? "bg-emerald-500"
                             : idx + 1 === wizardStep
@@ -924,7 +930,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                 </div>
 
                 {/* Step Card */}
-                <div className="p-5 bg-[#0b0f19] border border-[#1f2942] rounded-2xl shadow-xl space-y-4">
+                <div className="p-5 bg-panel border border-line rounded-2xl shadow-xl space-y-4">
                   <div className="space-y-1">
                     <h3 className="text-base font-bold text-white tracking-tight">
                       {currentStepInfo.title}
@@ -950,10 +956,10 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && formData.host_pattern) {
-                              setWizardStep(2);
+                              setWizardStep((p) => Math.min(p + 1, totalSteps));
                             }
                           }}
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-purple-500"
                         />
                       </div>
 
@@ -1002,10 +1008,10 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && formData.host_name) {
-                              setWizardStep(3);
+                              setWizardStep((p) => Math.min(p + 1, totalSteps));
                             }
                           }}
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                         />
                       </div>
                       {sameTargetHosts.length > 0 && (
@@ -1026,7 +1032,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           placeholder="e.g. work, personal"
                           value={account || ""}
                           onChange={(e) => setAccount(e.target.value)}
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                         />
                         <span className="text-[11px] text-gray-500 mt-1 block">
                           Used to name the alias and key, and shown next to this host in the list.
@@ -1049,7 +1055,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           placeholder="e.g. root, ubuntu, git, admin"
                           value={formData.user || ""}
                           onChange={(e) => setFormData({ ...formData, user: e.target.value.trim() })}
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                         />
                         <div className="flex gap-1 mt-2">
                           {["root", "ubuntu", "git", "ec2-user"].map((u) => (
@@ -1057,7 +1063,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                               key={u}
                               type="button"
                               onClick={() => setFormData({ ...formData, user: u })}
-                              className="px-2 py-0.5 rounded bg-[#161d30] text-gray-300 text-[11px] font-mono border border-[#232f4d] cursor-pointer"
+                              className="px-2 py-0.5 rounded bg-control text-gray-300 text-[11px] font-mono border border-line-strong cursor-pointer"
                             >
                               {u}
                             </button>
@@ -1075,7 +1081,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           onChange={(e) =>
                             setFormData({ ...formData, port: parseInt(e.target.value, 10) || 22 })
                           }
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-purple-500"
                         />
                       </div>
                     </div>
@@ -1134,7 +1140,7 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                           placeholder="e.g. Production, Homelab, Cloud Servers"
                           value={formData.group || ""}
                           onChange={(e) => setFormData({ ...formData, group: e.target.value })}
-                          className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-purple-500"
+                          className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-purple-500"
                         />
                       </div>
 
@@ -1154,12 +1160,12 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                                 handleAddTag();
                               }
                             }}
-                            className="flex-1 bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-1.5 text-white text-xs focus:outline-none focus:border-purple-500"
+                            className="flex-1 bg-app border border-line rounded-xl px-3 py-1.5 text-white text-xs focus:outline-none focus:border-purple-500"
                           />
                           <button
                             type="button"
                             onClick={handleAddTag}
-                            className="px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded-xl font-medium cursor-pointer"
+                            className="px-3 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-xl font-medium cursor-pointer"
                           >
                             Add
                           </button>
@@ -1171,20 +1177,17 @@ export const AddHostView: React.FC<AddHostViewProps> = ({
                   {/* STEP: Review */}
                   {currentStepInfo.id === "review" && (
                     <div className="space-y-3">
-                      <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-1.5">
+                      <div className="p-3 bg-app border border-line rounded-xl space-y-1.5">
                         <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                           Generated ~/.ssh/config Block Preview
                         </div>
-                        <pre className="p-3 bg-[#05070c] border border-[#1f2942] rounded-lg font-mono text-xs text-emerald-400 overflow-x-auto leading-relaxed">
-{`Host ${formData.host_pattern || "my-host"}
-${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.user ? `    User ${formData.user}\n` : ""}${formData.port && formData.port !== 22 ? `    Port ${formData.port}\n` : ""}${formData.identity_file ? `    IdentityFile ${formData.identity_file}\n` : ""}${formData.identities_only ? `    IdentitiesOnly yes\n` : ""}${formData.proxy_jump ? `    ProxyJump ${formData.proxy_jump}\n` : ""}${formData.local_forward.map((f) => `    LocalForward ${f}\n`).join("")}`}
-                        </pre>
+                        <ConfigPreview host={hostToSave} original={initialHost} className="p-3 rounded-lg" />
                       </div>
                     </div>
                   )}
 
                   {/* Plain-English Help Note */}
-                  <div className="p-3 bg-[#070a10]/80 border border-blue-500/20 rounded-xl space-y-1 text-gray-300">
+                  <div className="p-3 bg-app/80 border border-blue-500/20 rounded-xl space-y-1 text-gray-300">
                     <div className="flex items-center gap-1.5 text-blue-400 font-semibold text-xs">
                       <BsInfoCircleFill className="w-3.5 h-3.5" />
                       <span>{currentStepInfo.helpTitle}</span>
@@ -1195,12 +1198,12 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                   </div>
 
                   {/* Navigation Buttons */}
-                  <div className="pt-2 flex items-center justify-between border-t border-[#1f2942]">
+                  <div className="pt-2 flex items-center justify-between border-t border-line">
                     <button
                       type="button"
                       disabled={wizardStep === 1}
                       onClick={() => setWizardStep((prev) => Math.max(prev - 1, 1))}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-xl font-medium disabled:opacity-30 cursor-pointer"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium disabled:opacity-30 cursor-pointer"
                     >
                       <BsChevronLeft className="w-3.5 h-3.5" />
                       <span>Back</span>
@@ -1244,7 +1247,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
         {activeScreen === "fast" && (
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto space-y-3 animate-in fade-in duration-150">
             {/* Top Preset / Custom Toggler bar */}
-            <div className="p-2.5 bg-[#090d16] border border-[#1f2942] rounded-lg flex items-center justify-between flex-wrap gap-2">
+            <div className="p-2.5 bg-bar border border-line rounded-lg flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-gray-400 font-semibold text-xs">Preset:</span>
                 <div className="flex flex-wrap gap-1">
@@ -1256,7 +1259,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                       className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border transition-colors cursor-pointer ${
                         selectedPreset?.id === preset.id
                           ? "bg-blue-600 text-white border-blue-500"
-                          : "bg-[#161d30] text-gray-300 border-[#232f4d] hover:bg-[#1f2942]"
+                          : "bg-control text-gray-300 border-line-strong hover:bg-line"
                       }`}
                     >
                       <BrandLogo name={preset.id} className="w-3 h-3" />
@@ -1276,8 +1279,8 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
             </div>
 
             {/* Section 1: Basic Parameters */}
-            <div className="p-3 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#1f2942] text-gray-300 font-semibold text-xs">
+            <div className="p-3 bg-panel border border-line rounded-lg space-y-2.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
                 <BsServer className="w-3.5 h-3.5 text-blue-400" />
                 <span>Basic Connection Parameters</span>
               </div>
@@ -1295,7 +1298,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     onChange={(e) =>
                       setFormData({ ...formData, host_pattern: e.target.value })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                   />
                   <span className="text-[11px] text-gray-500 mt-1 block leading-none">
                     Terminal shortcut: <code className="text-blue-400 font-mono">ssh {formData.host_pattern || "alias"}</code>
@@ -1314,7 +1317,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     onChange={(e) =>
                       setFormData({ ...formData, host_name: e.target.value })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -1329,7 +1332,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     onChange={(e) =>
                       setFormData({ ...formData, user: e.target.value })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -1346,7 +1349,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                         port: parseInt(e.target.value, 10) || 22,
                       })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -1361,7 +1364,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     onChange={(e) =>
                       setFormData({ ...formData, group: e.target.value })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white placeholder-gray-600 text-xs focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white placeholder-gray-600 text-xs focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -1381,12 +1384,12 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                           handleAddTag();
                         }
                       }}
-                      className="flex-1 bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                      className="flex-1 bg-app border border-line rounded px-2.5 py-1 text-white text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                     />
                     <button
                       type="button"
                       onClick={handleAddTag}
-                      className="px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded font-medium text-xs cursor-pointer"
+                      className="px-3 py-1 bg-control hover:bg-line text-gray-200 border border-line-strong rounded font-medium text-xs cursor-pointer"
                     >
                       Add
                     </button>
@@ -1450,8 +1453,8 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
             </div>
 
             {/* Section 3: Jump Host / Proxy & Tunnels */}
-            <div className="p-3 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#1f2942] text-gray-300 font-semibold text-xs">
+            <div className="p-3 bg-panel border border-line rounded-lg space-y-2.5">
+              <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
                 <BsShieldLock className="w-3.5 h-3.5 text-purple-400" />
                 <span>Jump Host (ProxyJump) & Port Forwarding</span>
               </div>
@@ -1466,7 +1469,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     onChange={(e) =>
                       setFormData({ ...formData, proxy_jump: e.target.value })
                     }
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-purple-300 font-mono text-xs focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-purple-300 font-mono text-xs focus:outline-none focus:border-blue-500"
                   >
                     <option value="">-- Direct connection (No ProxyJump) --</option>
                     {existingHosts
@@ -1495,12 +1498,12 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                           handleAddLocalForward();
                         }
                       }}
-                      className="flex-1 bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
+                      className="flex-1 bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs placeholder-gray-600 focus:outline-none focus:border-blue-500"
                     />
                     <button
                       type="button"
                       onClick={handleAddLocalForward}
-                      className="px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded font-medium text-xs cursor-pointer"
+                      className="px-3 py-1 bg-control hover:bg-line text-gray-200 border border-line-strong rounded font-medium text-xs cursor-pointer"
                     >
                       Add
                     </button>
@@ -1510,7 +1513,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                       {formData.local_forward.map((lf, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-2.5 py-1 bg-[#070a10] border border-[#1f2942] rounded text-emerald-300 font-mono text-xs"
+                          className="flex items-center justify-between px-2.5 py-1 bg-app border border-line rounded text-emerald-300 font-mono text-xs"
                         >
                           <span>LocalForward {lf}</span>
                           <button
@@ -1529,7 +1532,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
             </div>
 
             {/* Live Config Preview & Preset Save */}
-            <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-lg space-y-2">
+            <div className="p-3 bg-app border border-line rounded-lg space-y-2">
               <div className="flex items-center justify-between text-xs text-gray-400">
                 <span className="font-semibold text-gray-300">Live ~/.ssh/config Block Preview</span>
                 <label className="flex items-center gap-1.5 text-amber-300 cursor-pointer">
@@ -1537,29 +1540,26 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     type="checkbox"
                     checked={saveAsPreset}
                     onChange={(e) => setSaveAsPreset(e.target.checked)}
-                    className="rounded border-[#1f2942] bg-[#0b0f19] text-amber-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                    className="rounded border-line bg-panel text-amber-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                   />
                   <span>Save as Reusable Preset</span>
                 </label>
               </div>
 
               {saveAsPreset && (
-                <div className="p-2.5 bg-[#0f1422] border border-amber-500/30 rounded">
+                <div className="p-2.5 bg-raised-2 border border-amber-500/30 rounded">
                   <input
                     type="text"
                     required={saveAsPreset}
                     placeholder="Enter Preset Name (e.g. My Production Cluster Template)"
                     value={customPresetTitle}
                     onChange={(e) => setCustomPresetTitle(e.target.value)}
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-app border border-line rounded px-2.5 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-amber-500"
                   />
                 </div>
               )}
 
-              <pre className="p-2.5 bg-[#05070c] border border-[#1f2942] rounded font-mono text-xs text-emerald-400 overflow-x-auto leading-relaxed">
-{`Host ${formData.host_pattern || "my-host"}
-${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.user ? `    User ${formData.user}\n` : ""}${formData.port && formData.port !== 22 ? `    Port ${formData.port}\n` : ""}${formData.identity_file ? `    IdentityFile ${formData.identity_file}\n` : ""}${formData.identities_only ? `    IdentitiesOnly yes\n` : ""}${formData.proxy_jump ? `    ProxyJump ${formData.proxy_jump}\n` : ""}${formData.local_forward.map((f) => `    LocalForward ${f}\n`).join("")}`}
-              </pre>
+              <ConfigPreview host={hostToSave} original={initialHost} />
             </div>
 
             {/* Bottom Actions */}
@@ -1567,7 +1567,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded font-medium text-xs transition-colors border border-[#232f4d] cursor-pointer"
+                className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded font-medium text-xs transition-colors border border-line-strong cursor-pointer"
               >
                 Cancel
               </button>
@@ -1588,7 +1588,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
         {/* ========================================================================= */}
         {activeScreen === "presets" && (
           <div className="max-w-4xl mx-auto space-y-3 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-[#1f2942]/60">
+            <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-line/60">
               <div>
                 <h3 className="font-semibold text-white text-sm">Choose or Create an SSH Preset</h3>
                 <p className="text-gray-400 text-xs mt-0.5">
@@ -1619,7 +1619,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                       className={`px-2.5 py-1 rounded text-xs font-medium transition-colors border cursor-pointer ${
                         selectedCategory === cat.id
                           ? "bg-blue-600/20 text-blue-300 border-blue-500/40 font-semibold"
-                          : "bg-[#0f1422] text-gray-400 border-[#1f2942] hover:text-gray-200"
+                          : "bg-raised-2 text-gray-400 border-line hover:text-gray-200"
                       }`}
                     >
                       {cat.label}
@@ -1637,12 +1637,12 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                 return (
                   <div
                     key={preset.id}
-                    className="group p-3 bg-[#0b0f19] hover:bg-[#121829] border border-[#1f2942] hover:border-purple-500/50 rounded-xl transition-all flex flex-col justify-between gap-2.5 relative shadow-sm"
+                    className="group p-3 bg-panel hover:bg-card border border-line hover:border-purple-500/50 rounded-xl transition-all flex flex-col justify-between gap-2.5 relative shadow-sm"
                   >
                     <div className="space-y-1.5">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="w-7 h-7 rounded-md bg-[#161d30] border border-[#232f4d] flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform shrink-0">
+                          <div className="w-7 h-7 rounded-md bg-control border border-line-strong flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform shrink-0">
                             <BrandLogo
                               name={preset.id}
                               hostName={preset.defaultHost.host_name}
@@ -1657,7 +1657,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                               {preset.title}
                             </span>
                             {preset.badge && (
-                              <span className="text-[9px] px-1 py-0.2 rounded bg-[#161d30] text-purple-300 border border-[#232f4d] leading-none inline-block">
+                              <span className="text-[9px] px-1 py-0.2 rounded bg-control text-purple-300 border border-line-strong leading-none inline-block">
                                 {preset.badge}
                               </span>
                             )}
@@ -1710,7 +1710,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     </div>
 
                     {/* Preset Preview Box */}
-                    <div className="bg-[#070a10] p-2 rounded-lg border border-[#1f2942] font-mono text-xs text-gray-400 space-y-0.5">
+                    <div className="bg-app p-2 rounded-lg border border-line font-mono text-xs text-gray-400 space-y-0.5">
                       <div className="truncate">
                         <span className="text-gray-500">Host </span>
                         <span className="text-blue-400 font-semibold">{preset.defaultHost.host_pattern}</span>
@@ -1730,7 +1730,7 @@ ${formData.host_name ? `    HostName ${formData.host_name}\n` : ""}${formData.us
                     </div>
 
                     {/* Dual Launch Action Buttons: Interactive Wizard vs Fast Mode */}
-                    <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-[#1f2942]/60">
+                    <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-line/60">
                       <button
                         type="button"
                         onClick={() => handleApplyPreset(preset, "interactive")}

@@ -3,18 +3,20 @@ import { BsPencilSquare } from "react-icons/bs";
 import { SshHost, SshKeyInfo } from "../types";
 import { api } from "../api";
 import { cleanKeyFileName, hostsUsingKey, isKeyNameDuplicate } from "../utils/keyUtils";
-import { getAccountLabel } from "../utils/hostUtils";
+import { getAccountLabel, isGitHost } from "../utils/hostUtils";
 import { toast } from "../utils/toast";
 
 interface Props {
   keyInfo: SshKeyInfo;
   keys: SshKeyInfo[];
   hosts: SshHost[];
+  /** Account each host authenticated as in its last Test, by host id. */
+  hostAccounts?: Record<string, string>;
   onRenamed: (newPath: string) => void;
 }
 
 /** Which hosts use this key, plus a rename that repoints them (config is backed up first). */
-export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, onRenamed }) => {
+export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, hostAccounts, onRenamed }) => {
   const users = hostsUsingKey(keyInfo, hosts);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(keyInfo.file_name);
@@ -44,7 +46,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, onRenamed
   };
 
   return (
-    <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md space-y-2 text-xs">
+    <div className="p-3 bg-app border border-line rounded-md space-y-2 text-xs">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none">
           Used by
@@ -75,6 +77,11 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, onRenamed
                 {h.host_pattern}
                 {acct && <span className="text-amber-300"> @{acct}</span>}
                 {h.host_name && <span className="text-gray-500"> · {h.host_name}</span>}
+                {hostAccounts?.[h.id] ? (
+                  <span className="text-emerald-400"> · authenticates as @{hostAccounts[h.id]}</span>
+                ) : (
+                  isGitHost(h) && <span className="text-gray-500"> · not tested</span>
+                )}
               </li>
             );
           })}
@@ -92,7 +99,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, onRenamed
               if (e.key === "Escape") setEditing(false);
             }}
             aria-label="New key file name"
-            className="w-full bg-[#0b0f19] border border-[#1f2942] rounded px-2.5 py-1 font-mono text-white focus:outline-none focus:border-blue-500"
+            className="w-full bg-panel border border-line rounded px-2.5 py-1 font-mono text-white focus:outline-none focus:border-blue-500"
           />
           {(invalid || taken) && (
             <div className="text-rose-300">
@@ -115,7 +122,7 @@ export const KeyUsagePanel: React.FC<Props> = ({ keyInfo, keys, hosts, onRenamed
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="px-2.5 py-1 bg-[#161d30] border border-[#232f4d] text-gray-300 rounded cursor-pointer"
+              className="px-2.5 py-1 bg-control border border-line-strong text-gray-300 rounded cursor-pointer"
             >
               Cancel
             </button>

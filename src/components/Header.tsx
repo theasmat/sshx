@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-10 border-b border-[#1f2942] bg-[#090d16] px-3.5 flex items-center justify-between gap-3 shrink-0 select-none relative z-40">
+    <header className="h-10 border-b border-line bg-bar px-3.5 flex items-center justify-between gap-3 shrink-0 select-none relative z-40">
       {/* Brand Logo - macOS Style */}
       <div
         onClick={() => onSelectTab("hosts")}
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             setIsFocused(true);
           }}
           onKeyDown={handleKeyDown}
-          className="w-full h-7 pl-8 pr-14 text-xs bg-[#0f1422] border border-[#1f2942] rounded-md text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-sans"
+          className="w-full h-7 pl-8 pr-14 text-xs bg-raised-2 border border-line rounded-md text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-sans"
         />
 
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
               <BsXLg className="w-3 h-3" />
             </button>
           ) : (
-            <kbd className="text-[10px] bg-[#161d30] text-gray-400 px-1.5 py-0.5 rounded border border-[#232f4d] font-mono leading-none pointer-events-none">
+            <kbd className="text-[10px] bg-control text-gray-400 px-1.5 py-0.5 rounded border border-line-strong font-mono leading-none pointer-events-none">
               ⌘K
             </kbd>
           )}
@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-[#0f1422] rounded-md transition-colors disabled:opacity-50 cursor-pointer"
+          className="p-1.5 text-gray-400 hover:text-gray-200 hover:bg-raised-2 rounded-md transition-colors disabled:opacity-50 cursor-pointer"
           title="Reload ~/.ssh/config (⌘R)"
         >
           <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-blue-400" : ""}`} />

@@ -72,8 +72,8 @@ export const HostsView: React.FC<HostsViewProps> = ({
 
   if (hosts.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-[#070a10] select-none">
-        <div className="w-14 h-14 rounded-2xl bg-[#121829] border border-[#1f2942] flex items-center justify-center text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-app select-none">
+        <div className="w-14 h-14 rounded-2xl bg-card border border-line flex items-center justify-center text-blue-400 mb-4 shadow-lg shadow-blue-500/10">
           <BsServer className="w-7 h-7" />
         </div>
         <h3 className="text-base font-bold text-white mb-1">No SSH Hosts Found</h3>
@@ -94,23 +94,23 @@ export const HostsView: React.FC<HostsViewProps> = ({
   }
 
   return (
-    <div className="h-full flex flex-row overflow-hidden bg-[#070a10]">
+    <div className="h-full flex flex-row overflow-hidden bg-app">
       {/* Left Pane: Host List */}
-      <div style={{ width: listWidth }} className="shrink-0 h-full flex flex-col bg-[#070a10]">
+      <div style={{ width: listWidth }} className="shrink-0 h-full flex flex-col bg-app">
         {/* Navigation / Host count header */}
-        <div className="px-3 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between text-xs text-gray-400 select-none">
+        <div className="px-3 py-1.5 border-b border-line bg-bar flex items-center justify-between text-xs text-gray-400 select-none">
           <span className="font-semibold text-gray-300">
             {hosts.length} {hosts.length === 1 ? "host" : "hosts"}
           </span>
           <div className="flex items-center gap-2 text-[11px] text-gray-400">
             <span className="flex items-center gap-1">
-              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↑</kbd>
-              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↓</kbd>
+              <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong font-mono text-gray-300 text-[10px]">↑</kbd>
+              <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong font-mono text-gray-300 text-[10px]">↓</kbd>
               <span className="text-gray-400">nav</span>
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] font-mono text-gray-300 text-[10px]">↵</kbd>
+              <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong font-mono text-gray-300 text-[10px]">↵</kbd>
               <span className="text-gray-400">connect</span>
             </span>
           </div>
@@ -137,11 +137,11 @@ export const HostsView: React.FC<HostsViewProps> = ({
         onPointerDown={startResize}
         onPointerMove={onResize}
         onPointerUp={endResize}
-        className="w-1 shrink-0 cursor-col-resize bg-[#1f2942] hover:bg-blue-500/60 transition-colors"
+        className="w-1 shrink-0 cursor-col-resize bg-line hover:bg-blue-500/60 transition-colors"
       />
 
       {/* Right Pane: Host Detail View */}
-      <div className="flex-1 min-w-0 h-full overflow-hidden bg-[#0b0f19]">
+      <div className="flex-1 min-w-0 h-full overflow-hidden bg-panel">
         <HostDetailPane
           host={selectedHost}
           onConnect={onConnect}

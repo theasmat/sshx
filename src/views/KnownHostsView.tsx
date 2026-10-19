@@ -82,9 +82,9 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-yellow-500/20 text-yellow-400 flex items-center justify-center border border-yellow-500/30">
             <BsJournalBookmark className="w-3.5 h-3.5" />
@@ -101,7 +101,7 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-1.5 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong transition-colors disabled:opacity-50 cursor-pointer"
             title="Refresh known_hosts"
           >
             <BsArrowClockwise
@@ -114,21 +114,21 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
       {/* Main Split View: Left Known Hosts List | Right Selected Host Inspector (Persistent Side-by-Side) */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* Left Pane: Known Hosts List */}
-        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-[#1f2942] bg-[#070a10]">
+        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-line bg-app">
           {/* Search bar */}
-          <div className="p-2 border-b border-[#1f2942] bg-[#090d16] relative">
+          <div className="p-2 border-b border-line bg-bar relative">
             <BsSearch className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search host or IP..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#0f1422] border border-[#1f2942] rounded pl-7 pr-2.5 py-1 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-xs"
+              className="w-full bg-raised-2 border border-line rounded pl-7 pr-2.5 py-1 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-xs"
             />
           </div>
 
           {/* List items */}
-          <div className="flex-1 overflow-y-auto divide-y divide-[#1f2942]/50">
+          <div className="flex-1 overflow-y-auto divide-y divide-line/50">
             {filteredEntries.length === 0 ? (
               <div className="p-4 text-center text-gray-500 text-xs">
                 {search ? "No matching known hosts." : "Your ~/.ssh/known_hosts is empty."}
@@ -144,7 +144,7 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
                     className={`px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                       isSelected
                         ? "bg-yellow-500/10 border-l-2 border-yellow-500 pl-2"
-                        : "hover:bg-[#161d30]/60"
+                        : "hover:bg-control/60"
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -191,14 +191,14 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
         </div>
 
         {/* Right Pane: Selected Host Inspector */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-[#0b0f19] p-3">
+        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel p-3">
           {selectedEntry ? (
             <div className="max-w-3xl mx-auto space-y-2.5">
               {/* Header Title */}
-              <div className="pb-2 border-b border-[#1f2942] flex items-center justify-between flex-wrap gap-2">
+              <div className="pb-2 border-b border-line flex items-center justify-between flex-wrap gap-2">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center bg-[#161d30] border border-[#232f4d] shrink-0 text-gray-300">
+                    <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
                       <BrandLogo
                         name={selectedEntry.host}
                         className="w-4 h-4"
@@ -225,7 +225,7 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleCopyHost(selectedEntry.host)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
                   >
                     {copiedHost ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" /> : <BsCopy className="w-3.5 h-3.5" />}
                     <span>{copiedHost ? "Copied!" : "Copy Host"}</span>
@@ -243,7 +243,7 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
               </div>
 
               {/* CLI Command Box */}
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md space-y-1.5">
+              <div className="p-3 bg-app border border-line rounded-md space-y-1.5">
                 <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                   <div className="flex items-center gap-1.5">
                     <BsTerminalFill className="w-3.5 h-3.5 text-yellow-400" />
@@ -257,13 +257,13 @@ export const KnownHostsView: React.FC<KnownHostsViewProps> = ({
                     <span>{copiedCmd ? "Copied" : "Copy Command"}</span>
                   </button>
                 </div>
-                <pre className="p-2 bg-[#05070c] border border-[#1f2942] rounded font-mono text-emerald-400 text-xs select-all leading-snug">
+                <pre className="p-2 bg-well border border-line rounded font-mono text-emerald-400 text-xs select-all leading-snug">
                   {getCliRemoveCmd(selectedEntry.host)}
                 </pre>
               </div>
 
               {/* Secure Masked Key Preview */}
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md flex items-center justify-between">
+              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1 leading-none">
                     <BsLockFill className="w-3 h-3 text-yellow-400" />

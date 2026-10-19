@@ -65,9 +65,9 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-lg bg-[#0b0f19] border border-rose-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
+      <div className="w-full max-w-lg bg-panel border border-rose-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-[#1f2942] bg-[#140b12] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-line bg-[#140b12] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shadow-sm">
               <BsTrash3 className="w-4 h-4" />
@@ -96,7 +96,7 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
           {/* Key Summary Card */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-2">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BsKeyFill className="w-4 h-4 text-emerald-400" />
@@ -132,7 +132,7 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
               </p>
 
               {/* List of Affected Hosts */}
-              <div className="bg-[#070a10] border border-rose-500/20 rounded-lg divide-y divide-[#1f2942] max-h-36 overflow-y-auto">
+              <div className="bg-app border border-rose-500/20 rounded-lg divide-y divide-line max-h-36 overflow-y-auto">
                 {dependentHosts.map((h) => (
                   <div key={h.id} className="p-2 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -181,7 +181,7 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
           )}
 
           {/* Deletion Scope Explanation */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-1.5 text-gray-400 text-[11px]">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-1.5 text-gray-400 text-[11px]">
             <div className="font-semibold text-gray-300 flex items-center gap-1.5">
               <BsExclamationTriangleFill className="w-3 h-3 text-amber-400" />
               <span>Consequences of Deletion</span>
@@ -214,11 +214,11 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-[#1f2942] bg-[#0e1422] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3 border-t border-line bg-raised flex items-center justify-between shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
           >
             Cancel
           </button>

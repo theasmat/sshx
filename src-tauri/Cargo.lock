@@ -3496,6 +3496,7 @@ name = "sshx"
 version = "0.1.0"
 dependencies = [
  "dirs 7.0.0",
+ "libc",
  "serde",
  "serde_json",
  "tauri",

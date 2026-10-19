@@ -100,13 +100,13 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
 
   if (!host) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-6 text-center text-gray-500 select-none bg-[#0b0f19]">
-        <div className="w-10 h-10 rounded-xl bg-[#161d30] border border-[#232f4d] flex items-center justify-center text-gray-400 mb-2.5">
+      <div className="h-full flex flex-col items-center justify-center p-6 text-center text-gray-500 select-none bg-panel">
+        <div className="w-10 h-10 rounded-xl bg-control border border-line-strong flex items-center justify-center text-gray-400 mb-2.5">
           <BsServer className="w-5 h-5 opacity-60 text-blue-400" />
         </div>
         <p className="font-semibold text-gray-300 text-xs">No Host Selected</p>
         <p className="text-xs text-gray-500 mt-1 max-w-xs">
-          Select a host from the list or use <kbd className="bg-[#1c243a] px-1.5 py-0.5 rounded text-gray-400 font-mono text-[10px] border border-[#232f4d]">↑</kbd> <kbd className="bg-[#1c243a] px-1.5 py-0.5 rounded text-gray-400 font-mono text-[10px] border border-[#232f4d]">↓</kbd> to navigate.
+          Select a host from the list or use <kbd className="bg-hover px-1.5 py-0.5 rounded text-gray-400 font-mono text-[10px] border border-line-strong">↑</kbd> <kbd className="bg-hover px-1.5 py-0.5 rounded text-gray-400 font-mono text-[10px] border border-line-strong">↓</kbd> to navigate.
         </p>
       </div>
     );
@@ -192,10 +192,10 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
   };
 
   return (
-    <div className="h-full flex flex-col justify-between bg-[#0b0f19] border-l border-[#1f2942] select-none text-xs overflow-y-auto">
+    <div className="h-full flex flex-col justify-between bg-panel border-l border-line select-none text-xs overflow-y-auto">
       <div className="p-3 space-y-2.5">
         {/* Top Title & Header */}
-        <div className="space-y-1 pb-2 border-b border-[#1f2942]">
+        <div className="space-y-1 pb-2 border-b border-line">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[#131a29] border border-[#202c46] shrink-0 text-gray-200">
               <BrandLogo
@@ -217,7 +217,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
               {host.host_pattern}
             </h2>
             {host.group && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#161d30] text-gray-400 border border-[#232f4d] flex items-center gap-1 leading-none">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-control text-gray-400 border border-line-strong flex items-center gap-1 leading-none">
                 <BsFolder2Open className="w-3 h-3 text-amber-400" />
                 <span>{host.group}</span>
               </span>
@@ -240,7 +240,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
 
           <button
             onClick={handleCopy}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#161d30] hover:bg-[#1c243a] text-gray-200 rounded-md border border-[#232f4d] font-medium transition-colors cursor-pointer text-xs"
+            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium transition-colors cursor-pointer text-xs"
           >
             {copied ? (
               <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" />
@@ -252,7 +252,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
 
           <button
             onClick={() => onTest(host)}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#161d30] hover:bg-[#1c243a] text-gray-200 rounded-md border border-[#232f4d] font-medium transition-colors cursor-pointer text-xs"
+            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium transition-colors cursor-pointer text-xs"
           >
             <BsPlayFill className="w-3.5 h-3.5 text-amber-400" />
             <span>Test Connection</span>
@@ -261,7 +261,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
           {/* Setup & Auth Guide Trigger */}
           <button
             onClick={() => setGuideOpen(true)}
-            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#161d30] hover:bg-[#1c243a] text-emerald-300 rounded-md border border-emerald-500/30 font-medium transition-colors cursor-pointer text-xs"
+            className="flex items-center justify-center gap-1.5 py-1 px-2.5 bg-control hover:bg-hover text-emerald-300 rounded-md border border-emerald-500/30 font-medium transition-colors cursor-pointer text-xs"
             title="Open platform authorization steps and public key instructions"
           >
             <BsBook className="w-3.5 h-3.5 text-emerald-400" />
@@ -276,7 +276,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
                 <button
                   onClick={handleCopyPublicKey}
                   disabled={!matchedKey?.public_key_content}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
                   title="Copy the public key to register it in your provider's SSH settings"
                 >
                   {copiedPubKey ? (
@@ -289,7 +289,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
                 {gitProvider?.settingsUrl && (
                   <button
                     onClick={handleOpenProviderSettings}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer text-xs"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer text-xs"
                     title={`Open ${gitProvider.name} SSH key settings`}
                   >
                     <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
@@ -306,7 +306,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
             <button
               onClick={handleInstallKey}
               disabled={isInstallingKey}
-              className="col-span-2 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-[#121829] hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
+              className="col-span-2 flex items-center justify-center gap-1.5 py-1 px-2.5 bg-card hover:bg-[#1a233a] text-blue-300 rounded-md border border-blue-500/30 font-medium transition-colors cursor-pointer disabled:opacity-50 text-xs"
               title="Install public key onto remote server's ~/.ssh/authorized_keys"
             >
               <BsCloudUpload className="w-3.5 h-3.5 text-blue-400" />
@@ -337,7 +337,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
         )}
 
         {/* Command Line Preview Box */}
-        <div className="bg-[#070a10] border border-[#1f2942] rounded-md p-2 font-mono text-xs text-gray-300 relative group">
+        <div className="bg-app border border-line rounded-md p-2 font-mono text-xs text-gray-300 relative group">
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 leading-none">
             CLI Command
           </div>
@@ -401,7 +401,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
             Connection Parameters
           </div>
 
-          <div className="bg-[#0f1422] border border-[#1f2942] rounded-md divide-y divide-[#1f2942] text-xs">
+          <div className="bg-raised-2 border border-line rounded-md divide-y divide-line text-xs">
             <div className="flex items-center justify-between px-2.5 py-1.5">
               <span className="text-gray-400">HostName / IP</span>
               <span className="font-mono text-gray-200 font-medium">
@@ -456,7 +456,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
                 {host.local_forward.map((lf, i) => (
                   <div
                     key={i}
-                    className="font-mono text-xs text-emerald-300 bg-[#070a10] px-2 py-0.5 rounded border border-[#1f2942]"
+                    className="font-mono text-xs text-emerald-300 bg-app px-2 py-0.5 rounded border border-line"
                   >
                     {lf}
                   </div>
@@ -489,7 +489,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
               {host.tags.map((t) => (
                 <span
                   key={t}
-                  className="px-2 py-0.5 rounded bg-[#161d30] text-gray-300 border border-[#232f4d] text-xs leading-none"
+                  className="px-2 py-0.5 rounded bg-control text-gray-300 border border-line-strong text-xs leading-none"
                 >
                   #{t}
                 </span>
@@ -500,11 +500,11 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
       </div>
 
       {/* Bottom Bar: Edit / Duplicate / Delete */}
-      <div className="p-2.5 border-t border-[#1f2942] bg-[#070a10] flex items-center justify-between gap-2">
+      <div className="p-2.5 border-t border-line bg-app flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => onEdit(host)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#161d30] hover:bg-[#1c243a] text-gray-200 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
           >
             <BsPencilSquare className="w-3 h-3 text-blue-400" />
             <span>Edit</span>
@@ -512,7 +512,7 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
 
           <button
             onClick={() => onDuplicate(host)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#161d30] hover:bg-[#1c243a] text-gray-200 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-hover text-gray-200 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
           >
             <BsDuplicate className="w-3 h-3 text-yellow-400" />
             <span>Duplicate</span>

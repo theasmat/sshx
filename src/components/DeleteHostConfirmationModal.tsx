@@ -60,9 +60,9 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-md bg-[#0b0f19] border border-rose-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
+      <div className="w-full max-w-md bg-panel border border-rose-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-[#1f2942] bg-[#140b12] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-line bg-[#140b12] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shadow-sm">
               <BsTrash3 className="w-4 h-4" />
@@ -91,7 +91,7 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar">
           {/* Host Summary Card */}
-          <div className="p-3.5 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-2">
+          <div className="p-3.5 bg-app border border-line rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <BrandLogo
@@ -113,7 +113,7 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
               )}
             </div>
 
-            <div className="text-[11px] font-mono text-gray-300 bg-[#0e1422] p-2 rounded-lg border border-[#1c263c] space-y-1">
+            <div className="text-[11px] font-mono text-gray-300 bg-raised p-2 rounded-lg border border-[#1c263c] space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-500">Destination:</span>
                 <span className="text-gray-200">
@@ -191,7 +191,7 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
           )}
 
           {/* Auto-Backup Reassurance */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl flex items-start gap-2.5 text-gray-400 text-[11px]">
+          <div className="p-3 bg-app border border-line rounded-xl flex items-start gap-2.5 text-gray-400 text-[11px]">
             <BsExclamationTriangleFill className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold text-gray-200">Reversible Action</span>
@@ -203,11 +203,11 @@ export const DeleteHostConfirmationModal: React.FC<DeleteHostConfirmationModalPr
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-[#1f2942] bg-[#0e1422] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3 border-t border-line bg-raised flex items-center justify-between shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
           >
             Cancel
           </button>

@@ -26,6 +26,7 @@ import { DeleteKeyConfirmationModal } from "../components/DeleteKeyConfirmationM
 interface KeyManagementViewProps {
   keys: SshKeyInfo[];
   hosts?: SshHost[];
+  hostAccounts?: Record<string, string>;
   onRefresh: () => void;
   isLoading: boolean;
   initialCreateModalOpen?: boolean;
@@ -35,6 +36,7 @@ interface KeyManagementViewProps {
 export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
   keys,
   hosts = [],
+  hostAccounts,
   onRefresh,
   isLoading,
   initialCreateModalOpen = false,
@@ -185,9 +187,9 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
   const loadedCount = keys.filter((k) => k.is_agent_loaded).length;
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Header with Prominent Create Key Button */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5">
           <div className="w-5.5 h-5.5 rounded-md bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
             <BsKeyFill className="w-3 h-3" />
@@ -210,7 +212,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="p-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] transition-colors disabled:opacity-50 cursor-pointer"
+            className="p-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong transition-colors disabled:opacity-50 cursor-pointer"
             title="Refresh ~/.ssh/ keys"
           >
             <BsArrowClockwise
@@ -221,9 +223,9 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       </div>
 
       {/* Top Summary Status Bar (Clean & Space-Efficient) */}
-      <div className="px-3 py-1.5 border-b border-[#1f2942] bg-[#090d16]/70 shrink-0 flex items-center justify-between flex-wrap gap-2 text-xs">
+      <div className="px-3 py-1.5 border-b border-line bg-bar/70 shrink-0 flex items-center justify-between flex-wrap gap-2 text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0f1422] border border-[#1f2942] text-gray-300 text-xs">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-raised-2 border border-line text-gray-300 text-xs">
             <BsKeyFill className="w-3.5 h-3.5 text-blue-400 shrink-0" />
             <span className="font-bold text-white font-mono">{keys.length}</span>
             <span className="text-gray-400">
@@ -231,7 +233,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0f1422] border border-[#1f2942] text-gray-300 text-xs">
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-raised-2 border border-line text-gray-300 text-xs">
             <span
               className={`w-2 h-2 rounded-full ${
                 loadedCount > 0 ? "bg-emerald-400 ring-2 ring-emerald-400/20" : "bg-gray-500"
@@ -247,7 +249,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
           <span className="text-gray-400 text-xs">Default:</span>
           <button
             onClick={() => setIsAlgoModalOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#161d30] hover:bg-[#1f2942] text-purple-300 border border-purple-500/30 font-mono font-semibold text-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-control hover:bg-line text-purple-300 border border-purple-500/30 font-mono font-semibold text-xs transition-colors cursor-pointer"
             title="Click to switch preferred key algorithm"
           >
             <BsStars className="w-3 h-3 text-purple-400" />
@@ -260,15 +262,15 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       {/* Main Split View: Left List of Keys | Right Selected Key Detail (Persistent Side-by-Side) */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* Left Pane: Keys List */}
-        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-[#1f2942] bg-[#070a10]">
+        <div className="w-72 md:w-80 shrink-0 h-full flex flex-col border-r border-line bg-app">
           {/* Search bar */}
-          <div className="p-2 border-b border-[#1f2942] bg-[#090d16]">
+          <div className="p-2 border-b border-line bg-bar">
             <input
               type="text"
               placeholder="Filter keys by name, comment..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-7 px-2.5 text-xs bg-[#0f1422] border border-[#1f2942] rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              className="w-full h-7 px-2.5 text-xs bg-raised-2 border border-line rounded text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
           </div>
 
@@ -288,7 +290,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                     className={`group px-2.5 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                       isSelected
                         ? "bg-blue-600/15 border-l-2 border-blue-500 pl-2"
-                        : "hover:bg-[#121829]/60"
+                        : "hover:bg-card/60"
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -296,7 +298,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                         className={`w-6 h-6 rounded flex items-center justify-center shrink-0 border ${
                           isSelected
                             ? "bg-blue-600/20 text-blue-400 border-blue-500/40"
-                            : "bg-[#161d30] text-gray-400 border-[#232f4d]"
+                            : "bg-control text-gray-400 border-line-strong"
                         }`}
                       >
                         <BrandLogo
@@ -355,14 +357,14 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
         </div>
 
         {/* Right Pane: Selected Key Inspector Detail */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-[#0b0f19] p-3">
+        <div className="flex-1 min-w-0 h-full overflow-y-auto bg-panel p-3">
           {selectedKey ? (
             <div className="max-w-3xl mx-auto space-y-2.5">
               {/* Header Title & Badges */}
-              <div className="pb-2 border-b border-[#1f2942] flex items-center justify-between flex-wrap gap-2">
+              <div className="pb-2 border-b border-line flex items-center justify-between flex-wrap gap-2">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center bg-[#161d30] border border-[#232f4d] shrink-0 text-gray-300">
+                    <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
                       <BrandLogo
                         name={selectedKey.file_name}
                         hostName={selectedKey.comment}
@@ -408,7 +410,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
 
                   <button
                     onClick={() => handleCopyPath(selectedKey.private_path)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer whitespace-nowrap"
                     title="Copy absolute key file path"
                   >
                     {copiedPath ? (
@@ -437,6 +439,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 keyInfo={selectedKey}
                 keys={keys}
                 hosts={hosts}
+                hostAccounts={hostAccounts}
                 onRenamed={(newPath) => {
                   setSelectedKeyPath(newPath);
                   onRefresh();
@@ -444,7 +447,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
               />
 
               {/* Secure Privacy Box for Fingerprint (Masked) - Clean & Responsive */}
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md flex items-center justify-between gap-3">
+              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 leading-none">
                     <BsLockFill className="w-3 h-3 text-amber-400 shrink-0" />
@@ -459,7 +462,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                   onClick={() =>
                     handleCopyFingerprint(selectedKey.fingerprint_sha256)
                   }
-                  className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-amber-300 hover:text-white rounded-md border border-amber-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 bg-control hover:bg-line text-amber-300 hover:text-white rounded-md border border-amber-500/30 font-medium text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                   title="Copy full SHA256 fingerprint to clipboard"
                 >
                   {copiedFingerprint ? <BsCheckLg className="w-3.5 h-3.5 text-emerald-400" /> : <BsCopy className="w-3.5 h-3.5 text-amber-400" />}
@@ -468,7 +471,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
               </div>
 
               {/* Secure Public Key Card (Copy-Only for Privacy) - Clean & Responsive */}
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md flex items-center justify-between gap-3">
+              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 leading-none">
                     <BsShieldLock className="w-3 h-3 text-blue-400 shrink-0" />
@@ -497,7 +500,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
               </div>
 
               {/* Parameters Table */}
-              <div className="bg-[#0f1422] border border-[#1f2942] rounded-md divide-y divide-[#1f2942] text-xs">
+              <div className="bg-raised-2 border border-line rounded-md divide-y divide-line text-xs">
                 <div className="flex items-center justify-between px-2.5 py-1.5">
                   <span className="text-gray-400">Algorithm</span>
                   <span className="font-mono text-white font-semibold uppercase">
@@ -586,9 +589,9 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       {/* MODAL 1: CREATE KEY (Apple/Google Auth-Style Clean Modal) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl shadow-black/80 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl shadow-black/80 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Modal Header */}
-            <div className="p-5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+            <div className="p-5 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
                   <BsKeyFill className="w-5 h-5" />
@@ -607,7 +610,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
 
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                className="p-1 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
               >
                 <BsXLg className="w-4 h-4" />
               </button>
@@ -628,7 +631,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         keyType === "ed25519"
                           ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                          : "bg-app border-line text-gray-400 hover:text-gray-200"
                       }`}
                     >
                       <div className="text-xs">Ed25519</div>
@@ -641,7 +644,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         keyType === "rsa"
                           ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                          : "bg-app border-line text-gray-400 hover:text-gray-200"
                       }`}
                     >
                       <div className="text-xs">RSA</div>
@@ -654,7 +657,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                         keyType === "ecdsa"
                           ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold shadow-sm"
-                          : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                          : "bg-app border-line text-gray-400 hover:text-gray-200"
                       }`}
                     >
                       <div className="text-xs">ECDSA</div>
@@ -678,8 +681,8 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       placeholder="e.g. id_ed25519_github_work"
                       value={keyName}
                       onChange={(e) => setKeyName(e.target.value)}
-                      className={`w-full bg-[#070a10] border ${
-                        isModalKeyDuplicate ? "border-amber-500/60 text-amber-200" : "border-[#1f2942] text-white"
+                      className={`w-full bg-app border ${
+                        isModalKeyDuplicate ? "border-amber-500/60 text-amber-200" : "border-line text-white"
                       } rounded-xl pl-16 pr-3 py-2 font-mono text-xs focus:outline-none focus:border-blue-500`}
                     />
                   </div>
@@ -712,7 +715,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                     placeholder="e.g. your-email@company.com"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                    className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
                   />
                 </div>
 
@@ -728,7 +731,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                       placeholder="Enter passphrase to encrypt key"
                       value={passphrase}
                       onChange={(e) => setPassphrase(e.target.value)}
-                      className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl pl-3 pr-10 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600 font-mono"
+                      className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600 font-mono"
                     />
                     <button
                       type="button"
@@ -741,11 +744,11 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 </div>
 
                 {/* Modal Footer */}
-                <div className="pt-2 flex items-center justify-between border-t border-[#1f2942]">
+                <div className="pt-2 flex items-center justify-between border-t border-line">
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
+                    className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -776,7 +779,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                   </p>
                 </div>
 
-                <div className="p-3.5 bg-[#070a10] border border-[#1f2942] rounded-xl text-left space-y-1.5">
+                <div className="p-3.5 bg-app border border-line rounded-xl text-left space-y-1.5">
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
                     <BsShieldLock className="w-3 h-3 text-emerald-400" />
                     <span>Public Key Ready to Paste</span>
@@ -801,7 +804,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
 
                   <button
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-5 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
+                    className="px-5 py-2 bg-control hover:bg-line text-gray-200 rounded-xl font-semibold text-xs transition-colors cursor-pointer"
                   >
                     Done
                   </button>
@@ -815,8 +818,8 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       {/* MODAL 2: SWITCH DEFAULT ALGORITHM POPUP */}
       {isAlgoModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1f2942]">
+          <div className="w-full max-w-sm bg-[#0c101a] border border-line rounded-2xl shadow-2xl p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
               <div className="flex items-center gap-2">
                 <BsStars className="w-4 h-4 text-purple-400" />
                 <h3 className="font-bold text-white text-xs">Preferred Default Algorithm</h3>
@@ -835,7 +838,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                   defaultAlgo === "ed25519"
                     ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-[#070a10] border-[#1f2942] text-gray-300 hover:bg-[#161d30]"
+                    : "bg-app border-line text-gray-300 hover:bg-control"
                 }`}
               >
                 <div>
@@ -850,7 +853,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                   defaultAlgo === "rsa"
                     ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-[#070a10] border-[#1f2942] text-gray-300 hover:bg-[#161d30]"
+                    : "bg-app border-line text-gray-300 hover:bg-control"
                 }`}
               >
                 <div>
@@ -865,7 +868,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
                 className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                   defaultAlgo === "ecdsa"
                     ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                    : "bg-[#070a10] border-[#1f2942] text-gray-300 hover:bg-[#161d30]"
+                    : "bg-app border-line text-gray-300 hover:bg-control"
                 }`}
               >
                 <div>

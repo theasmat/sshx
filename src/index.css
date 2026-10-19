@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/* Surface/border palette; use bg-app, border-line, etc. instead of raw hex. */
+@theme {
+  --color-app: #070a10;
+  --color-panel: #0b0f19;
+  --color-bar: #090d16;
+  --color-raised: #0e1422;
+  --color-raised-2: #0f1422;
+  --color-card: #121829;
+  --color-control: #161d30;
+  --color-hover: #1c243a;
+  --color-line: #1f2942;
+  --color-line-strong: #232f4d;
+  --color-well: #05070c;
+}
+
+
 @layer base {
   :root {
     --bg-primary: #090d16;

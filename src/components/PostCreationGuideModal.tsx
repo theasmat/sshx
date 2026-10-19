@@ -389,9 +389,9 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-2xl bg-[#0b0f19] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
+      <div className="w-full max-w-2xl bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
         {/* Modal Header */}
-        <div className="px-5 py-3.5 border-b border-[#1f2942] bg-[#0e1422] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-line bg-raised flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
               <BsCheckCircleFill className="w-4 h-4" />
@@ -405,7 +405,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                   {safeHostPattern}
                 </span>
                 {preset?.badge && (
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#161d30] text-gray-300 border border-[#232f4d]">
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-control text-gray-300 border border-line-strong">
                     {preset.badge}
                   </span>
                 )}
@@ -418,7 +418,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-[#1c243a] transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-hover transition-colors cursor-pointer"
             title="Close (Esc)"
           >
             <BsXLg className="w-4 h-4" />
@@ -426,13 +426,13 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
         </div>
 
         {/* Stepper Progress Bar */}
-        <div className="px-5 py-2.5 bg-[#080c16] border-b border-[#1f2942] flex items-center justify-between shrink-0">
+        <div className="px-5 py-2.5 bg-[#080c16] border-b border-line flex items-center justify-between shrink-0">
           <div className="flex items-center gap-1.5 text-[11px]">
             <span
               className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
                 completedSteps[0]
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-[#161d30] text-gray-400"
+                  : "bg-control text-gray-400"
               }`}
             >
               <BsCheckLg className="w-3 h-3" />
@@ -443,7 +443,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
               className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
                 completedSteps[1]
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-[#161d30] text-gray-400"
+                  : "bg-control text-gray-400"
               }`}
             >
               <BsCopy className="w-3 h-3" />
@@ -454,7 +454,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
               className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
                 completedSteps[2]
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-[#161d30] text-gray-400"
+                  : "bg-control text-gray-400"
               }`}
             >
               <BsBoxArrowUpRight className="w-3 h-3" />
@@ -465,7 +465,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
               className={`flex items-center gap-1 px-2 py-0.5 rounded font-semibold ${
                 completedSteps[3]
                   ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                  : "bg-[#161d30] text-gray-400"
+                  : "bg-control text-gray-400"
               }`}
             >
               <BsPlayFill className="w-3.5 h-3.5" />
@@ -478,7 +478,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
         <div className="p-5 overflow-y-auto space-y-4 flex-1">
           {/* Edge Case: No Key Generated / Using SSH Agent Defaults */}
           {!hasKey && (
-            <div className="p-3.5 bg-[#0e1422] border border-blue-500/30 rounded-xl flex items-start gap-3 text-xs">
+            <div className="p-3.5 bg-raised border border-blue-500/30 rounded-xl flex items-start gap-3 text-xs">
               <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5">
                 <BsShieldLockFill className="w-4 h-4" />
               </div>
@@ -493,12 +493,12 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
           {/* Public Key Box (When key is present) */}
           {hasKey && (
-            <div className="p-3.5 bg-[#070a10] border border-blue-500/30 rounded-xl space-y-2.5">
+            <div className="p-3.5 bg-app border border-blue-500/30 rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-blue-300 font-semibold text-xs">
                   <BsKeyFill className="w-4 h-4 text-blue-400" />
                   <span>
-                    Your Public Key (<code className="font-mono text-white bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d]">{keyFileName}.pub</code>)
+                    Your Public Key (<code className="font-mono text-white bg-control px-1.5 py-0.5 rounded border border-line-strong">{keyFileName}.pub</code>)
                   </span>
                 </div>
                 <button
@@ -511,7 +511,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                 </button>
               </div>
 
-              <pre className="p-2.5 bg-[#04060a] border border-[#1f2942] rounded-lg font-mono text-[11px] text-emerald-400 overflow-x-auto leading-relaxed select-all">
+              <pre className="p-2.5 bg-[#04060a] border border-line rounded-lg font-mono text-[11px] text-emerald-400 overflow-x-auto leading-relaxed select-all">
                 {pubKey}
               </pre>
 
@@ -543,10 +543,10 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
           )}
 
           {/* Platform Step-by-Step Instructions */}
-          <div className="p-4 bg-[#0e1422] border border-[#1f2942] rounded-xl space-y-3">
+          <div className="p-4 bg-raised border border-line rounded-xl space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded flex items-center justify-center bg-[#161d30] border border-[#232f4d]">
+                <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong">
                   <BrandLogo
                     name={safeHostPattern}
                     hostName={safeHostName}
@@ -592,7 +592,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                       className={`p-2 rounded-lg border flex items-start gap-2.5 transition-colors cursor-pointer ${
                         isChecked
                           ? "bg-emerald-500/5 border-emerald-500/20 text-gray-300"
-                          : "bg-[#070a10] border-[#1f2942] text-gray-200 hover:border-[#2a375a]"
+                          : "bg-app border-line text-gray-200 hover:border-[#2a375a]"
                       }`}
                     >
                       <div className="mt-0.5 text-emerald-400 shrink-0">
@@ -609,7 +609,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
           {/* 1-Click Remote Key Installation (ssh-copy-id) for Cloud / Homelab / Bastion */}
           {!guideData.skipKeyInstall && hasKey && (
-            <div className="p-3.5 bg-[#0e1422] border border-[#1f2942] rounded-xl space-y-2.5">
+            <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BsCloudUploadFill className="w-4 h-4 text-blue-400" />
@@ -690,13 +690,13 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
               <div className="space-y-1">
                 <div className="text-gray-400 font-semibold text-[10px]">Manual Fallback Command (Bypasses Config Parser):</div>
                 <div className="flex items-center gap-2">
-                  <pre className="p-2 bg-[#070a10] border border-[#1f2942] text-emerald-400 font-mono text-[10px] rounded-lg overflow-x-auto flex-1 leading-snug">
+                  <pre className="p-2 bg-app border border-line text-emerald-400 font-mono text-[10px] rounded-lg overflow-x-auto flex-1 leading-snug">
                     {manualSshInstallCmd}
                   </pre>
                   <button
                     type="button"
                     onClick={() => handleCopyManualCmd(manualSshInstallCmd)}
-                    className="px-2.5 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
+                    className="px-2.5 py-2 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
                   >
                     {copiedManualCmd ? "Copied" : "Copy"}
                   </button>
@@ -706,7 +706,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
           )}
 
           {/* In-App "Test Connection" Button */}
-          <div className="p-3.5 bg-[#0e1422] border border-[#1f2942] rounded-xl space-y-2.5">
+          <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BsTerminalFill className="w-3.5 h-3.5 text-amber-400" />
@@ -716,7 +716,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCopyTestCmd}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] text-[11px] font-medium transition-colors cursor-pointer"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong text-[11px] font-medium transition-colors cursor-pointer"
                 >
                   {copiedTestCmd ? <BsCheckLg className="w-3 h-3 text-emerald-400" /> : <BsCopy className="w-3 h-3" />}
                   <span>{copiedTestCmd ? "Copied" : "Copy Command"}</span>
@@ -733,7 +733,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
               </div>
             </div>
 
-            <pre className="p-2 bg-[#070a10] border border-[#1f2942] rounded-lg font-mono text-[11px] text-emerald-400">
+            <pre className="p-2 bg-app border border-line rounded-lg font-mono text-[11px] text-emerald-400">
               $ {testCmdString}
             </pre>
 
@@ -792,7 +792,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                         <button
                           type="button"
                           onClick={onOpenRawConfig}
-                          className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-amber-300 border border-amber-500/30 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
+                          className="px-2.5 py-1.5 bg-control hover:bg-line text-amber-300 border border-amber-500/30 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
                         >
                           Fix in Config Editor
                         </button>
@@ -815,7 +815,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                       <button
                         type="button"
                         onClick={handleCopyPubKey}
-                        className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                        className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <BsCopy className="w-3 h-3 text-emerald-400" />
                         <span>Copy Public Key</span>
@@ -854,7 +854,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
           {/* Git Remote Rewrite Guidance (Multi-Account) */}
           {guideData.gitRemoteRewrite && (
-            <div className="p-3.5 bg-[#0e1422] border border-[#1f2942] rounded-xl space-y-2.5">
+            <div className="p-3.5 bg-raised border border-line rounded-xl space-y-2.5">
               <div className="flex items-center gap-2 text-white font-bold text-xs">
                 <BsGit className="w-4 h-4 text-orange-400" />
                 <span>Using This Profile with Git (Multi-Account Setup)</span>
@@ -867,13 +867,13 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                 <div>
                   <div className="text-[10px] font-semibold text-gray-400 mb-1">Clone a new repository:</div>
                   <div className="flex items-center gap-2">
-                    <code className="p-2 bg-[#070a10] border border-[#1f2942] rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
+                    <code className="p-2 bg-app border border-line rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
                       {replaceVars(guideData.gitRemoteRewrite.example)}
                     </code>
                     <button
                       type="button"
                       onClick={() => handleCopyClone(replaceVars(guideData.gitRemoteRewrite!.example))}
-                      className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
+                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
                     >
                       {copiedCloneCmd ? "Copied" : "Copy"}
                     </button>
@@ -883,7 +883,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                 <div>
                   <div className="text-[10px] font-semibold text-gray-400 mb-1">Switch an existing repository to this profile:</div>
                   <div className="flex items-center gap-2">
-                    <code className="p-2 bg-[#070a10] border border-[#1f2942] rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
+                    <code className="p-2 bg-app border border-line rounded-lg font-mono text-[10px] text-emerald-400 flex-1 overflow-x-auto">
                       git remote set-url origin {replaceVars(guideData.gitRemoteRewrite.pattern)}username/repo.git
                     </code>
                     <button
@@ -895,7 +895,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
                           )}username/repo.git`
                         )
                       }
-                      className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-200 border border-[#232f4d] rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
+                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-200 border border-line-strong rounded-lg text-[10px] font-medium transition-colors cursor-pointer shrink-0"
                     >
                       {copiedRemoteCmd ? "Copied" : "Copy"}
                     </button>
@@ -920,7 +920,7 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
 
           {/* Warnings Section */}
           {Array.isArray(guideData.warnings) && guideData.warnings.length > 0 && (
-            <div className="p-3 bg-[#080c16] border border-[#1f2942] rounded-xl space-y-1.5 text-xs">
+            <div className="p-3 bg-[#080c16] border border-line rounded-xl space-y-1.5 text-xs">
               <div className="text-gray-400 font-semibold text-[10px] uppercase tracking-wider">
                 Important Tips & Edge Cases
               </div>
@@ -934,11 +934,11 @@ export const PostCreationGuideModal: React.FC<PostCreationGuideModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="px-5 py-3 border-t border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3 border-t border-line bg-bar flex items-center justify-between shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 hover:text-white rounded-xl font-medium transition-colors cursor-pointer text-xs"
+            className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-xl font-medium transition-colors cursor-pointer text-xs"
           >
             Done
           </button>

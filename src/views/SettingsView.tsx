@@ -452,9 +452,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const zoomPresets = [80, 90, 100, 110, 120, 130];
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-blue-600/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
             <BsGear className="w-3.5 h-3.5" />
@@ -476,16 +476,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="flex-1 overflow-y-auto p-3.5">
         <div className="max-w-3xl mx-auto space-y-3">
           {/* Section 1: UI Scaling & Zoom Controls */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1f2942]">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
               <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
                 <BsZoomIn className="w-3.5 h-3.5 text-blue-400" />
                 <span>UI Scaling & Zoom</span>
               </div>
               <div className="flex items-center gap-1 text-[11px] text-gray-400 font-mono">
-                <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] text-gray-300">Cmd +</kbd>
-                <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] text-gray-300">Cmd -</kbd>
-                <kbd className="bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d] text-gray-300">Cmd 0</kbd>
+                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd +</kbd>
+                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd -</kbd>
+                <kbd className="bg-control px-1.5 py-0.5 rounded border border-line-strong text-gray-300">Cmd 0</kbd>
               </div>
             </div>
 
@@ -503,7 +503,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       className={`px-2.5 py-1 rounded-md text-xs font-semibold font-mono transition-colors border cursor-pointer ${
                         zoomLevel === lvl
                           ? "bg-blue-600 text-white border-blue-500 shadow-sm"
-                          : "bg-[#070a10] text-gray-400 border-[#1f2942] hover:text-gray-200 hover:bg-[#161d30]"
+                          : "bg-app text-gray-400 border-line hover:text-gray-200 hover:bg-control"
                       }`}
                     >
                       {lvl}%
@@ -516,7 +516,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetZoom((prev: number) => Math.max(prev - 10, 70))}
-                  className="p-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] cursor-pointer"
+                  className="p-2 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong cursor-pointer"
                   title="Zoom Out (Cmd -)"
                 >
                   <BsZoomOut className="w-3.5 h-3.5" />
@@ -529,7 +529,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetZoom((prev: number) => Math.min(prev + 10, 150))}
-                  className="p-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] cursor-pointer"
+                  className="p-2 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong cursor-pointer"
                   title="Zoom In (Cmd +)"
                 >
                   <BsZoomIn className="w-3.5 h-3.5" />
@@ -538,7 +538,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onSetZoom(100)}
-                  className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-400 hover:text-gray-200 rounded-md border border-[#232f4d] text-xs font-medium cursor-pointer"
+                  className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-400 hover:text-gray-200 rounded-md border border-line-strong text-xs font-medium cursor-pointer"
                   title="Reset to default (Cmd 0)"
                 >
                   Reset
@@ -548,8 +548,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Section 2: Encrypted Backup & Restore (.sshx) */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1f2942]">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
               <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
                 <BsFileEarmarkLock2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Password-Encrypted Backup & Restore (.sshx)</span>
@@ -568,7 +568,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={handleStartExport}
-                className="p-3 bg-[#070a10] hover:bg-[#121829] border border-[#1f2942] hover:border-blue-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
+                className="p-3 bg-app hover:bg-card border border-line hover:border-blue-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
               >
                 <div className="space-y-0.5">
                   <div className="font-semibold text-white text-xs flex items-center gap-1.5 group-hover:text-blue-400 transition-colors">
@@ -586,7 +586,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="p-3 bg-[#070a10] hover:bg-[#121829] border border-[#1f2942] hover:border-emerald-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
+                className="p-3 bg-app hover:bg-card border border-line hover:border-emerald-500/40 rounded-lg text-left transition-all flex items-center justify-between cursor-pointer group"
               >
                 <div className="space-y-0.5">
                   <div className="font-semibold text-white text-xs flex items-center gap-1.5 group-hover:text-emerald-400 transition-colors">
@@ -611,8 +611,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Section 3: Terminal Launcher Target */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-[#1f2942] text-gray-300 font-semibold text-xs">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
               <BsTerminalFill className="w-3.5 h-3.5 text-blue-400" />
               <span>Default Terminal Launcher</span>
             </div>
@@ -637,11 +637,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       className={`p-2.5 rounded-lg border text-left flex items-center justify-between transition-all cursor-pointer ${
                         isSelected
                           ? "bg-blue-600/20 border-blue-500 text-blue-300 font-semibold shadow-sm"
-                          : "bg-[#070a10] border-[#1f2942] text-gray-300 hover:bg-[#161d30]"
+                          : "bg-app border-line text-gray-300 hover:bg-control"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 rounded flex items-center justify-center bg-[#161d30] border border-[#232f4d] shrink-0 text-gray-300">
+                        <div className="w-6 h-6 rounded flex items-center justify-center bg-control border border-line-strong shrink-0 text-gray-300">
                           <BrandLogo
                             name={t.name}
                             className="w-3.5 h-3.5"
@@ -667,8 +667,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Section 4: SSH Key Generation Defaults */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-[#1f2942] text-gray-300 font-semibold text-xs">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
               <BsKeyFill className="w-3.5 h-3.5 text-purple-400" />
               <span>SSH Key Generation Defaults</span>
             </div>
@@ -685,7 +685,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
                       defaultAlgo === "ed25519"
                         ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                        : "bg-app border-line text-gray-400 hover:text-gray-200"
                     }`}
                   >
                     <div className="text-xs">Ed25519</div>
@@ -698,7 +698,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
                       defaultAlgo === "rsa"
                         ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                        : "bg-app border-line text-gray-400 hover:text-gray-200"
                     }`}
                   >
                     <div className="text-xs">RSA</div>
@@ -711,7 +711,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`p-2 rounded-lg border text-center transition-all cursor-pointer ${
                       defaultAlgo === "ecdsa"
                         ? "bg-purple-600/20 border-purple-500 text-purple-300 font-bold"
-                        : "bg-[#070a10] border-[#1f2942] text-gray-400 hover:text-gray-200"
+                        : "bg-app border-line text-gray-400 hover:text-gray-200"
                     }`}
                   >
                     <div className="text-xs">ECDSA</div>
@@ -728,15 +728,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="number"
                   value={defaultPort}
                   onChange={(e) => handlePortChange(parseInt(e.target.value, 10) || 22)}
-                  className="w-28 bg-[#070a10] border border-[#1f2942] rounded px-2.5 py-1 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                  className="w-28 bg-app border border-line rounded px-2.5 py-1 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 5: Safety, Automated Snapshots & Backups */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1f2942]">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
               <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
                 <BsShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Safety & Automated Snapshots</span>
@@ -745,7 +745,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={handleOpenSnapshotsModal}
-                className="flex items-center gap-1.5 px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-amber-300 rounded-md border border-amber-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1 bg-control hover:bg-line text-amber-300 rounded-md border border-amber-500/30 text-xs font-semibold transition-colors cursor-pointer"
               >
                 <BsClockHistory className="w-3.5 h-3.5 text-amber-400" />
                 <span>Manage Local Snapshots</span>
@@ -760,7 +760,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             )}
 
             {/* Active Device Snapshot Card */}
-            <div className="p-3 bg-[#070a10] border border-emerald-500/30 rounded-lg space-y-2.5">
+            <div className="p-3 bg-app border border-emerald-500/30 rounded-lg space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -793,7 +793,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       type="button"
                       onClick={() => handlePreviewSnapshot("config.sshx.bak")}
                       disabled={isLoadingSnapshotPreview}
-                      className="px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 hover:text-white rounded-md border border-[#232f4d] text-xs font-medium transition-colors cursor-pointer"
+                      className="px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-md border border-line-strong text-xs font-medium transition-colors cursor-pointer"
                     >
                       Preview
                     </button>
@@ -829,7 +829,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <div className="space-y-2 text-xs">
-              <label className="flex items-center justify-between p-3 bg-[#070a10] border border-[#1f2942] rounded-md cursor-pointer">
+              <label className="flex items-center justify-between p-3 bg-app border border-line rounded-md cursor-pointer">
                 <div className="space-y-0.5">
                   <div className="font-semibold text-white text-xs">Auto-Backup Before Modifications</div>
                   <div className="text-xs text-gray-400">
@@ -840,11 +840,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="checkbox"
                   checked={autoBackup}
                   onChange={(e) => handleToggleAutoBackup(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#1f2942] bg-[#0b0f19] text-blue-600 focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-line bg-panel text-blue-600 focus:ring-0 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-3 bg-[#070a10] border border-[#1f2942] rounded-md cursor-pointer">
+              <label className="flex items-center justify-between p-3 bg-app border border-line rounded-md cursor-pointer">
                 <div className="space-y-0.5">
                   <div className="font-semibold text-white text-xs">Screen Privacy Masking</div>
                   <div className="text-xs text-gray-400">
@@ -855,21 +855,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="checkbox"
                   checked={privacyMask}
                   onChange={(e) => handleTogglePrivacyMask(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#1f2942] bg-[#0b0f19] text-blue-600 focus:ring-0 cursor-pointer"
+                  className="w-4 h-4 rounded border-line bg-panel text-blue-600 focus:ring-0 cursor-pointer"
                 />
               </label>
             </div>
           </div>
 
           {/* Section 6: System Paths */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center gap-2 pb-2 border-b border-[#1f2942] text-gray-300 font-semibold text-xs">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center gap-2 pb-2 border-b border-line text-gray-300 font-semibold text-xs">
               <BsFolder2Open className="w-3.5 h-3.5 text-amber-400" />
               <span>System SSH Directories & Configs</span>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2.5 bg-[#070a10] border border-[#1f2942] rounded-md">
+              <div className="flex items-center justify-between p-2.5 bg-app border border-line rounded-md">
                 <div className="space-y-0.5">
                   <div className="text-gray-400 text-[10px] font-semibold uppercase leading-none">Config File</div>
                   <div className="font-mono text-white text-xs">~/.ssh/config</div>
@@ -877,7 +877,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopyPath("~/.ssh/config")}
-                  className="p-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded border border-[#232f4d] cursor-pointer"
+                  className="p-1.5 bg-control hover:bg-line text-gray-300 rounded border border-line-strong cursor-pointer"
                   title="Copy path"
                 >
                   {copiedPath === "~/.ssh/config" ? (
@@ -888,7 +888,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-2.5 bg-[#070a10] border border-[#1f2942] rounded-md">
+              <div className="flex items-center justify-between p-2.5 bg-app border border-line rounded-md">
                 <div className="space-y-0.5">
                   <div className="text-gray-400 text-[10px] font-semibold uppercase leading-none">Known Hosts File</div>
                   <div className="font-mono text-white text-xs">~/.ssh/known_hosts</div>
@@ -896,7 +896,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopyPath("~/.ssh/known_hosts")}
-                  className="p-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded border border-[#232f4d] cursor-pointer"
+                  className="p-1.5 bg-control hover:bg-line text-gray-300 rounded border border-line-strong cursor-pointer"
                   title="Copy path"
                 >
                   {copiedPath === "~/.ssh/known_hosts" ? (
@@ -910,8 +910,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Section 7: Software Updates & GitHub Auto-Updater */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-lg space-y-2.5">
-            <div className="flex items-center justify-between pb-2 border-b border-[#1f2942]">
+          <div className="p-3.5 bg-panel border border-line rounded-lg space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-line">
               <div className="flex items-center gap-2 text-gray-300 font-semibold text-xs">
                 <BsCloudArrowDownFill className="w-3.5 h-3.5 text-blue-400" />
                 <span>Software Updates & Auto-Updater</span>
@@ -923,7 +923,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-md flex items-center justify-between gap-3">
+              <div className="p-3 bg-app border border-line rounded-md flex items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white text-xs">SSHX Desktop App</span>
@@ -970,7 +970,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </button>
                   </div>
                   {availableUpdate.body && (
-                    <p className="text-gray-300 text-[11px] font-mono whitespace-pre-wrap bg-[#070a10] p-2 rounded border border-[#1f2942]">
+                    <p className="text-gray-300 text-[11px] font-mono whitespace-pre-wrap bg-app p-2 rounded border border-line">
                       {availableUpdate.body}
                     </p>
                   )}
@@ -983,7 +983,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <span>Downloading update...</span>
                     <span>{downloadProgress}%</span>
                   </div>
-                  <div className="w-full h-2 bg-[#070a10] rounded-full overflow-hidden border border-[#1f2942]">
+                  <div className="w-full h-2 bg-app rounded-full overflow-hidden border border-line">
                     <div
                       className="h-full bg-blue-500 transition-all duration-200"
                       style={{ width: `${downloadProgress}%` }}
@@ -1014,7 +1014,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           {/* Section 8: About SSHX */}
-          <div className="p-3 bg-[#090d16] border border-[#1f2942] rounded-lg flex items-center justify-between">
+          <div className="p-3 bg-bar border border-line rounded-lg flex items-center justify-between">
             <div className="flex items-center gap-3">
               <SshxLogo variant="icon" size={36} macStyle={true} />
               <div>
@@ -1025,7 +1025,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            <span className="text-[10px] px-2 py-0.5 rounded bg-[#161d30] text-blue-400 border border-blue-500/30 font-medium font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-control text-blue-400 border border-blue-500/30 font-medium font-mono">
               v1.0.0
             </span>
           </div>
@@ -1035,8 +1035,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* MODAL 1: EXPORT ENCRYPTED .SSHX BACKUP */}
       {isExportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+          <div className="w-full max-w-md bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center">
                   <BsShieldLock className="w-4 h-4" />
@@ -1055,7 +1055,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             <form onSubmit={handlePerformExport} className="p-5 space-y-4 text-xs">
-              <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-1">
+              <div className="p-3 bg-app border border-line rounded-xl space-y-1">
                 <div className="text-gray-300 font-semibold text-xs flex items-center gap-1.5">
                   <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Backup Contents</span>
@@ -1083,7 +1083,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     placeholder="Enter strong password..."
                     value={exportPassword}
                     onChange={(e) => setExportPassword(e.target.value)}
-                    className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                    className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                   />
                   <button
                     type="button"
@@ -1105,15 +1105,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   placeholder="Re-enter password..."
                   value={exportConfirmPass}
                   onChange={(e) => setExportConfirmPass(e.target.value)}
-                  className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
+                  className="w-full bg-app border border-line rounded-xl px-3 py-2 text-white font-mono text-xs focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="pt-2 flex items-center justify-between border-t border-[#1f2942]">
+              <div className="pt-2 flex items-center justify-between border-t border-line">
                 <button
                   type="button"
                   onClick={() => setIsExportModalOpen(false)}
-                  className="px-4 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-xl font-medium cursor-pointer"
+                  className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1135,8 +1135,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* MODAL 2: RESTORE FROM .SSHX BACKUP */}
       {isRestoreModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+          <div className="w-full max-w-md bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
                   <BsFileEarmarkLock2 className="w-4 h-4" />
@@ -1185,7 +1185,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         placeholder="Enter password..."
                         value={restorePassword}
                         onChange={(e) => setRestorePassword(e.target.value)}
-                        className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
+                        className="w-full bg-app border border-line rounded-xl pl-3 pr-10 py-2 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
                       />
                       <button
                         type="button"
@@ -1197,11 +1197,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-2 flex items-center justify-between border-t border-[#1f2942]">
+                  <div className="pt-2 flex items-center justify-between border-t border-line">
                     <button
                       type="button"
                       onClick={() => setIsRestoreModalOpen(false)}
-                      className="px-4 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-xl font-medium cursor-pointer"
+                      className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1219,7 +1219,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               ) : (
                 /* Decrypted contents summary & execution */
                 <div className="space-y-3.5">
-                  <div className="p-3 bg-[#070a10] border border-emerald-500/30 rounded-xl space-y-2">
+                  <div className="p-3 bg-app border border-emerald-500/30 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-emerald-400 font-semibold text-xs flex items-center gap-1">
                         <BsCheckCircleFill className="w-3.5 h-3.5" />
@@ -1231,14 +1231,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1 font-mono text-xs">
-                      <div className="p-2 bg-[#0b0f19] border border-[#1f2942] rounded-lg text-center">
+                      <div className="p-2 bg-panel border border-line rounded-lg text-center">
                         <div className="text-lg font-bold text-white">
                           {decryptedPreview.metadata.hostsCount}
                         </div>
                         <div className="text-[10px] text-gray-400 font-sans">SSH Hosts</div>
                       </div>
 
-                      <div className="p-2 bg-[#0b0f19] border border-[#1f2942] rounded-lg text-center">
+                      <div className="p-2 bg-panel border border-line rounded-lg text-center">
                         <div className="text-lg font-bold text-white">
                           {decryptedPreview.metadata.knownHostsCount}
                         </div>
@@ -1251,11 +1251,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     Restoring this backup will update your <code className="text-emerald-400 font-mono">~/.ssh/config</code> and <code className="text-emerald-400 font-mono">~/.ssh/known_hosts</code>. An automated safety backup of your current configuration will be saved first.
                   </p>
 
-                  <div className="pt-2 flex items-center justify-between border-t border-[#1f2942]">
+                  <div className="pt-2 flex items-center justify-between border-t border-line">
                     <button
                       type="button"
                       onClick={() => setIsRestoreModalOpen(false)}
-                      className="px-4 py-2 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-xl font-medium cursor-pointer"
+                      className="px-4 py-2 bg-control hover:bg-line text-gray-300 rounded-xl font-medium cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1280,8 +1280,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* MODAL 3: LOCAL DEVICE SNAPSHOTS LIST */}
       {isLocalSnapshotsModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
                   <BsClockHistory className="w-4 h-4" />
@@ -1299,7 +1299,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   onClick={loadAllSnapshots}
                   disabled={isLoadingAllSnapshots}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
                   title="Refresh snapshots"
                 >
                   <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoadingAllSnapshots ? "animate-spin" : ""}`} />
@@ -1307,7 +1307,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsLocalSnapshotsModalOpen(false)}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
                 >
                   <BsXLg className="w-4 h-4" />
                 </button>
@@ -1331,7 +1331,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
                       snap.is_primary
                         ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500/60 shadow-sm"
-                        : "bg-[#070a10] hover:bg-[#0f1422] border-[#1f2942]"
+                        : "bg-app hover:bg-raised-2 border-line"
                     }`}
                   >
                     <div className="space-y-1 min-w-0 flex-1">
@@ -1366,7 +1366,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         type="button"
                         onClick={() => handlePreviewSnapshot(snap.filename)}
                         disabled={isLoadingSnapshotPreview}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 hover:text-white border border-[#232f4d] rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white border border-line-strong rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
                       >
                         <BsEye className="w-3 h-3 text-cyan-400" />
                         <span>Preview</span>
@@ -1389,7 +1389,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               )}
             </div>
 
-            <div className="p-3 border-t border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
@@ -1404,7 +1404,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsLocalSnapshotsModalOpen(false)}
-                className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -1416,8 +1416,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* MODAL 4: SNAPSHOT PREVIEW MODAL */}
       {snapshotPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+          <div className="w-full max-w-2xl bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
                   <BsEye className="w-4 h-4" />
@@ -1432,23 +1432,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSnapshotPreview(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
               >
                 <BsXLg className="w-4 h-4" />
               </button>
             </div>
 
             <div className="flex-1 p-3 overflow-hidden">
-              <pre className="h-full max-h-[50vh] p-3 bg-[#05070c] border border-[#1f2942] rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
+              <pre className="h-full max-h-[50vh] p-3 bg-well border border-line rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
                 {snapshotPreview.content || "# (Empty file)"}
               </pre>
             </div>
 
-            <div className="p-3 border-t border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setSnapshotPreview(null)}
-                className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
               >
                 Close Preview
               </button>

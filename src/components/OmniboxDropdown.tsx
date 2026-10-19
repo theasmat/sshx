@@ -111,18 +111,18 @@ export const OmniboxDropdown: React.FC<OmniboxDropdownProps> = ({
       case "page":
         return "bg-gray-500/10 text-gray-300 border-gray-500/30";
       default:
-        return "bg-[#161d30] text-gray-400 border-[#232f4d]";
+        return "bg-control text-gray-400 border-line-strong";
     }
   };
 
   return (
     <div
       ref={containerRef}
-      className="absolute top-full left-0 right-0 mt-1.5 bg-[#090d16]/95 backdrop-blur-md border border-[#1f2942] rounded-xl shadow-2xl shadow-black/80 z-50 overflow-hidden text-xs animate-in fade-in slide-in-from-top-1 duration-150"
+      className="absolute top-full left-0 right-0 mt-1.5 bg-bar/95 backdrop-blur-md border border-line rounded-xl shadow-2xl shadow-black/80 z-50 overflow-hidden text-xs animate-in fade-in slide-in-from-top-1 duration-150"
       style={{ minWidth: "460px" }}
     >
       {/* Top Header Label */}
-      <div className="px-3 py-1.5 border-b border-[#1f2942] bg-[#0c101c] flex items-center justify-between text-[11px] text-gray-400">
+      <div className="px-3 py-1.5 border-b border-line bg-[#0c101c] flex items-center justify-between text-[11px] text-gray-400">
         <span className="font-semibold uppercase tracking-wider text-gray-300">
           Smart Suggestions & Actions
         </span>
@@ -144,12 +144,12 @@ export const OmniboxDropdown: React.FC<OmniboxDropdownProps> = ({
               className={`p-2 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
                 isSelected
                   ? "bg-[#131a2c] border-blue-500/50 shadow-sm"
-                  : "bg-[#070a10] hover:bg-[#0f1524] border-transparent"
+                  : "bg-app hover:bg-[#0f1524] border-transparent"
               }`}
             >
               {/* Left Icon + Title & Note */}
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="w-7 h-7 rounded-lg bg-[#161d30] border border-[#232f4d] flex items-center justify-center shrink-0 shadow-inner">
+                <div className="w-7 h-7 rounded-lg bg-control border border-line-strong flex items-center justify-center shrink-0 shadow-inner">
                   {renderItemIcon(item)}
                 </div>
 
@@ -201,17 +201,17 @@ export const OmniboxDropdown: React.FC<OmniboxDropdownProps> = ({
       </div>
 
       {/* Bottom Hint Footer */}
-      <div className="px-3 py-1.5 border-t border-[#1f2942] bg-[#070a10] flex items-center justify-between text-[10px] text-gray-500">
+      <div className="px-3 py-1.5 border-t border-line bg-app flex items-center justify-between text-[10px] text-gray-500">
         <div className="flex items-center gap-3">
           <span>
-            <kbd className="bg-[#161d30] px-1 py-0.5 rounded border border-[#232f4d] text-gray-300">↑</kbd>{" "}
-            <kbd className="bg-[#161d30] px-1 py-0.5 rounded border border-[#232f4d] text-gray-300">↓</kbd> Navigate
+            <kbd className="bg-control px-1 py-0.5 rounded border border-line-strong text-gray-300">↑</kbd>{" "}
+            <kbd className="bg-control px-1 py-0.5 rounded border border-line-strong text-gray-300">↓</kbd> Navigate
           </span>
           <span>
-            <kbd className="bg-[#161d30] px-1 py-0.5 rounded border border-[#232f4d] text-gray-300">↵</kbd> Select Action
+            <kbd className="bg-control px-1 py-0.5 rounded border border-line-strong text-gray-300">↵</kbd> Select Action
           </span>
           <span>
-            <kbd className="bg-[#161d30] px-1 py-0.5 rounded border border-[#232f4d] text-gray-300">esc</kbd> Dismiss
+            <kbd className="bg-control px-1 py-0.5 rounded border border-line-strong text-gray-300">esc</kbd> Dismiss
           </span>
         </div>
         <span className="text-gray-600">SSHX Omnibox Engine</span>

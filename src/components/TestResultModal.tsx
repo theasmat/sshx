@@ -91,9 +91,9 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none">
-      <div className="bg-[#0c101a] border border-[#1f2942] rounded-2xl w-full max-w-lg p-5 shadow-2xl text-xs space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-[#0c101a] border border-line rounded-2xl w-full max-w-lg p-5 shadow-2xl text-xs space-y-4 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1f2942] pb-3">
+        <div className="flex items-center justify-between border-b border-line pb-3">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white text-sm">
               SSH Test: <span className="font-mono text-blue-400">{hostAlias}</span>
@@ -101,7 +101,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-[#161d30] cursor-pointer"
+            className="text-gray-400 hover:text-white p-1 rounded-md hover:bg-control cursor-pointer"
           >
             <BsXLg className="w-3.5 h-3.5" />
           </button>
@@ -226,7 +226,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
               <div className="text-gray-400 text-[10px] uppercase font-semibold mb-1 tracking-wider">
                 CLI Command Output:
               </div>
-              <pre className="bg-[#070a10] border border-[#1f2942] rounded-xl p-3 font-mono text-[11px] text-gray-300 max-h-44 overflow-y-auto whitespace-pre-wrap select-all leading-relaxed">
+              <pre className="bg-app border border-line rounded-xl p-3 font-mono text-[11px] text-gray-300 max-h-44 overflow-y-auto whitespace-pre-wrap select-all leading-relaxed">
                 {result.output || "(no output received from remote host)"}
               </pre>
             </div>
@@ -234,12 +234,12 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
         ) : null}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-1 border-t border-[#1f2942]">
+        <div className="flex items-center justify-between pt-1 border-t border-line">
           {onRetest && result && (
             <button
               onClick={() => onRetest(hostAlias)}
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium transition-colors text-xs border border-[#232f4d] cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium transition-colors text-xs border border-line-strong cursor-pointer"
             >
               <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
               <span>Retest</span>

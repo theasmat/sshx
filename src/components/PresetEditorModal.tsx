@@ -203,9 +203,9 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-xl bg-[#0b0f19] border border-purple-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
+      <div className="w-full max-w-xl bg-panel border border-purple-500/40 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] text-xs">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-[#1f2942] bg-[#110d1c] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-line bg-[#110d1c] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shadow-sm">
               <BsBookmarkStarFill className="w-4 h-4" />
@@ -236,7 +236,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
         {/* Modal Form Body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           {/* Preset Metadata */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-3">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
             <h4 className="text-[11px] font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
               <BsSliders className="w-3.5 h-3.5" />
               <span>Preset Information</span>
@@ -253,7 +253,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. GitLab Corporate, Hetzner VPS"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-purple-500 rounded-lg text-white font-medium text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-white font-medium text-xs outline-none"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
                 >
                   <option value="git">Git Provider</option>
                   <option value="cloud">Cloud VM</option>
@@ -285,7 +285,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                 placeholder="Short description of this template"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-purple-500 rounded-lg text-white text-xs outline-none"
+                className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-white text-xs outline-none"
               />
             </div>
 
@@ -299,7 +299,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. gitlab, oracle, digitalocean"
                   value={iconName}
                   onChange={(e) => setIconName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-purple-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
                 />
               </div>
 
@@ -312,14 +312,14 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. Internal, Verified"
                   value={badge}
                   onChange={(e) => setBadge(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-purple-500 rounded-lg text-gray-200 text-xs outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Default SSH Host Configuration */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-3">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
             <h4 className="text-[11px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
               <BsFolder2Open className="w-3.5 h-3.5" />
               <span>Default Host Template</span>
@@ -335,7 +335,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. gitlab-work, my-vps"
                   value={hostPattern}
                   onChange={(e) => setHostPattern(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-blue-300 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-blue-300 font-mono text-xs outline-none"
                 />
               </div>
 
@@ -348,7 +348,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. gitlab.company.com, 192.168.1.100"
                   value={hostName}
                   onChange={(e) => setHostName(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
                 />
               </div>
             </div>
@@ -363,7 +363,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. git, root, ubuntu"
                   value={user}
                   onChange={(e) => setUser(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="22"
                   value={port}
                   onChange={(e) => setPort(parseInt(e.target.value, 10) || 22)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
                 />
               </div>
 
@@ -389,7 +389,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. Work, Infrastructure"
                   value={group}
                   onChange={(e) => setGroup(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
                 />
               </div>
 
@@ -400,7 +400,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                 <select
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
                 >
                   <option value="blue">Blue</option>
                   <option value="purple">Purple</option>
@@ -430,12 +430,12 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                       handleAddTag();
                     }
                   }}
-                  className="flex-1 px-2.5 py-1 bg-[#0e1422] border border-[#1f2942] focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="flex-1 px-2.5 py-1 bg-raised border border-line focus:border-blue-500 rounded-lg text-gray-200 text-xs outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleAddTag}
-                  className="px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors"
+                  className="px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors"
                 >
                   Add Tag
                 </button>
@@ -463,7 +463,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
           </div>
 
           {/* Key Recommendation Settings */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-3">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-[11px] font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                 <BsKeyFill className="w-3.5 h-3.5" />
@@ -474,7 +474,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   type="checkbox"
                   checked={enableKeyRec}
                   onChange={(e) => setEnableKeyRec(e.target.checked)}
-                  className="rounded text-emerald-500 focus:ring-0 bg-[#0e1422] border-[#1f2942]"
+                  className="rounded text-emerald-500 focus:ring-0 bg-raised border-line"
                 />
                 <span>Recommend dedicated key</span>
               </label>
@@ -491,7 +491,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                     placeholder="e.g. id_ed25519_gitlab"
                     value={keyName}
                     onChange={(e) => setKeyName(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-emerald-500 rounded-lg text-emerald-300 font-mono text-xs outline-none"
+                    className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-emerald-500 rounded-lg text-emerald-300 font-mono text-xs outline-none"
                   />
                 </div>
 
@@ -502,7 +502,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   <select
                     value={keyType}
                     onChange={(e) => setKeyType(e.target.value as any)}
-                    className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-emerald-500 rounded-lg text-gray-200 text-xs outline-none"
+                    className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-emerald-500 rounded-lg text-gray-200 text-xs outline-none"
                   >
                     <option value="ed25519">Ed25519 (Recommended)</option>
                     <option value="rsa">RSA (4096-bit)</option>
@@ -513,7 +513,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
           </div>
 
           {/* Post-Creation Guide & External Links */}
-          <div className="p-3 bg-[#070a10] border border-[#1f2942] rounded-xl space-y-3">
+          <div className="p-3 bg-app border border-line rounded-xl space-y-3">
             <h4 className="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
               <BsLink45Deg className="w-4 h-4" />
               <span>Setup Guide & Portal URL</span>
@@ -529,7 +529,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="https://gitlab.com/-/profile/keys"
                   value={guideUrl}
                   onChange={(e) => setGuideUrl(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none"
                 />
               </div>
 
@@ -542,7 +542,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                   placeholder="e.g. Open GitLab SSH Settings"
                   value={guideUrlLabel}
                   onChange={(e) => setGuideUrlLabel(e.target.value)}
-                  className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-amber-500 rounded-lg text-gray-200 text-xs outline-none"
+                  className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 text-xs outline-none"
                 />
               </div>
             </div>
@@ -556,7 +556,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
                 placeholder={"1. Open the remote console\n2. Add your public SSH key\n3. Test the connection"}
                 value={guideInstructions}
                 onChange={(e) => setGuideInstructions(e.target.value)}
-                className="w-full px-2.5 py-1.5 bg-[#0e1422] border border-[#1f2942] focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none resize-y"
+                className="w-full px-2.5 py-1.5 bg-raised border border-line focus:border-amber-500 rounded-lg text-gray-200 font-mono text-xs outline-none resize-y"
               />
             </div>
           </div>
@@ -591,7 +591,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>

@@ -194,9 +194,9 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
   };
 
   return (
-    <div className="bg-[#0b0f19] border border-[#1f2942] rounded-xl overflow-hidden shadow-lg transition-all text-xs">
+    <div className="bg-panel border border-line rounded-xl overflow-hidden shadow-lg transition-all text-xs">
       {/* Universal Top Card Header */}
-      <div className="px-3.5 py-2.5 bg-[#0e1422] border-b border-[#1f2942] flex items-center justify-between flex-wrap gap-2">
+      <div className="px-3.5 py-2.5 bg-raised border-b border-line flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div
             className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
@@ -231,14 +231,14 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
 
         {/* IdentitiesOnly Toggle */}
         <label
-          className="flex items-center gap-1.5 text-gray-300 hover:text-white cursor-pointer select-none bg-[#070a10] px-2.5 py-1 rounded-lg border border-[#1f2942]"
+          className="flex items-center gap-1.5 text-gray-300 hover:text-white cursor-pointer select-none bg-app px-2.5 py-1 rounded-lg border border-line"
           title="IdentitiesOnly forces SSH to only use the specified key and ignore unlisted agent keys"
         >
           <input
             type="checkbox"
             checked={identitiesOnly}
             onChange={(e) => onChangeIdentity(identityFile, e.target.checked)}
-            className="rounded border-[#1f2942] bg-[#0b0f19] text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+            className="rounded border-line bg-panel text-blue-600 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
           />
           <span className="text-[11px] font-medium">IdentitiesOnly (Isolate)</span>
         </label>
@@ -276,7 +276,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenGuideModal(connectedKeyObj, currentPubKey)}
-                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-blue-300 border border-blue-500/30 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-blue-300 border border-blue-500/30 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
                   >
                     <BsInfoCircleFill className="w-3.5 h-3.5 text-blue-400" />
                     <span>Setup Guide</span>
@@ -304,7 +304,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                 <select
                   value={identityFile}
                   onChange={(e) => onChangeIdentity(e.target.value, true)}
-                  className="bg-[#070a10] border border-[#1f2942] hover:border-blue-500/50 rounded-lg px-2.5 py-1 text-amber-300 font-mono text-xs focus:outline-none cursor-pointer"
+                  className="bg-app border border-line hover:border-blue-500/50 rounded-lg px-2.5 py-1 text-amber-300 font-mono text-xs focus:outline-none cursor-pointer"
                   title="Switch to a different existing key in ~/.ssh/"
                 >
                   <option value={identityFile}>
@@ -325,7 +325,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold transition-colors cursor-pointer ${
                     showReplaceForm
                       ? "bg-blue-600 text-white border-blue-500"
-                      : "bg-[#161d30] hover:bg-[#1f2942] text-gray-300 border-[#232f4d]"
+                      : "bg-control hover:bg-line text-gray-300 border-line-strong"
                   }`}
                 >
                   <BsArrowRepeat className="w-3.5 h-3.5 text-blue-400" />
@@ -365,7 +365,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
               <select
                 value={identityFile}
                 onChange={(e) => onChangeIdentity(e.target.value, !!e.target.value)}
-                className="w-full bg-[#070a10] border border-[#1f2942] rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
+                className="w-full bg-app border border-line rounded-xl px-3 py-2 text-amber-300 font-mono text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 <option value="">-- No specific key (Use OpenSSH agent defaults) --</option>
                 {availableKeys.map((k) => (
@@ -379,10 +379,10 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
             {/* Clean Divider */}
             <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-[#1f2942]"></div>
+                <div className="w-full border-t border-line"></div>
               </div>
               <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
-                <span className="bg-[#0b0f19] px-2 text-gray-500">or generate dedicated key</span>
+                <span className="bg-panel px-2 text-gray-500">or generate dedicated key</span>
               </div>
             </div>
           </div>
@@ -393,8 +393,8 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
         {/* ========================================================================= */}
         {(!identityFile || showReplaceForm) && (
           <div
-            className={`p-3 bg-[#070a10] border ${
-              isDuplicate ? "border-amber-500/50" : "border-[#1f2942]"
+            className={`p-3 bg-app border ${
+              isDuplicate ? "border-amber-500/50" : "border-line"
             } rounded-xl space-y-2.5 transition-colors`}
           >
             <div className="flex items-center justify-between">
@@ -411,7 +411,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5">
-                <div className="flex bg-[#0b0f19] p-0.5 rounded-lg border border-[#1f2942]">
+                <div className="flex bg-panel p-0.5 rounded-lg border border-line">
                   <button
                     type="button"
                     onClick={() => setGenKeyType("ed25519")}
@@ -440,7 +440,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowReplaceForm(false)}
-                    className="text-gray-400 hover:text-white p-1 rounded hover:bg-[#161d30] cursor-pointer"
+                    className="text-gray-400 hover:text-white p-1 rounded hover:bg-control cursor-pointer"
                     title="Close generator"
                   >
                     <BsXLg className="w-3 h-3" />
@@ -463,8 +463,8 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                     nameTouched.current = true;
                     setGenKeyName(e.target.value);
                   }}
-                  className={`w-full bg-[#0b0f19] border ${
-                    isDuplicate ? "border-amber-500/60 text-amber-200" : "border-[#1f2942] text-white"
+                  className={`w-full bg-panel border ${
+                    isDuplicate ? "border-amber-500/60 text-amber-200" : "border-line text-white"
                   } rounded-lg pl-14 pr-2.5 py-1.5 font-mono text-xs focus:outline-none focus:border-blue-500`}
                 />
               </div>
@@ -477,7 +477,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                   commentTouched.current = true;
                   setGenKeyComment(e.target.value);
                 }}
-                className="bg-[#0b0f19] border border-[#1f2942] rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
+                className="bg-panel border border-line rounded-lg px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-blue-500 placeholder-gray-600"
               />
 
               <button
@@ -548,7 +548,7 @@ export const KeyAuthCard: React.FC<KeyAuthCardProps> = ({
                         existingKey: matchingExistingKey,
                       })
                     }
-                    className="px-2 py-0.5 bg-[#161d30] hover:bg-[#1f2942] text-amber-200 border border-amber-500/40 rounded font-semibold text-[11px] cursor-pointer shadow-sm"
+                    className="px-2 py-0.5 bg-control hover:bg-line text-amber-200 border border-amber-500/40 rounded font-semibold text-[11px] cursor-pointer shadow-sm"
                   >
                     3 Resolution Options
                   </button>

@@ -161,9 +161,9 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
   const isModified = content !== initialContent;
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
             <BsFileEarmarkCode className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
           {/* Backups Button */}
           <button
             onClick={handleOpenBackups}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
             title="View automated backup snapshots"
           >
             <BsClockHistory className="w-3.5 h-3.5 text-amber-400" />
@@ -188,7 +188,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
             <button
               onClick={handleRevert}
               disabled={isSaving}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors cursor-pointer"
             >
               <BsArrowCounterclockwise className="w-3.5 h-3.5" />
               <span>Revert</span>
@@ -211,7 +211,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
       </div>
 
       {/* Helper Bar */}
-      <div className="px-3.5 py-1 bg-[#090d16]/80 border-b border-[#1f2942] flex items-center justify-between text-xs text-gray-400">
+      <div className="px-3.5 py-1 bg-bar/80 border-b border-line flex items-center justify-between text-xs text-gray-400">
         <div className="flex items-center gap-2 font-mono">
           <span>File: {filePath || "~/.ssh/config"}</span>
           {isModified && (
@@ -243,7 +243,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
 
       {/* Code Editor Textarea */}
       <div className="flex-1 p-2.5 overflow-hidden">
-        <div className="h-full bg-[#05070c] border border-[#1f2942] rounded-lg overflow-hidden flex flex-col shadow-inner">
+        <div className="h-full bg-well border border-line rounded-lg overflow-hidden flex flex-col shadow-inner">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -257,9 +257,9 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
       {/* Backups & Snapshots Modal */}
       {isBackupsModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[80vh]">
+          <div className="w-full max-w-lg bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[80vh]">
             {/* Modal Header */}
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
                   <BsClockHistory className="w-4 h-4" />
@@ -276,7 +276,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                 <button
                   onClick={loadBackups}
                   disabled={isLoadingBackups}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
                   title="Refresh list"
                 >
                   <BsArrowClockwise
@@ -285,7 +285,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                 </button>
                 <button
                   onClick={() => setIsBackupsModalOpen(false)}
-                  className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                  className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
                 >
                   <BsXLg className="w-4 h-4" />
                 </button>
@@ -310,7 +310,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                     className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all ${
                       b.is_primary
                         ? "bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-500/60 shadow-sm"
-                        : "bg-[#070a10] hover:bg-[#0f1422] border-[#1f2942]"
+                        : "bg-app hover:bg-raised-2 border-line"
                     }`}
                   >
                     <div className="space-y-1 min-w-0 flex-1">
@@ -343,7 +343,7 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
                       <button
                         onClick={() => handlePreview(b.filename)}
                         disabled={isLoadingPreview}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 hover:text-white border border-[#232f4d] rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white border border-line-strong rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
                         title="Preview contents"
                       >
                         <BsEye className="w-3 h-3 text-cyan-400" />
@@ -365,10 +365,10 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 border-t border-[#1f2942] bg-[#090d16] flex justify-end">
+            <div className="p-3 border-t border-line bg-bar flex justify-end">
               <button
                 onClick={() => setIsBackupsModalOpen(false)}
-                className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
               >
                 Close
               </button>
@@ -380,8 +380,8 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
       {/* Snapshot Preview Modal */}
       {previewBackup && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#0c101a] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
-            <div className="p-4 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+          <div className="w-full max-w-2xl bg-[#0c101a] border border-line rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <div className="p-4 border-b border-line bg-bar flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
                   <BsEye className="w-4 h-4" />
@@ -395,22 +395,22 @@ export const RawConfigView: React.FC<RawConfigViewProps> = ({
               </div>
               <button
                 onClick={() => setPreviewBackup(null)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-[#161d30] rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 text-gray-400 hover:text-white hover:bg-control rounded-lg transition-colors cursor-pointer"
               >
                 <BsXLg className="w-4 h-4" />
               </button>
             </div>
 
             <div className="flex-1 p-3 overflow-hidden">
-              <pre className="h-full max-h-[50vh] p-3 bg-[#05070c] border border-[#1f2942] rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
+              <pre className="h-full max-h-[50vh] p-3 bg-well border border-line rounded-lg overflow-y-auto text-emerald-400 font-mono text-xs leading-relaxed select-text">
                 {previewBackup.content || "# (Empty file)"}
               </pre>
             </div>
 
-            <div className="p-3 border-t border-[#1f2942] bg-[#090d16] flex items-center justify-between">
+            <div className="p-3 border-t border-line bg-bar flex items-center justify-between">
               <button
                 onClick={() => setPreviewBackup(null)}
-                className="px-4 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                className="px-4 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg font-medium text-xs transition-colors cursor-pointer"
               >
                 Close Preview
               </button>

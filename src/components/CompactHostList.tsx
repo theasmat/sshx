@@ -87,7 +87,7 @@ export const CompactHostList: React.FC<CompactHostListProps> = ({
             className={`group px-2.5 py-1.5 flex focus:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 items-center justify-between gap-2 cursor-pointer transition-colors ${
               isSelected
                 ? "bg-blue-600/15 border-l-2 border-blue-500 pl-2"
-                : "hover:bg-[#121829]/60"
+                : "hover:bg-card/60"
             }`}
           >
             {/* Left: Brand / Tech Logo + Alias + Address */}

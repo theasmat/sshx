@@ -30,7 +30,7 @@ export const ConfirmDialog: React.FC = () => {
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
-        className="w-[min(92vw,420px)] bg-[#0b0f19] border border-[#1f2942] rounded-xl p-4 space-y-3 shadow-2xl"
+        className="w-[min(92vw,420px)] bg-panel border border-line rounded-xl p-4 space-y-3 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 id="confirm-title" className="text-sm font-bold text-white">
@@ -41,7 +41,7 @@ export const ConfirmDialog: React.FC = () => {
           <button
             autoFocus
             onClick={() => close(false)}
-            className="px-3 py-1.5 bg-[#161d30] border border-[#232f4d] text-gray-200 rounded-lg text-xs cursor-pointer"
+            className="px-3 py-1.5 bg-control border border-line-strong text-gray-200 rounded-lg text-xs cursor-pointer"
           >
             Cancel
           </button>

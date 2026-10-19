@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   if (isCollapsed) {
     /* COLLAPSED ICON-ONLY MODE */
     return (
-      <aside className="w-12 border-r border-[#1f2942] bg-[#090d16] flex flex-col justify-between items-center py-2 select-none shrink-0 text-xs transition-all duration-200">
+      <aside className="w-12 border-r border-line bg-bar flex flex-col justify-between items-center py-2 select-none shrink-0 text-xs transition-all duration-200">
         <div className="flex flex-col items-center gap-1.5 w-full px-1">
           {/* Add Host Icon Button */}
           <button
@@ -73,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           {/* Nav Icons Divider */}
-          <div className="w-6 h-px bg-[#1f2942] my-0.5" />
+          <div className="w-6 h-px bg-line my-0.5" />
 
           {/* All Hosts */}
           <button
@@ -86,12 +86,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "hosts"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsServer className="w-3.5 h-3.5" />
             {totalHosts > 0 && (
-              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-[#161d30] border border-[#232f4d] text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
+              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-control border border-line-strong text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
                 {totalHosts}
               </span>
             )}
@@ -104,12 +104,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "keys"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsKeyFill className="w-3.5 h-3.5 text-blue-400" />
             {totalKeys > 0 && (
-              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-[#161d30] border border-[#232f4d] text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
+              <span className="absolute -top-1 -right-1 px-1 min-w-[14px] h-3.5 rounded-full bg-control border border-line-strong text-[10px] font-mono text-gray-300 flex items-center justify-center leading-none">
                 {totalKeys}
               </span>
             )}
@@ -122,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "known-hosts"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsJournalBookmark className="w-3.5 h-3.5 text-yellow-400" />
@@ -135,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "audit"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -148,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "raw-config"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsFileEarmarkCode className="w-3.5 h-3.5 text-purple-400" />
@@ -161,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
               activeTab === "settings"
                 ? "bg-blue-600/20 text-blue-400 border border-blue-500/40"
-                : "text-gray-400 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-400 hover:bg-control hover:text-white"
             }`}
           >
             <BsGear className="w-3.5 h-3.5 text-gray-400" />
@@ -169,11 +169,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Bottom Expand Toggle Button */}
-        <div className="w-full px-1 pt-1.5 border-t border-[#1f2942]/60 flex flex-col items-center">
+        <div className="w-full px-1 pt-1.5 border-t border-line/60 flex flex-col items-center">
           <button
             onClick={onToggleCollapse}
             title="Expand Sidebar"
-            className="w-8 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#161d30] transition-colors cursor-pointer"
+            className="w-8 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-control transition-colors cursor-pointer"
           >
             <BsLayoutSidebar className="w-3.5 h-3.5 text-blue-400" />
           </button>
@@ -184,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   /* EXPANDED FULL MODE */
   return (
-    <aside className="w-52 border-r border-[#1f2942] bg-[#090d16] flex flex-col justify-between select-none shrink-0 text-xs overflow-y-auto transition-all duration-200">
+    <aside className="w-52 border-r border-line bg-bar flex flex-col justify-between select-none shrink-0 text-xs overflow-y-auto transition-all duration-200">
       <div className="p-2 space-y-2">
         {/* 1. At First: Add Host Button */}
         <button
@@ -205,7 +205,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         {/* Navigation Items */}
-        <div className="space-y-0.5 pt-1 border-t border-[#1f2942]/80">
+        <div className="space-y-0.5 pt-1 border-t border-line/80">
           {/* 2. All Hosts */}
           <button
             onClick={() => {
@@ -216,14 +216,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "hosts" && activeGroup === null && activeTag === null
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
               <BsServer className="w-3.5 h-3.5" />
               <span className="text-xs">All Hosts</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#161d30] text-gray-400 font-mono leading-none">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
               {totalHosts}
             </span>
           </button>
@@ -234,14 +234,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "keys"
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
               <BsKeyFill className="w-3.5 h-3.5 text-blue-400" />
               <span className="text-xs">Key Management</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#161d30] text-gray-400 font-mono leading-none">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
               {totalKeys}
             </span>
           </button>
@@ -252,14 +252,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "known-hosts"
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
               <BsJournalBookmark className="w-3.5 h-3.5 text-yellow-400" />
               <span className="text-xs">Host Manager</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#161d30] text-gray-400 font-mono leading-none">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-control text-gray-400 font-mono leading-none">
               {totalKnownHosts}
             </span>
           </button>
@@ -270,7 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "audit"
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "raw-config"
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -309,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md transition-colors cursor-pointer ${
               activeTab === "settings"
                 ? "bg-blue-600/20 text-blue-400 font-semibold border border-blue-500/30"
-                : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                : "text-gray-300 hover:bg-control hover:text-white"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Contextual Groups Filter (when on hosts tab) */}
         {activeTab === "hosts" && groups.length > 0 && (
-          <div className="space-y-1 pt-1.5 border-t border-[#1f2942]">
+          <div className="space-y-1 pt-1.5 border-t border-line">
             <div className="px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center justify-between">
               <span>Groups</span>
               <BsFolder2Open className="w-3 h-3 text-gray-500" />
@@ -336,14 +336,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`w-full flex items-center justify-between px-2 py-1 rounded-md transition-colors cursor-pointer ${
                   activeGroup === grp.name
                     ? "bg-blue-600/20 text-blue-400 font-medium border border-blue-500/30"
-                    : "text-gray-300 hover:bg-[#161d30] hover:text-white"
+                    : "text-gray-300 hover:bg-control hover:text-white"
                 }`}
               >
                 <div className="flex items-center gap-1.5 truncate">
                   <BsFolder2Open className="w-3 h-3 text-amber-400 shrink-0" />
                   <span className="truncate text-xs">{grp.name}</span>
                 </div>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#161d30] text-gray-400 font-mono shrink-0 leading-none">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-control text-gray-400 font-mono shrink-0 leading-none">
                   {grp.count}
                 </span>
               </button>
@@ -353,7 +353,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Contextual Tags Filter (when on hosts tab) */}
         {activeTab === "hosts" && tags.length > 0 && (
-          <div className="space-y-1 pt-1.5 border-t border-[#1f2942]">
+          <div className="space-y-1 pt-1.5 border-t border-line">
             <div className="px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center justify-between">
               <span>Tags</span>
               <BsTag className="w-3 h-3 text-gray-500" />
@@ -369,7 +369,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors border cursor-pointer leading-none ${
                     activeTag === t.name
                       ? "bg-blue-500/20 text-blue-300 border-blue-500/50 font-medium"
-                      : "bg-[#0f1422] text-gray-400 border-[#1f2942] hover:text-gray-200 hover:border-gray-500"
+                      : "bg-raised-2 text-gray-400 border-line hover:text-gray-200 hover:border-gray-500"
                   }`}
                 >
                   <span>#{t.name}</span>
@@ -384,7 +384,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer: Launch Target Selector & Collapse Button */}
-      <div className="p-2 border-t border-[#1f2942] bg-[#070a10] space-y-2">
+      <div className="p-2 border-t border-line bg-app space-y-2">
         <div>
           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
             <BsTerminalFill className="w-3 h-3 text-blue-400" />
@@ -393,7 +393,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <select
             value={selectedTerminal}
             onChange={(e) => onSelectTerminal(e.target.value)}
-            className="w-full bg-[#0f1422] border border-[#1f2942] rounded text-gray-200 text-xs px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+            className="w-full bg-raised-2 border border-line rounded text-gray-200 text-xs px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             {terminals.map((t) => (
               <option key={t.id} value={t.id}>
@@ -409,7 +409,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collapse Toggle */}
         <button
           onClick={onToggleCollapse}
-          className="w-full flex items-center justify-between px-2 py-1 text-gray-400 hover:text-white hover:bg-[#161d30] rounded transition-colors text-xs cursor-pointer"
+          className="w-full flex items-center justify-between px-2 py-1 text-gray-400 hover:text-white hover:bg-control rounded transition-colors text-xs cursor-pointer"
           title="Collapse sidebar to icon-only mode"
         >
           <span className="text-xs">Collapse</span>

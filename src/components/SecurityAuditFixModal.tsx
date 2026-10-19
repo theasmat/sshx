@@ -112,9 +112,9 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-2xl bg-[#0b0f19] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
+      <div className="w-full max-w-2xl bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-xs">
         {/* Header */}
-        <div className="px-5 py-3.5 border-b border-[#1f2942] bg-[#0e1422] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3.5 border-b border-line bg-raised flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-sm">
               <BsWrench className="w-4 h-4" />
@@ -163,7 +163,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                   <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
                     Applied Changes
                   </div>
-                  <div className="bg-[#070a10] border border-[#1f2942] rounded-xl p-2.5 space-y-1.5 font-mono text-[11px]">
+                  <div className="bg-app border border-line rounded-xl p-2.5 space-y-1.5 font-mono text-[11px]">
                     {fixResult.messages.map((msg, idx) => (
                       <div key={idx} className="flex items-start gap-2 text-emerald-300">
                         <BsCheckCircleFill className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
@@ -178,7 +178,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
             /* Selection Screen */
             <>
               {/* Filter & Selection Bar */}
-              <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-[#1f2942]/60">
+              <div className="flex items-center justify-between gap-2 flex-wrap pb-1 border-b border-line/60">
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -186,7 +186,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
                       categoryFilter === "all"
                         ? "bg-emerald-600 text-white font-bold"
-                        : "bg-[#161d30] text-gray-300 hover:bg-[#1f2942]"
+                        : "bg-control text-gray-300 hover:bg-line"
                     }`}
                   >
                     All ({fixableIssues.length})
@@ -197,7 +197,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
                       categoryFilter === "permissions"
                         ? "bg-emerald-600 text-white font-bold"
-                        : "bg-[#161d30] text-gray-300 hover:bg-[#1f2942]"
+                        : "bg-control text-gray-300 hover:bg-line"
                     }`}
                   >
                     Permissions
@@ -208,7 +208,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                     className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${
                       categoryFilter === "syntax"
                         ? "bg-emerald-600 text-white font-bold"
-                        : "bg-[#161d30] text-gray-300 hover:bg-[#1f2942]"
+                        : "bg-control text-gray-300 hover:bg-line"
                     }`}
                   >
                     Config Syntax
@@ -237,7 +237,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
               {/* Fixable Items Checklist */}
               <div className="space-y-2">
                 {filteredFixable.length === 0 ? (
-                  <div className="p-6 text-center text-gray-400 bg-[#070a10] border border-[#1f2942] rounded-xl">
+                  <div className="p-6 text-center text-gray-400 bg-app border border-line rounded-xl">
                     No fixable issues found in this category.
                   </div>
                 ) : (
@@ -252,7 +252,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                         className={`p-3 rounded-xl border transition-all cursor-pointer select-none ${
                           isChecked
                             ? "bg-[#0e1627] border-emerald-500/40 shadow-sm"
-                            : "bg-[#070a10] border-[#1f2942] opacity-75 hover:opacity-100 hover:border-gray-700"
+                            : "bg-app border-line opacity-75 hover:opacity-100 hover:border-gray-700"
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -319,7 +319,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
 
               {/* Non-Fixable / Manual Guidance Section */}
               {nonFixableIssues.length > 0 && (
-                <div className="pt-2 border-t border-[#1f2942]/60 space-y-2">
+                <div className="pt-2 border-t border-line/60 space-y-2">
                   <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400">
                     <span>Manual Recommendations ({nonFixableIssues.length})</span>
                     <span className="text-[10px] text-gray-500 font-normal">Require user decision</span>
@@ -329,7 +329,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                     {nonFixableIssues.map((issue, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 rounded-lg bg-[#070a10] border border-[#1f2942] flex items-center justify-between gap-2"
+                        className="p-2.5 rounded-lg bg-app border border-line flex items-center justify-between gap-2"
                       >
                         <div className="flex items-start gap-2 flex-1">
                           <BsExclamationTriangleFill className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
@@ -362,7 +362,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
                                 onClose();
                                 onSelectTab("hosts");
                               }}
-                              className="flex items-center gap-1 px-2 py-1 bg-[#161d30] hover:bg-[#1f2942] text-blue-300 border border-[#232f4d] rounded text-[10px] font-medium transition-colors cursor-pointer"
+                              className="flex items-center gap-1 px-2 py-1 bg-control hover:bg-line text-blue-300 border border-line-strong rounded text-[10px] font-medium transition-colors cursor-pointer"
                             >
                               <span>Hosts</span>
                               <BsArrowRight className="w-2.5 h-2.5" />
@@ -379,7 +379,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-[#1f2942] bg-[#0e1422] flex items-center justify-between shrink-0">
+        <div className="px-5 py-3 border-t border-line bg-raised flex items-center justify-between shrink-0">
           <div className="text-[11px] text-gray-400 font-mono">
             {fixResult
               ? "All actions executed safely."
@@ -390,7 +390,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-lg border border-[#232f4d] font-medium text-xs transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 rounded-lg border border-line-strong font-medium text-xs transition-colors cursor-pointer"
             >
               {fixResult ? "Close" : "Cancel"}
             </button>

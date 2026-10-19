@@ -33,9 +33,9 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 select-none">
-      <div className="w-full max-w-lg bg-[#0b0f19] border border-[#1f2942] rounded-2xl shadow-2xl overflow-hidden flex flex-col text-xs">
+      <div className="w-full max-w-lg bg-panel border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col text-xs">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-[#1f2942] bg-[#0e1422] flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-line bg-raised flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center">
               <BsExclamationTriangleFill className="w-4 h-4" />
@@ -52,7 +52,7 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-[#1c243a] transition-colors cursor-pointer"
+            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-hover transition-colors cursor-pointer"
           >
             <BsXLg className="w-4 h-4" />
           </button>
@@ -60,9 +60,9 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
 
         {/* Body Content */}
         <div className="p-4 space-y-3">
-          <div className="p-3 bg-[#070a10] border border-amber-500/20 rounded-xl space-y-1 text-gray-300">
+          <div className="p-3 bg-app border border-amber-500/20 rounded-xl space-y-1 text-gray-300">
             <p className="leading-relaxed">
-              A private key named <code className="text-amber-300 font-mono font-semibold bg-[#161d30] px-1.5 py-0.5 rounded border border-[#232f4d]">{conflictKeyName}</code> is already stored in your local <code className="text-blue-400 font-mono">~/.ssh/</code> directory.
+              A private key named <code className="text-amber-300 font-mono font-semibold bg-control px-1.5 py-0.5 rounded border border-line-strong">{conflictKeyName}</code> is already stored in your local <code className="text-blue-400 font-mono">~/.ssh/</code> directory.
             </p>
             <p className="text-[11px] text-gray-400">
               Please choose how you would like SSHX to resolve this key connection:
@@ -91,7 +91,7 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
                 <p className="text-gray-400 text-[11px] mt-0.5 leading-relaxed">
                   Automatically generate a dedicated, non-colliding key pair:
                 </p>
-                <code className="block mt-1 text-emerald-400 font-mono text-[11px] bg-[#070a10] px-2 py-1 rounded border border-[#1f2942]">
+                <code className="block mt-1 text-emerald-400 font-mono text-[11px] bg-app px-2 py-1 rounded border border-line">
                   ~/.ssh/{uniqueSuggestionName}
                 </code>
               </div>
@@ -125,7 +125,7 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
             {/* Option 3: Manual Selection / Rename */}
             <div
               onClick={onManualSelect}
-              className="group p-3 bg-[#0e121d] hover:bg-[#151a2a] border border-[#1f2942] hover:border-purple-500/50 rounded-xl cursor-pointer transition-all flex items-start gap-3 hover:-translate-y-0.5"
+              className="group p-3 bg-[#0e121d] hover:bg-[#151a2a] border border-line hover:border-purple-500/50 rounded-xl cursor-pointer transition-all flex items-start gap-3 hover:-translate-y-0.5"
             >
               <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
                 <BsSliders className="w-4 h-4" />
@@ -143,11 +143,11 @@ export const KeyConflictModal: React.FC<KeyConflictModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2.5 border-t border-[#1f2942] bg-[#090d16] flex items-center justify-end">
+        <div className="px-4 py-2.5 border-t border-line bg-bar flex items-center justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 hover:text-white rounded-lg font-medium transition-colors cursor-pointer text-xs"
+            className="px-3.5 py-1.5 bg-control hover:bg-line text-gray-300 hover:text-white rounded-lg font-medium transition-colors cursor-pointer text-xs"
           >
             Cancel
           </button>

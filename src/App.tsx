@@ -601,7 +601,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
 
   return (
     <div
-      className={`flex flex-col overflow-hidden bg-[#070a10] text-gray-200 font-sans select-none antialiased ${
+      className={`flex flex-col overflow-hidden bg-app text-gray-200 font-sans select-none antialiased ${
         embedded ? "w-full h-full min-h-[580px]" : "h-screen w-screen"
       } ${className}`}
     >
@@ -661,7 +661,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
         />
 
         {/* Center / Main Content View (Dedicated In-Page Tabs) */}
-        <main className="flex-1 overflow-hidden bg-[#070a10]">
+        <main className="flex-1 overflow-hidden bg-app">
           {activeTab === "hosts" && (
             <HostsView
               hosts={filteredHosts}
@@ -711,6 +711,7 @@ export function App({ embedded = false, className = "" }: AppProps = {}) {
             <KeyManagementView
               keys={keys}
               hosts={configData?.hosts || []}
+              hostAccounts={hostAccounts}
               onRefresh={loadAllData}
               isLoading={isLoading}
               initialCreateModalOpen={keyInitialCreateModalOpen}

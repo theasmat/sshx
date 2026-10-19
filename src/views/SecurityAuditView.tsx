@@ -76,9 +76,9 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
   const fixableCount = issues.filter((i) => i.fixable).length;
 
   return (
-    <div className="h-full flex flex-col bg-[#070a10] text-xs select-none overflow-hidden">
+    <div className="h-full flex flex-col bg-app text-xs select-none overflow-hidden">
       {/* Top Header */}
-      <div className="px-3.5 py-1.5 border-b border-[#1f2942] bg-[#090d16] flex items-center justify-between shrink-0 flex-wrap gap-2">
+      <div className="px-3.5 py-1.5 border-b border-line bg-bar flex items-center justify-between shrink-0 flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
             <BsShieldCheck className="w-3.5 h-3.5" />
@@ -102,7 +102,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-gray-300 rounded-md border border-[#232f4d] font-medium text-xs transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1 bg-control hover:bg-line text-gray-300 rounded-md border border-line-strong font-medium text-xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             <BsArrowClockwise className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
             <span>Re-Run Audit</span>
@@ -114,7 +114,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
       <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
         <div className="max-w-4xl mx-auto space-y-3">
           {/* Security Score Banner */}
-          <div className="p-3.5 bg-[#0b0f19] border border-[#1f2942] rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+          <div className="p-3.5 bg-panel border border-line rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
             <div className="flex items-center gap-3">
               <div
                 className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-2xl font-mono border ${
@@ -182,7 +182,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                 </button>
               </div>
 
-              <div className="flex items-center justify-between bg-[#070a10] p-2 rounded-lg border border-[#1f2942]">
+              <div className="flex items-center justify-between bg-app p-2 rounded-lg border border-line">
                 <span className="font-mono text-gray-300 truncate max-w-md">
                   {generatedKeyMsg.pubKey}
                 </span>
@@ -202,7 +202,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
             <h3 className="font-semibold text-white text-xs">Security Findings</h3>
 
             {issues.length === 0 ? (
-              <div className="p-6 text-center bg-[#0b0f19] border border-[#1f2942] rounded-xl text-emerald-400 flex flex-col items-center gap-2">
+              <div className="p-6 text-center bg-panel border border-line rounded-xl text-emerald-400 flex flex-col items-center gap-2">
                 <BsCheckCircleFill className="w-7 h-7" />
                 <span className="font-semibold text-sm">No Security Warnings</span>
                 <span className="text-gray-400 text-xs">
@@ -214,7 +214,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                 {issues.map((issue, idx) => (
                   <div
                     key={idx}
-                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start justify-between gap-3 bg-[#0b0f19] ${
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start justify-between gap-3 bg-panel ${
                       issue.severity === "critical"
                         ? "border-rose-500/30"
                         : issue.severity === "warning"
@@ -289,7 +289,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
                       {issue.title.includes("Duplicate") && onSelectTab && (
                         <button
                           onClick={() => onSelectTab("hosts")}
-                          className="px-3 py-1 bg-[#161d30] hover:bg-[#1f2942] text-blue-400 rounded font-medium text-xs border border-[#232f4d] cursor-pointer"
+                          className="px-3 py-1 bg-control hover:bg-line text-blue-400 rounded font-medium text-xs border border-line-strong cursor-pointer"
                         >
                           Go to Hosts ➔
                         </button>
