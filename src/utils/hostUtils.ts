@@ -79,3 +79,66 @@ export function getGitProviderInfo(
     supportsSshCopyId: false,
   };
 }
+
+/**
+ * Other hosts that point at the same server (same HostName, User and Port) —
+ * e.g. two GitHub accounts. Only the alias + IdentityFile tells them apart.
+ */
+export function findSiblingHosts(
+  host: Pick<SshHost, "id" | "host_name" | "user" | "port">,
+  hosts: SshHost[]
+): SshHost[] {
+  const name = (host.host_name || "").trim().toLowerCase();
+  if (!name) return [];
+  return hosts.filter(
+    (h) =>
+      h.id !== host.id &&
+      (h.host_name || "").trim().toLowerCase() === name &&
+      (h.user || "").toLowerCase() === (host.user || "").toLowerCase() &&
+      (h.port || 22) === (host.port || 22)
+  );
+}
+
+/** Account name from a git provider's `ssh -T` reply ("Hi bob!", "Welcome to GitLab, @bob!", "logged in as bob."). */
+export function parseGitAccount(output: string): string | null {
+  const m =
+    /Hi ([\w.-]+)!/.exec(output) ||
+    /Welcome to GitLab, @([\w.-]+)!/.exec(output) ||
+    /logged in as ([\w.-]+)/.exec(output);
+  return m ? m[1].replace(/\.$/, "") : null;
+}
+
+/** Account label kept as an `account:<name>` tag so it persists in ~/.ssh/config metadata. */
+export function getAccountLabel(host: Pick<SshHost, "tags">): string | null {
+  const t = (host.tags || []).find((x) => x.toLowerCase().startsWith("account:"));
+  return t ? t.slice("account:".length) : null;
+}
+
+export function firstAlias(host: Pick<SshHost, "host_pattern">): string {
+  return host.host_pattern.trim().split(/\s+/)[0] || host.host_pattern;
+}
+
+/** `git remote set-url` snippet that routes a repo through this alias. */
+export function gitRemoteUrl(host: Pick<SshHost, "host_pattern">): string {
+  return `git@${firstAlias(host)}:owner/repo.git`;
+}
+
+export interface HostCluster {
+  /** Shared server address when more than one host uses it, else null. */
+  target: string | null;
+  hosts: SshHost[];
+}
+
+/** Cluster hosts that share a server (first-seen order kept). */
+export function clusterHosts(hosts: SshHost[]): HostCluster[] {
+  const out: HostCluster[] = [];
+  const used = new Set<string>();
+  for (const h of hosts) {
+    if (used.has(h.id)) continue;
+    const sibs = findSiblingHosts(h, hosts);
+    const members = [h, ...sibs];
+    members.forEach((m) => used.add(m.id));
+    out.push({ target: sibs.length ? (h.host_name || "").trim() : null, hosts: members });
+  }
+  return out;
+}

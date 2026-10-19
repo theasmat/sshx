@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect, useRef } from "react";
 import {
   BsGear,
@@ -166,7 +167,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       const content = await api.readBackupPreview(name);
       setSnapshotPreview({ name, content });
     } catch (e: any) {
-      alert(`Failed to load snapshot preview: ${e}`);
+      toast.error(`Failed to load snapshot preview: ${e}`);
     } finally {
       setIsLoadingSnapshotPreview(false);
     }
@@ -194,7 +195,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       }
       setSnapshotPreview(null);
     } catch (e: any) {
-      alert(`Failed to restore snapshot: ${e}`);
+      toast.error(`Failed to restore snapshot: ${e}`);
     } finally {
       setRestoringSnapshotName(null);
     }

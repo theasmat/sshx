@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState } from "react";
 import {
   BsShieldCheck,
@@ -56,7 +57,7 @@ export const SecurityAuditView: React.FC<SecurityAuditViewProps> = ({
       });
       onRefresh();
     } catch (err: any) {
-      alert(`Failed to generate replacement key: ${err}`);
+      toast.error(`Failed to generate replacement key: ${err}`);
     } finally {
       setIsGeneratingKey(false);
     }

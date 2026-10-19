@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
 import {
   BsKeyFill,
@@ -133,7 +134,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
   const handleGenerateKeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!keyName.trim()) {
-      alert("Key filename is required");
+      toast.error("Key filename is required");
       return;
     }
 
@@ -158,7 +159,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       onRefresh();
       setSelectedKeyPath(newKey.private_path);
     } catch (err: any) {
-      alert(`Failed to generate SSH key: ${err}`);
+      toast.error(`Failed to generate SSH key: ${err}`);
     } finally {
       setIsGenerating(false);
     }
@@ -174,7 +175,7 @@ export const KeyManagementView: React.FC<KeyManagementViewProps> = ({
       }
       onRefresh();
     } catch (err: any) {
-      alert(`Failed to update ssh-agent: ${err}`);
+      toast.error(`Failed to update ssh-agent: ${err}`);
     } finally {
       setIsTogglingAgent(false);
     }

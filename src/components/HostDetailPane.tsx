@@ -22,8 +22,9 @@ import {
 import { BrandLogo } from "./BrandLogo";
 import { SshHost, SshKeyInfo } from "../types";
 import { api } from "../api";
+import { toast } from "../utils/toast";
 import { getAllPresets } from "../presets";
-import { getGitProviderInfo } from "../utils/hostUtils";
+import { getGitProviderInfo, findSiblingHosts, getAccountLabel, firstAlias, gitRemoteUrl } from "../utils/hostUtils";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { PostCreationGuideModal } from "./PostCreationGuideModal";
 
@@ -37,6 +38,8 @@ interface HostDetailPaneProps {
   terminalName: string;
   keys?: SshKeyInfo[];
   onOpenRawConfig?: () => void;
+  allHosts?: SshHost[];
+  hostAccounts?: Record<string, string>;
 }
 
 export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
@@ -49,6 +52,8 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
   terminalName,
   keys,
   onOpenRawConfig,
+  allHosts,
+  hostAccounts,
 }) => {
   const [copied, setCopied] = useState(false);
   const [copiedPubKey, setCopiedPubKey] = useState(false);
@@ -58,6 +63,11 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
 
   const gitProvider = useMemo(() => getGitProviderInfo(host), [host]);
   const isGit = gitProvider !== null;
+
+  const siblings = useMemo(
+    () => (host && allHosts ? findSiblingHosts(host, allHosts) : []),
+    [host, allHosts]
+  );
 
   const matchedKey = useMemo(() => {
     if (!host?.identity_file || !keys) return null;
@@ -335,6 +345,55 @@ export const HostDetailPane: React.FC<HostDetailPaneProps> = ({
             {getSshCommand()}
           </div>
         </div>
+
+        {host && (isGit || siblings.length > 0) && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-2 text-xs text-amber-200 space-y-1">
+            {siblings.length > 0 && (
+              <>
+                <div className="font-semibold">
+                  {siblings.length + 1} identities share {host.host_name}
+                </div>
+                <div className="text-amber-200/80">
+                  Always connect through the alias so the right key is used.
+                </div>
+                <ul className="font-mono text-[11px] space-y-0.5">
+                  {[host, ...siblings].map((h) => {
+                    const acct = hostAccounts?.[h.id] || getAccountLabel(h);
+                    return (
+                      <li key={h.id} className={h.id === host.id ? "text-white" : ""}>
+                        {h.host_pattern} → {acct ? `@${acct} · ` : ""}
+                        {h.identity_file ? h.identity_file.split("/").pop() : "default key"}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+            {isGit && (
+              <div className="space-y-1">
+                {hostAccounts?.[host.id] ? (
+                  <div>
+                    Authenticates as <span className="font-semibold text-white">@{hostAccounts[host.id]}</span>
+                  </div>
+                ) : (
+                  <div className="text-amber-200/80">Run Test to detect which account this key logs in as.</div>
+                )}
+                <div className="font-mono text-[11px] break-all">
+                  git remote set-url origin {gitRemoteUrl(host)}
+                </div>
+                <button
+                  className="underline cursor-pointer"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`git remote set-url origin ${gitRemoteUrl(host)}`);
+                    toast.success(`Copied remote command for ${firstAlias(host)}`);
+                  }}
+                >
+                  Copy remote command
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Directives Table */}
         <div className="space-y-1">

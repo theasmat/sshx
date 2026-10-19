@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useMemo } from "react";
 import {
   BsTrash3,
@@ -69,7 +70,7 @@ export const DeleteKeyConfirmationModal: React.FC<DeleteKeyConfirmationModalProp
       onKeyDeleted(keyInfo.private_path);
       onClose();
     } catch (err: any) {
-      alert(`Failed to delete SSH key: ${err}`);
+      toast.error(`Failed to delete SSH key: ${err}`);
     } finally {
       setIsDeleting(false);
     }

@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   BsExclamationTriangleFill,
@@ -101,7 +102,7 @@ export const SecurityAuditFixModal: React.FC<SecurityAuditFixModalProps> = ({
       setFixResult(res);
       onFixApplied(res);
     } catch (err: any) {
-      alert(`Failed to apply security fixes: ${err}`);
+      toast.error(`Failed to apply security fixes: ${err}`);
     } finally {
       setIsApplying(false);
     }

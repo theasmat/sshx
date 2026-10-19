@@ -1,3 +1,4 @@
+import { toast } from "../utils/toast";
 import React, { useState, useEffect } from "react";
 import {
   BsXLg,
@@ -137,7 +138,7 @@ export const PresetEditorModal: React.FC<PresetEditorModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert("Please provide a preset title");
+      toast.error("Please provide a preset title");
       return;
     }
 
